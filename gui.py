@@ -19,8 +19,8 @@ def createWindow():
         [sg.In (size=(25,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(size=(10, 1))]], pad=(10, 10), size=(400, 100)),
         
         #second col
-         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(40,10), key="-FILE LIST-")]], 
-         pad=(10, 10), size=(300, 150)),
+         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(100,5), key="-FILE LIST-")]], 
+         pad=(10, 10), size=(300, 85)),
 
         #third col
          sg.Column([[sg.Button("Correct", key='-CORRECT-',disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
