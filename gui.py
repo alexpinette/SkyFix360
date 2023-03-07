@@ -62,10 +62,10 @@ def correctMethodWindow():
 
 
 def successWindow():
-    correctionLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
+    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
                         [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center')],
                         [sg.Button("Close", size=(10, 1), pad=(100, 10))]]
-    return correctionLayout
+    return successLayout
 
 
 
@@ -83,9 +83,8 @@ def runEvents(window):
                     help.close()
                     break
         
+        # when user selects 'Browse', find folder & update elements
         if event == ('-FOLDER-'):
-            window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
-
             # get actual folder that was chosen
             folder = values["-FOLDER-"]
             try:
@@ -105,6 +104,11 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update (fileNames)
 
+            # if no valid input, keep 'Correct' button disabled
+            if fileNames != []:
+                window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
+
+        # if 'Correct' button is not disabled & clicks, display appropriate window
         if event == ('-CORRECT-'):
             correctMWidnow = correctMethodWindow()
             correctWindow = sg.Window('Correction Method', correctMWidnow, size=(355,195), margins=(20, 20))
@@ -115,7 +119,6 @@ def runEvents(window):
                     correctWindow.close()
                     break
         
-
 
         # DISPLAY WINDOW WHEN IMAGE/VIDEO IS CORRECTED
         # successMWindow = successWindow()
