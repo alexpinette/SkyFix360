@@ -13,7 +13,7 @@ import io
 def createWindow():
     sg.theme ("DarkGrey1")
 
-    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Text(size=(0, 1), key="-FILENAME-")],
+    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Text(size=(0, 1), key="-FILENAME-", visible=False)],
                 [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],]
     
     secondRow = [ #first col
@@ -121,10 +121,8 @@ def runEvents(window):
                 window["-FILENAME-"].update(fileName)  
                 
                 window["-FILETEXT-"].update(visible=True)
-
-                
-                                      
-                            
+                window["-FILENAME-"].update(visible=True)
+        
                 # Open the image
                 pilImage = PIL.Image.open(fileName)
                 
