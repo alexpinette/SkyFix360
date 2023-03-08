@@ -104,10 +104,6 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update (fileNames)
 
-            # if no valid input, keep 'Correct' button disabled
-            if fileNames != []:
-                window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
-
         # if 'Correct' button is not disabled & clicks, display appropriate window
         if event == ('-CORRECT-'):
             correctMWidnow = correctMethodWindow()
