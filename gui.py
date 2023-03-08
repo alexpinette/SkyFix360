@@ -114,7 +114,7 @@ def runEvents(window):
             correctWindow = sg.Window('Correction Method', correctMWidnow, size=(355,195), margins=(20, 20))
             while True:
                 correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED or correctEvent == ('Cancel'):
+                if correctEvent == sg.WIN_CLOSED or correctEvent == ('Cancel') or event == ('Quit') or event == sg.WIN_CLOSED:
                     # Close the help popup
                     correctWindow.close()
                     break
