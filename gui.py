@@ -9,6 +9,14 @@ from matplotlib.pyplot import margins
 import PIL
 import os
 import io
+import numpy as np
+from matplotlib.widgets  import RectangleSelector
+import matplotlib.figure as figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import matplotlib.pyplot as plt
+import sys
+import cv2
+import matplotlib.image as mpimg
 
 def createWindow():
     sg.theme ("DarkGrey1")
@@ -29,8 +37,10 @@ def createWindow():
          [sg.Button("Export ", key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],], 
             pad=(10, 10), size=(100, 75))],
 
-         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", size=(10, 1))]
-    ], 
+         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", size=(10, 1))],
+         [sg.Canvas(key='controls_cv')],
+         [sg.Canvas(key='fig_cv', size=(500 * 2, 200))]
+    ] 
 
     layout = [ firstRow, secondRow ]
 
@@ -72,6 +82,8 @@ def successWindow():
 
 
 def runEvents(window):
+    
+
     fileNames = []
     while True:
         event, values = window.read()
@@ -151,7 +163,29 @@ def runEvents(window):
                     # Close the help popup
                     correctWindow.close()
                     break
-        
+                elif correctEvent == 'Manual':
+                    # fig = figure.Figure()
+                    # ax = fig.add_subplot(111)
+                    # DPI = fig.get_dpi()
+                    # fig.set_size_inches(505 * 2 / float(DPI), 707 / float(DPI))
+
+                    fig = plt.figure()
+                    ax = fig.add_subplot(111)
+                    DPI = fig.get_dpi()
+                    # fig.set_size_inches(505 * 2 / float(DPI), 707 / float(DPI))
+                    fig.set_size_inches(505 * 2 / float(DPI), 707 / float(DPI))
+                    img = mpimg.imread(fileName)
+                    imgplot = plt.imshow(img)
+                    plt.grid()
+
+                    x = np.linspace(0, 2 * np.pi)
+                    y = np.sin(x)
+                    line, = ax.plot(x, y)
+                    rs = RectangleSelector(ax, line_select_callback,
+                                useblit=False, button=[1],
+                                minspanx=5, minspany=5, spancoords='pixels',
+                                interactive=True)
+                    draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
 
         # DISPLAY WINDOW WHEN IMAGE/VIDEO IS CORRECTED
         # successMWindow = successWindow()
@@ -193,6 +227,38 @@ def imageToData(pilImage, resize):
     img.save(ImgBytes, format="PNG")
     del img
     return ImgBytes.getvalue()
+
+def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
+    if canvas.children:
+        for child in canvas.winfo_children():
+            child.destroy()
+    if canvas_toolbar.children:
+        for child in canvas_toolbar.winfo_children():
+            child.destroy()
+    figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
+    figure_canvas_agg.draw()
+    toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)
+    toolbar.update()
+    figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
+
+
+def line_select_callback(eclick, erelease):
+    fig = figure.Figure()
+    ax = fig.add_subplot(111)
+    DPI = fig.get_dpi()
+    fig.set_size_inches(505 * 2 / float(DPI), 707 / float(DPI))
+
+    x1, y1 = eclick.xdata, eclick.ydata
+    x2, y2 = erelease.xdata, erelease.ydata
+
+    rect = plt.Rectangle( (min(x1,x2),min(y1,y2)), np.abs(x1-x2), np.abs(y1-y2) )
+    print(rect)
+    ax.add_patch(rect)
+    fig.canvas.draw()
+
+class Toolbar(NavigationToolbar2Tk):
+    def __init__(self, *args, **kwargs):
+        super(Toolbar, self).__init__(*args, **kwargs)
     
 
 # ------------------------------------------------------------------------------  
