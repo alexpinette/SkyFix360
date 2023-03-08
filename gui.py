@@ -6,12 +6,14 @@
 
 import PySimpleGUI as sg
 from matplotlib.pyplot import margins
+import PIL
 import os
+import io
 
 def createWindow():
     sg.theme ("DarkGrey1")
 
-    firstRow = [[sg.Text("File:", size=(4,1)), sg.Text(size=(65, 1), key="-FILENAME-")],
+    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Text(size=(0, 1), key="-FILENAME-")],
                 [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],]
     
     secondRow = [ #first col
@@ -70,6 +72,7 @@ def successWindow():
 
 
 def runEvents(window):
+    fileNames = []
     while True:
         event, values = window.read()
         # if user selects 'Help' button, display help window with instructions
@@ -104,6 +107,10 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update (fileNames)
 
+            # if no valid input, keep 'Correct' button disabled
+            if fileNames != []:
+                window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
+
         # if 'Correct' button is not disabled & clicks, display appropriate window
         if event == ('-CORRECT-'):
             correctMWidnow = correctMethodWindow()
@@ -132,6 +139,31 @@ def runEvents(window):
         # if user selects 'Quit' button or default exit button, close window
         if event == ('Quit') or event == sg.WIN_CLOSED:
             break
+        
+        
+# ------------------------------------------------------------------------------  
+        
+def imageToData(pilImage, resize):
+    """ 
+    Insert comments here
+    """
+    
+    # store current image and its width and height
+    img = pilImage.copy() 
+    currentW, currentH = img.size
+    
+    # if resize image, make new height and width to scale image
+    if resize:
+        newW, newH = resize
+        scale = min(newH/currentH, newW/currentW)
+        img = img.resize((int(currentW*scale), int(currentH*scale)), PIL.Image.ANTIALIAS)  
+    
+    # convert image to bytes and save it
+    ImgBytes = io.BytesIO()
+    img.save(ImgBytes, format="PNG")
+    del img
+    return ImgBytes.getvalue()
+    
 
 # ------------------------------------------------------------------------------  
 
