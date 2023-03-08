@@ -13,7 +13,7 @@ import io
 def createWindow():
     sg.theme ("DarkGrey1")
 
-    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Text(size=(0, 1), key="-FILENAME-")],
+    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Text(size=(0, 1), key="-FILENAME-", visible=False)],
                 [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],]
     
     secondRow = [ #first col
@@ -107,9 +107,39 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update (fileNames)
 
-            # if no valid input, keep 'Correct' button disabled
-            if fileNames != []:
+
+
+        # User chose file from File List
+        if event == "-FILE LIST-":   
+            
+            try:
+            
+                fileName = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
+                
+                
+                # display filename in appropriate spot in right column
+                window["-FILENAME-"].update(fileName)  
+                
+                window["-FILETEXT-"].update(visible=True)
+                window["-FILENAME-"].update(visible=True)
+        
+                # Open the image
+                pilImage = PIL.Image.open(fileName)
+                
+                # Get image data, and then use it to update window["-IMAGE-"]
+                data = imageToData(pilImage, window["-IMAGE-"].get_size())
+                window['-IMAGE-'].update(data=data) 
+                
+                
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
+        
+        
+            except:
+                pass
+
+
+
+
 
         # if 'Correct' button is not disabled & clicks, display appropriate window
         if event == ('-CORRECT-'):
@@ -117,7 +147,7 @@ def runEvents(window):
             correctWindow = sg.Window('Correction Method', correctMWidnow, size=(355,195), margins=(20, 20))
             while True:
                 correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED or correctEvent == ('Cancel') or event == ('Quit') or event == sg.WIN_CLOSED:
+                if correctEvent == sg.WIN_CLOSED or correctEvent == ('Cancel'):
                     # Close the help popup
                     correctWindow.close()
                     break
