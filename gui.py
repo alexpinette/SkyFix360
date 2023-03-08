@@ -19,7 +19,7 @@ def createWindow():
         [sg.In (size=(25,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(size=(10, 1))]], pad=(10, 10), size=(400, 100)),
         
         #second col
-         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(100,5), key="-FILE LIST-")]], 
+         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]], 
          pad=(10, 10), size=(300, 85)),
 
         #third col
