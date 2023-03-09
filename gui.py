@@ -37,7 +37,7 @@ def createWindow():
          [sg.Button("Export ", key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],], 
             pad=(10, 10), size=(100, 75))],
 
-         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", size=(10, 1))],
+         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", key=('-QUIT-'), size=(10, 1))],
          [sg.Canvas(key='controls_cv')],
          [sg.Canvas(key='fig_cv', size=(500 * 2, 200))]
     ] 
@@ -45,6 +45,7 @@ def createWindow():
     layout = [ firstRow, secondRow ]
 
     window = sg.Window('SkyFix360', layout, element_justification='c')
+    
             
     # Display the window
     # window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True)
@@ -206,12 +207,18 @@ def runEvents(window):
         
         
 # ------------------------------------------------------------------------------  
-        
+'''
+    def imageToData - the method calcuates the bytes of the image to draw the terrain
+                      map after reading and storing the elevation values, it will
+                      update the image size.
+    @ param image   - passing the image to update/draw again on the GUI
+    @ param resize  - whether or not the image should be resized
+    precondition    - image should be valid after reading the array, method should
+                      be called in main function
+    postcondition   - image size is updated & image is displayed in GUI; method
+                      returns the new image with its updated size
+'''
 def imageToData(pilImage, resize):
-    """ 
-    Insert comments here
-    """
-    
     # store current image and its width and height
     img = pilImage.copy() 
     currentW, currentH = img.size
@@ -228,6 +235,8 @@ def imageToData(pilImage, resize):
     del img
     return ImgBytes.getvalue()
 
+'''
+'''
 def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     if canvas.children:
         for child in canvas.winfo_children():
@@ -242,6 +251,8 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
 
 
+'''
+'''
 def line_select_callback(eclick, erelease):
     fig = figure.Figure()
     ax = fig.add_subplot(111)
