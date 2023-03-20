@@ -20,6 +20,7 @@ import cv2
 import matplotlib.image as mpimg
 from sqlalchemy import false
 from equirectRotate import EquirectRotate, pointRotate
+import time
 
 
 def createWindow():
@@ -32,8 +33,8 @@ def createWindow():
                 ]
 
     secondRow = [ #first col
-        [sg.Column([[sg.Text("SkyFix360", font= ("Arial", 16, "bold"), size=(200, 1))],
-        [sg.In (size=(25,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(size=(10, 1))]], pad=(10, 10), size=(400, 100)),
+        [sg.Column([[sg.Text("SkyFix360", font= ("Arial", 16, "bold"), size=(200, 1), key="-SKYTEXT-")],
+        [sg.In (size=(25,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(size=(10, 1), key="-BROWSE-")]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
         
         #second col
          sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]], 
@@ -44,7 +45,7 @@ def createWindow():
          [sg.Button("Export ", key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],], 
             pad=(10, 10), size=(100, 75))],
 
-         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", size=(10, 1))],
+         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", key='-QUIT-', size=(10, 1))]
     ] 
 
     layout = [ firstRow, secondRow ]
@@ -88,7 +89,6 @@ def successWindow():
 
 def runEvents(window):
     
-
     fileNames = []
     while True:
         event, values = window.read()
@@ -160,8 +160,8 @@ def runEvents(window):
 
         # if 'Correct' button is not disabled & clicks, display appropriate window
         if event == ('-CORRECT-'):
-            correctMWidnow = correctMethodWindow()
-            correctWindow = sg.Window('Correction Method', correctMWidnow, size=(355,195), margins=(20, 20))
+            correctMWindow = correctMethodWindow()
+            correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
             while True:
                 correctEvent, correctVal = correctWindow.read()
                 if correctEvent == sg.WIN_CLOSED or correctEvent == ('Cancel'):
@@ -169,7 +169,6 @@ def runEvents(window):
                     correctWindow.close()
                     break
                 elif correctEvent == 'Manual':
-
                     window['-IMAGE-'].update(visible=False)
                     window['-IMAGE-'].Widget.master.pack_forget() 
                     window['fig_cv'].update(visible=True)
@@ -202,6 +201,7 @@ def runEvents(window):
                             print(lineCoords)
 
                     def onkey(event):
+                        global closeWin
                         # If the key pressed is 'z' and there are points to remove, remove the last point
                         if event.key == 'z' and len(lineCoords) > 0:
                             lineCoords.pop()
@@ -225,65 +225,30 @@ def runEvents(window):
                             ix = min_x
                             iy = min_y
 
-                            print('\n Now rotating the image to straighten the horizon.')
-                            src_image = cv2.imread(fileName)
-                            h, w, c = src_image.shape
-                            print("\n Input file's height, width, colors =", h,w,c)
-
-                            # Do a 'yaw' rotation such that ix position earth-sky horizon is 
-                            # at the middle column of the image. Fortunately for an equirectangular
-                            # image, a yaw is simply sliding the image horizontally, and is done very
-                            # fast by np.roll.
-                            shiftx=int(w/2 - ix)
-                            src_image = np.roll(src_image, shiftx, axis=1) 
-
-                            # If iy>0 then the user selected the lowest point of the horizon.
-                            # After the above 'yaw', the true horizon at the middle of the image
-                            # is still (iy - h/2) pixels below the camera's equator. This is
-                            # (iy - h/2)*(180)/h degrees below the camera's equator. So rotate the
-                            # pitch of the yaw-ed rectilinear image by this amount to get a nearly
-                            # straight horizon.
-                            myY, myP, myR = 0, (iy - h/2)*180/h , 0
-
-                            # If iy<0 then the user actually recorded the highest point. That
-                            # is, the true horizon is (h/2 - |iy|) pixels above the camera's
-                            # equator. So rotate the pitch of the yaw-ed rectilinear image by the
-                            # amount -(h/2 - |iy|)*180/h to get a nearly straight horizon.
-                            if iy < 0 :
-                                myP = -(h/2 - np.abs(iy))*180/h
-
-
-                            print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'),
-                                    'deg). This can take a while ...')
-                            # rotate (yaw, pitch, roll)
-                            equirectRot = EquirectRotate(h, w, (myY, myP, myR))
-                            rotated_image = equirectRot.rotate(src_image)
-                            ###################################################################
-
-                            final_image = cv2.rotate(rotated_image, cv2.ROTATE_180)
-
-                            opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-                            cv2.imwrite(opfile, final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-                            print('\nWrote output file: ', opfile)
-                            print('Done.')
+                            fig.canvas.mpl_disconnect(cid)
+                            fig.canvas.mpl_disconnect(cid2)
+                            
+                            # correctImageMan(fileName, ix, iy)
+                            fixScreen(window, fileName)
 
                     # Connect the onclick function to the mouse click event
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
-
-
-        # DISPLAY WINDOW WHEN IMAGE/VIDEO IS CORRECTED
-        # successMWindow = successWindow()
-        # sucessWindow = sg.Window('Sucess', successMWindow, size=(300,155), margins=(10, 10))
-        # while True:
-        #     successevent, successVal = sucessWindow.read()
-        #     if successevent == sg.WIN_CLOSED or successevent == ('Close'):
-        #         # Close the help popup
-        #         sucessWindow.close()
-        #         window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
-        #         break
+                    # manualCorrect(window, fileName)
+            # correctWindow.close()
+            # DISPLAY WINDOW WHEN IMAGE/VIDEO IS CORRECTED
+            print("Success")
+            successMWindow = successWindow()
+            sucessWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
+            while True:
+                successevent, successVal = sucessWindow.read()
+                if successevent == sg.WIN_CLOSED or successevent == ('Close'):
+                    # Close the help popup
+                    sucessWindow.close()
+                    # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
+                    break
         
         
          
@@ -332,7 +297,90 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
 class Toolbar(NavigationToolbar2Tk):
     def __init__(self, *args, **kwargs):
         super(Toolbar, self).__init__(*args, **kwargs)
+
+def correctImageMan(fileName, ix, iy):
+    print('\n Now rotating the image to straighten the horizon.')
+    src_image = cv2.imread(fileName)
+    h, w, c = src_image.shape
+    print("\n Input file's height, width, colors =", h,w,c)
+
+    # Do a 'yaw' rotation such that ix position earth-sky horizon is 
+    # at the middle column of the image. Fortunately for an equirectangular
+    # image, a yaw is simply sliding the image horizontally, and is done very
+    # fast by np.roll.
+    shiftx=int(w/2 - ix)
+    src_image = np.roll(src_image, shiftx, axis=1) 
+
+    # If iy>0 then the user selected the lowest point of the horizon.
+    # After the above 'yaw', the true horizon at the middle of the image
+    # is still (iy - h/2) pixels below the camera's equator. This is
+    # (iy - h/2)*(180)/h degrees below the camera's equator. So rotate the
+    # pitch of the yaw-ed rectilinear image by this amount to get a nearly
+    # straight horizon.
+    myY, myP, myR = 0, (iy - h/2)*180/h , 0
+
+    # If iy<0 then the user actually recorded the highest point. That
+    # is, the true horizon is (h/2 - |iy|) pixels above the camera's
+    # equator. So rotate the pitch of the yaw-ed rectilinear image by the
+    # amount -(h/2 - |iy|)*180/h to get a nearly straight horizon.
+    if iy < 0 :
+        myP = -(h/2 - np.abs(iy))*180/h
+
+
+    print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'),
+            'deg). This can take a while ...')
+    # rotate (yaw, pitch, roll)
+    equirectRot = EquirectRotate(h, w, (myY, myP, myR))
+    rotated_image = equirectRot.rotate(src_image)
+    ###################################################################
+
+    final_image = cv2.rotate(rotated_image, cv2.ROTATE_180)
+
+    opfile = os.path.splitext(fileName)[0]+'_f.jpg'
+    cv2.imwrite(opfile, final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    print('\nWrote output file: ', opfile)
+    print('Done.')
+
+def fixScreen(window, fileName):
+    window['fig_cv'].update(visible=False)
+    window['fig_cv'].Widget.master.pack_forget() 
+    window['controls_cv'].Widget.master.pack_forget() 
+    # window['-FOLDROW-'].update(visible=False)
+    window['-FOLDROW-'].Widget.master.pack_forget() 
+    # window['-FILE LIST-'].update(visible=False)
+    window['-FILE LIST-'].Widget.master.pack_forget() 
+    # window['-CORRECT-'].update(visible=False)
+    window['-CORRECT-'].Widget.master.pack_forget() 
+    # window['-EXPORT-'].update(visible=False)
+    window['-EXPORT-'].Widget.master.pack_forget() 
+    # window['-HELP-'].update(visible=False)
+    window['-HELP-'].Widget.master.pack_forget() 
+    # window['-QUIT-'].update(visible=False)
+    window['-QUIT-'].Widget.master.pack_forget() 
+
+    window['-IMAGE-'].Widget.master.pack()
+    window['-IMAGE-'].update(visible=True)
+    opfile = os.path.splitext(fileName)[0]+'_f.jpg'
+    pilImage = PIL.Image.open(opfile)
+    # Get image data, and then use it to update window["-IMAGE-"]
+    data = imageToData(pilImage, window["-IMAGE-"].get_size())
+    window['-IMAGE-'].update(data=data)
     
+    window['-FOLDROW-'].Widget.master.pack()
+    # window['-FOLDROW-'].update(visible=True)
+    window['-FILE LIST-'].Widget.master.pack()
+    # window['-FILE LIST-'].update(visible=True)
+    window['-CORRECT-'].Widget.master.pack()
+    # window['-CORRECT-'].update(visible=True)
+    window['-EXPORT-'].Widget.master.pack()
+    # window['-EXPORT-'].update(visible=True)
+
+    # window.finalize()
+    # window.refresh()
+
+# def manualCorrect(window, fileName):
+
+
 
 
 # ------------------------------------------------------------------------------  
