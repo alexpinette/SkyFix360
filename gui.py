@@ -21,7 +21,7 @@ import matplotlib.image as mpimg
 from sqlalchemy import false
 from equirectRotate import EquirectRotate, pointRotate
 import time
-
+from pathlib import Path
 
 def createWindow():
     sg.theme ("DarkGrey1")
@@ -133,7 +133,6 @@ def runEvents(window):
             
                 fileName = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
                 
-                
                 # display filename in appropriate spot in right column
                 window["-FILENAME-"].update(fileName)  
                 
@@ -176,12 +175,9 @@ def runEvents(window):
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
                     DPI = fig.get_dpi()
-                    # fig.set_size_inches(505 * 2 / float(DPI), 707 / float(DPI))
                     fig.set_size_inches(505 * 2 / float(DPI), 500 / float(DPI))
                     img = mpimg.imread(fileName)
                     imgplot = plt.imshow(img)
-                    # pid = fig.canvas.mpl_connect('key_press_event', lambda event: press(event, fig, pid))  
-                    # cid = fig.canvas.mpl_connect('button_press_event', lambda event: press(event, fig, cid))
                     plt.grid()
 
                     # Define a list to store the coordinates of the line
@@ -201,7 +197,7 @@ def runEvents(window):
                             print(lineCoords)
 
                     def onkey(event):
-                        global closeWin
+                        global done
                         # If the key pressed is 'z' and there are points to remove, remove the last point
                         if event.key == 'z' and len(lineCoords) > 0:
                             lineCoords.pop()
@@ -215,7 +211,7 @@ def runEvents(window):
                                         color='r')
                             fig.canvas.draw()
 
-                        if event.key == 'q':
+                        if event.key == 'q':  
                             # Find the min and max x and y values in the list of coordinates
                             x_coords, y_coords = zip(*lineCoords)
                             min_x, max_x = min(x_coords), max(x_coords)
@@ -228,27 +224,19 @@ def runEvents(window):
                             fig.canvas.mpl_disconnect(cid)
                             fig.canvas.mpl_disconnect(cid2)
                             
-                            # correctImageMan(fileName, ix, iy)
+                            correctImageMan(fileName, ix, iy)
                             fixScreen(window, fileName)
+                            correctWindow.close() 
+
+                            displaySuccess()
+                            window['-EXPORT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
+
 
                     # Connect the onclick function to the mouse click event
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
-                    # manualCorrect(window, fileName)
-            # correctWindow.close()
-            # DISPLAY WINDOW WHEN IMAGE/VIDEO IS CORRECTED
-            print("Success")
-            successMWindow = successWindow()
-            sucessWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
-            while True:
-                successevent, successVal = sucessWindow.read()
-                if successevent == sg.WIN_CLOSED or successevent == ('Close'):
-                    # Close the help popup
-                    sucessWindow.close()
-                    # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
-                    break
         
         
          
@@ -345,17 +333,11 @@ def fixScreen(window, fileName):
     window['fig_cv'].update(visible=False)
     window['fig_cv'].Widget.master.pack_forget() 
     window['controls_cv'].Widget.master.pack_forget() 
-    # window['-FOLDROW-'].update(visible=False)
     window['-FOLDROW-'].Widget.master.pack_forget() 
-    # window['-FILE LIST-'].update(visible=False)
     window['-FILE LIST-'].Widget.master.pack_forget() 
-    # window['-CORRECT-'].update(visible=False)
     window['-CORRECT-'].Widget.master.pack_forget() 
-    # window['-EXPORT-'].update(visible=False)
     window['-EXPORT-'].Widget.master.pack_forget() 
-    # window['-HELP-'].update(visible=False)
     window['-HELP-'].Widget.master.pack_forget() 
-    # window['-QUIT-'].update(visible=False)
     window['-QUIT-'].Widget.master.pack_forget() 
 
     window['-IMAGE-'].Widget.master.pack()
@@ -367,18 +349,20 @@ def fixScreen(window, fileName):
     window['-IMAGE-'].update(data=data)
     
     window['-FOLDROW-'].Widget.master.pack()
-    # window['-FOLDROW-'].update(visible=True)
     window['-FILE LIST-'].Widget.master.pack()
-    # window['-FILE LIST-'].update(visible=True)
     window['-CORRECT-'].Widget.master.pack()
-    # window['-CORRECT-'].update(visible=True)
     window['-EXPORT-'].Widget.master.pack()
-    # window['-EXPORT-'].update(visible=True)
 
-    # window.finalize()
-    # window.refresh()
-
-# def manualCorrect(window, fileName):
+def displaySuccess():
+    successMWindow = successWindow()
+    sucessWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
+    while True:
+        successevent, successVal = sucessWindow.read()
+        if successevent == sg.WIN_CLOSED or successevent == ('Close'):
+            # Close the help popup
+            sucessWindow.close()
+            # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
+            break
 
 
 
