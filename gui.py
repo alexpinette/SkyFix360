@@ -34,7 +34,7 @@ def createWindow():
     manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the hotizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
-    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Text(size=(0, 1), key="-FILENAME-", visible=False)],
+    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Input(disabled=True, key="-FILENAME-", visible=False)],
                 [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],
                 [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
@@ -43,19 +43,21 @@ def createWindow():
     secondRow = [ #first col
         [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
                     [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 5))],
-                    
-        [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
+            
+                    [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
-        #second col
-         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]], 
-         pad=(10, 10), size=(300, 85)),
+         #second col
+         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]], size=(300, 85)),
 
-        #third col
-         sg.Column([[sg.Button("Correct", key='-CORRECT-',disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
-         [sg.Button("Export ", key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],], 
-            pad=(10, 10), size=(100, 75))],
-
-
+         #third col
+         sg.Column([
+         [sg.Button("Correct", key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
+         [sg.Button("Export ", key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
+         [sg.Button("Done ", key='-DONE-', visible=False, size=(10, 1))],
+         [sg.Button("Cancel ", key='-CANCEL-', visible=False, size=(10, 1))],
+         ])
+        ],
+    
         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
@@ -163,7 +165,6 @@ def runEvents(window):
                 data = imageToData(pilImage, window["-IMAGE-"].get_size())
                 window['-IMAGE-'].update(data=data) 
                 
-                
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
         
         
@@ -171,20 +172,21 @@ def runEvents(window):
                 pass
 
 
-
-        # if 'Correct' button is not disabled & clicks, display appropriate window
+        manualMode = False  # flag variable
+        
+        # if 'Correct' button is not disabled & clicked, display appropriate window
         if event == ('-CORRECT-'):
             correctMWindow = correctMethodWindow()
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
             openWindows.append(correctWindow)
             while True:
                 correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED or correctEvent == ('Cancel'):
+                if correctEvent == sg.WIN_CLOSED or correctEvent == ('-CANCEL-'):
                     # Close the help popup
                     correctWindow.close()
                     break
                 elif correctEvent == 'Manual':
-
+                    manualMode = True  # add this flag variable
                     window['-IMAGE-'].update(visible=False)
                     window['-IMAGE-'].Widget.master.pack_forget() 
                     window['fig_cv'].update(visible=True)
@@ -198,7 +200,8 @@ def runEvents(window):
 
                     window['-TITLE-'].update("Manual Correction Instructions")
                     window['-MANUAL DESCRIPTION-'].update(visible=True)
-                    
+                    window["-CANCEL-"].update(visible=True)
+                    window["-DONE-"].update(visible=True)
 
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
@@ -253,30 +256,65 @@ def runEvents(window):
                             fig.canvas.mpl_disconnect(cid)
                             fig.canvas.mpl_disconnect(cid2)
 
-                            correctImageMan(fileName, ix, iy)
-                            fixScreen(window, fileName)
-                            correctWindow.close() 
+                            if event == '-DONE-':
+                                correctImageMan(fileName, ix, iy)
+                                fixScreen(window, fileName)
+                                correctWindow.close() 
 
-                            displaySuccess()
-                            window['-EXPORT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
+                                displaySuccess()
+                                window['-EXPORT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
 
                     # Connect the onclick function to the mouse click event
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
-         
-        # if user selects '-QUIT-' button or default exit button, close window
-        if event == ('-QUIT-') or event == sg.WIN_CLOSED:
-            break
+
+        elif manualMode:
+            if event == ('-DONE-'):
+                # code for saving manual corrections and returning to main screen
+                manualMode = False  # reset the flag variable
+
+                print("done")
+
+            elif event == ('-CANCEL-'):
+                # code for discarding user drawing
+                manualMode = False  # reset the flag variable
+
+                print('cancel')
+
+            elif event == ('-QUIT-'):
+                # code for quitting the program
+                break
+
+
+
+            # if user maximizies/minimizes, or change screen size, the image rescales and
+            #  adjusts accordingly to the window size.
+            # if event == '-CONFIG-' and values['-FILENAME-']:
+            #     data = imageToData(pilImage, window["-IMAGE-"].get_size())
+            #     window['-IMAGE-'].update(data=data)
+
+            
+            # if user selects '-QUIT-' button or default exit button, close window
+            if event == ('-QUIT-') or event == sg.WIN_CLOSED:
+                break
         
         
 # ------------------------------------------------------------------------------  
-        
+
+'''
+    def imageToData - the method calcuates the bytes of the image to draw the terrain
+                      map after reading and storing the elevation values, it will
+                      update the image size.
+    @ param image   - passing the image to update/draw again on the GUI
+    @ param resize  - whether or not the image should be resized
+    precondition    - image should be valid after reading the array, method should
+                      be called in main function
+    postcondition   - image size is updated & image is displayed in GUI; method
+                      returns the new image with its updated size
+'''  
 def imageToData(pilImage, resize):
-    """ 
-    Insert comments here
-    """
     
     # store current image and its width and height
     img = pilImage.copy() 
