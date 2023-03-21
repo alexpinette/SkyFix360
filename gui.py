@@ -14,32 +14,13 @@ import matplotlib.pyplot as plt
 import sys
 import cv2
 import matplotlib.image as mpimg
-import time
-import textwrap
-
-from pydoc import visiblename
-from matplotlib.pyplot import margins
-from matplotlib.widgets  import RectangleSelector
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from sqlalchemy import false
-from equirectRotate import EquirectRotate, pointRotate
-from pathlib import Path
 
 def createWindow():
     sg.theme ("DarkGrey1")
 
-    # list of all opened windows
-    global openWindows
-
-    manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the hotizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
-    newManualDescription = textwrap.fill(manualDescription, 52)
-
-    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Input(disabled=True, key="-FILENAME-", visible=False)],
-                [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],
-                [sg.Canvas(key='controls_cv')],
-                [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
-               ]
-
+    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Text(size=(0, 1), key="-FILENAME-", visible=False)],
+                [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],]
+    
     secondRow = [ #first col
         [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
                     [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
@@ -210,95 +191,30 @@ def runEvents(window):
                     imgplot = plt.imshow(img)
                     plt.grid()
 
-                    # Define a list to store the coordinates of the line
-                    lineCoords = []
-
-                    # Define a function to handle mouse clicks
-                    def onclick(event):
-                        # Append the coordinates of the click to the list
-                        lineCoords.append((event.xdata, event.ydata))
-
-                        # If there are two or more points in the list, draw a line
-                        if len(lineCoords) > 1:
-                            ax.plot([lineCoords[-2][0], lineCoords[-1][0]],
-                                    [lineCoords[-2][1], lineCoords[-1][1]],
-                                    color='r')
-                            fig.canvas.draw()
-
-                    def onkey(event):
-                        # If the key pressed is 'z' and there are points to remove, remove the last point
-                        if event.key == 'z' and len(lineCoords) > 0:
-                            lineCoords.pop()
-                            # Clear the plot and redraw the lines
-                            ax.clear()
-                            ax.imshow(img)
-                            plt.grid()
-                            for i in range(len(lineCoords)-1):
-                                ax.plot([lineCoords[i][0], lineCoords[i+1][0]],
-                                        [lineCoords[i][1], lineCoords[i+1][1]],
-                                        color='r')
-                            fig.canvas.draw()
-
-                        if event.key == 'q':
-                            # Find the min and max x and y values in the list of coordinates
-                            x_coords, y_coords = zip(*lineCoords)
-                            min_x, max_x = min(x_coords), max(x_coords)
-                            min_y, max_y = min(y_coords), max(y_coords)
-                            print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
-                            
-                            ix = min_x
-                            iy = min_y
-
-                            fig.canvas.mpl_disconnect(cid)
-                            fig.canvas.mpl_disconnect(cid2)
-
-                    # Connect the onclick function to the mouse click event
-                    cid = fig.canvas.mpl_connect('button_press_event', onclick)
-                    cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
-
+                    x = np.linspace(0, 2 * np.pi)
+                    y = np.sin(x)
+                    line, = ax.plot(x, y)
+                    rs = RectangleSelector(ax, line_select_callback,
+                                useblit=False, button=[1],
+                                minspanx=5, minspany=5, spancoords='pixels',
+                                interactive=True)
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
 
-        if event == ('-DONE-'):
-            final_image = correctImageMan(fileName, ix, iy)
-            fixScreen(window, fileName)
-            correctWindow.close()
-            displaySuccess()
-
-            # CODE IN PROGRESS... UPDATING IT TO WORK WITH fixScreen()
-            window['-TITLE-'].update("SkyFix360")
-            window['-MANUAL DESCRIPTION-'].update(visible=False)
-            window["-CANCEL-"].update(visible=False)
-            window["-DONE-"].update(visible=False)
-
-            window['fig_cv'].update(visible=True)
-            window['-FOLDER-'].update(visible=True)
-            window['-FILE LIST-'].update(visible=True)
-            window['-CORRECT-'].update(visible=True)
-            window['-BROWSE-'].update(visible=True)
-            window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
-
-        if event == '-EXPORT-':
-            opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-            cv2.imwrite(opfile, final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-            print('\nWrote output file: ', opfile)
-
-        # if user clicks Cancel button, clear canvas (restart drawing)
-        if event == ('-CANCEL-'):
-            lineCoords = []
-            # Clear the plot and redraw the image
-            ax.clear()
-            ax.imshow(img)
-            fig.canvas.draw()
-
-        # if user maximizies/minimizes, or change screen size, the image rescales and
-        #  adjusts accordingly to the window size.
-        # if event == '-CONFIG-' and values['-FILENAME-']:
-        #     data = imageToData(pilImage, window["-IMAGE-"].get_size())
-        #     window['-IMAGE-'].update(data=data)
-
-            
-        # if user selects '-QUIT-' button or default exit button, close window
-        if event == ('-QUIT-') or event == sg.WIN_CLOSED:
+        # DISPLAY WINDOW WHEN IMAGE/VIDEO IS CORRECTED
+        # successMWindow = successWindow()
+        # sucessWindow = sg.Window('Sucess', successMWindow, size=(300,155), margins=(10, 10))
+        # while True:
+        #     successevent, successVal = sucessWindow.read()
+        #     if successevent == sg.WIN_CLOSED or successevent == ('Close'):
+        #         # Close the help popup
+        #         sucessWindow.close()
+        #         window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
+        #         break
+        
+        
+         
+        # if user selects 'Quit' button or default exit button, close window
+        if event == ('Quit') or event == sg.WIN_CLOSED:
             break
         
         
