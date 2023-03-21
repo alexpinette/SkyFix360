@@ -25,11 +25,11 @@ from sqlalchemy import false
 from equirectRotate import EquirectRotate, pointRotate
 from pathlib import Path
 
-# list of all opened windows
-openWindows = []
-
 def createWindow():
     sg.theme ("DarkGrey1")
+
+    # list of all opened windows
+    global openWindows
 
     manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the hotizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
