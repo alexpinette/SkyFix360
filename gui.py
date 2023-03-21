@@ -42,7 +42,7 @@ def createWindow():
 
     secondRow = [ #first col
         [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
-                    [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 5))],
+                    [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
             
                     [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
@@ -141,13 +141,12 @@ def runEvents(window):
                 and f.lower().endswith((".jpg", ".jpeg", ".mp4"))
             ]
             # add the filenames to the image file list in first column
-            window["-FILE LIST-"].update (fileNames)
+            window["-FILE LIST-"].update(fileNames)
 
 
 
         # User chose file from File List
         if event == "-FILE LIST-":   
-            
             try:
                 fileName = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
                 
@@ -167,26 +166,26 @@ def runEvents(window):
                 
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
         
-        
             except:
                 pass
 
-
-        manualMode = False  # flag variable
-        
         # if 'Correct' button is not disabled & clicked, display appropriate window
         if event == ('-CORRECT-'):
             correctMWindow = correctMethodWindow()
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
             openWindows.append(correctWindow)
             while True:
-                correctEvent, correctVal = correctWindow.read()
+                correctEvent, correctVal = correctWindow.read(timeout=0)
                 if correctEvent == sg.WIN_CLOSED or correctEvent == ('-CANCEL-'):
                     # Close the help popup
                     correctWindow.close()
                     break
                 elif correctEvent == 'Manual':
-                    manualMode = True  # add this flag variable
+                    correctWindow.close()
+
+                    ix = 0
+                    iy = 0
+
                     window['-IMAGE-'].update(visible=False)
                     window['-IMAGE-'].Widget.master.pack_forget() 
                     window['fig_cv'].update(visible=True)
@@ -195,7 +194,6 @@ def runEvents(window):
                     window['-FILE LIST-'].update(visible=False)
                     window['-CORRECT-'].update(visible=False)
                     window['-BROWSE-'].update(visible=False)
-                    window['-CORRECT-'].update(visible=False)
                     window['-EXPORT-'].update(visible=False)
 
                     window['-TITLE-'].update("Manual Correction Instructions")
@@ -210,7 +208,6 @@ def runEvents(window):
                     fig.set_size_inches(505 * 2 / float(DPI), 500 / float(DPI))
                     img = mpimg.imread(fileName)
                     imgplot = plt.imshow(img)
-
                     plt.grid()
 
                     # Define a list to store the coordinates of the line
@@ -227,7 +224,6 @@ def runEvents(window):
                                     [lineCoords[-2][1], lineCoords[-1][1]],
                                     color='r')
                             fig.canvas.draw()
-                            print(lineCoords)
 
                     def onkey(event):
                         # If the key pressed is 'z' and there are points to remove, remove the last point
@@ -256,63 +252,70 @@ def runEvents(window):
                             fig.canvas.mpl_disconnect(cid)
                             fig.canvas.mpl_disconnect(cid2)
 
-                            if event == '-DONE-':
-                                correctImageMan(fileName, ix, iy)
-                                fixScreen(window, fileName)
-                                correctWindow.close() 
-
-                                displaySuccess()
-                                window['-EXPORT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
-
                     # Connect the onclick function to the mouse click event
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
 
-        elif manualMode:
-            if event == ('-DONE-'):
-                # code for saving manual corrections and returning to main screen
-                manualMode = False  # reset the flag variable
+        if event == ('-DONE-'):
+            final_image = correctImageMan(fileName, ix, iy)
+            fixScreen(window, fileName)
+            correctWindow.close()
+            displaySuccess()
 
-                print("done")
+            # CODE IN PROGRESS... UPDATING IT TO WORK WITH fixScreen()
+            window['-TITLE-'].update("SkyFix360")
+            window['-MANUAL DESCRIPTION-'].update(visible=False)
+            window["-CANCEL-"].update(visible=False)
+            window["-DONE-"].update(visible=False)
 
-            elif event == ('-CANCEL-'):
-                # code for discarding user drawing
-                manualMode = False  # reset the flag variable
+            window['fig_cv'].update(visible=True)
+            window['-FOLDER-'].update(visible=True)
+            window['-FILE LIST-'].update(visible=True)
+            window['-CORRECT-'].update(visible=True)
+            window['-BROWSE-'].update(visible=True)
+            window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
 
-                print('cancel')
+        if event == '-EXPORT-':
+            opfile = os.path.splitext(fileName)[0]+'_f.jpg'
+            cv2.imwrite(opfile, final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            print('\nWrote output file: ', opfile)
 
-            elif event == ('-QUIT-'):
-                # code for quitting the program
-                break
+        # if user clicks Cancel button, clear canvas (restart drawing)
+        if event == ('-CANCEL-'):
+            lineCoords = []
+            # Clear the plot and redraw the image
+            ax.clear()
+            ax.imshow(img)
+            fig.canvas.draw()
 
-
-
-            # if user maximizies/minimizes, or change screen size, the image rescales and
-            #  adjusts accordingly to the window size.
-            # if event == '-CONFIG-' and values['-FILENAME-']:
-            #     data = imageToData(pilImage, window["-IMAGE-"].get_size())
-            #     window['-IMAGE-'].update(data=data)
+        # if user maximizies/minimizes, or change screen size, the image rescales and
+        #  adjusts accordingly to the window size.
+        # if event == '-CONFIG-' and values['-FILENAME-']:
+        #     data = imageToData(pilImage, window["-IMAGE-"].get_size())
+        #     window['-IMAGE-'].update(data=data)
 
             
-            # if user selects '-QUIT-' button or default exit button, close window
-            if event == ('-QUIT-') or event == sg.WIN_CLOSED:
-                break
+        # if user selects '-QUIT-' button or default exit button, close window
+        if event == ('-QUIT-') or event == sg.WIN_CLOSED:
+            break
         
         
 # ------------------------------------------------------------------------------  
-
 '''
-    def imageToData - the method calcuates the bytes of the image to draw the terrain
-                      map after reading and storing the elevation values, it will
-                      update the image size.
-    @ param image   - passing the image to update/draw again on the GUI
-    @ param resize  - whether or not the image should be resized
-    precondition    - image should be valid after reading the array, method should
-                      be called in main function
-    postcondition   - image size is updated & image is displayed in GUI; method
-                      returns the new image with its updated size
+    def imageToData  - the method resizes the image if the resize parameter is not
+                       None and saves the image as bytes in PNG format.
+    @ param pilImage - a PIL image object that will be converted to bytes & returned
+                       by the function
+    @ param resize   - a tuple containing two integers representing the new width
+                       and height of the image. If None, the image will not be resized.
+    precondition     - the pilImage parameter should be a PIL image object. Otherwise,
+                       the function will throw an exception. The resize parameter
+                       should be a tuple containing two integers. Otherwise, the
+                       function will treat it as None and not resize the image.
+    postcondition    - function returns a bytes object representing the image in
+                       PNG format
 '''  
 def imageToData(pilImage, resize):
     
@@ -366,44 +369,37 @@ def correctImageMan(fileName, ix, iy):
     print('\n Now rotating the image to straighten the horizon.')
     src_image = cv2.imread(fileName)
     h, w, c = src_image.shape
-    print("\n Input file's height, width, colors =", h,w,c)
+    print("\n Input file's height, width, colors =", h, w, c)
 
-    # Do a 'yaw' rotation such that ix position earth-sky horizon is 
-    # at the middle column of the image. Fortunately for an equirectangular
-    # image, a yaw is simply sliding the image horizontally, and is done very
-    # fast by np.roll.
+    # Do a 'yaw' rotation such that ix position earth-sky horizon is at the
+    # middle column of the image. Fortunately for an equirectangular image, a yaw
+    # is simply sliding the image horizontally, and is done very fast by np.roll
     shiftx=int(w/2 - ix)
     src_image = np.roll(src_image, shiftx, axis=1) 
 
-    # If iy>0 then the user selected the lowest point of the horizon.
-    # After the above 'yaw', the true horizon at the middle of the image
-    # is still (iy - h/2) pixels below the camera's equator. This is
-    # (iy - h/2)*(180)/h degrees below the camera's equator. So rotate the
-    # pitch of the yaw-ed rectilinear image by this amount to get a nearly
-    # straight horizon.
+    # If iy>0 then the user selected the lowest point of the horizon. After the
+    # above 'yaw', the true horizon at the middle of the image is still
+    # (iy - h/2) pixels below the camera's equator. This is (iy - h/2)*(180)/h degrees
+    # degrees below the camera's equator. So rotate the pitch of the yaw-ed
+    # rectilinear image by this amount to get a nearly straight horizon.
     myY, myP, myR = 0, (iy - h/2)*180/h , 0
 
-    # If iy<0 then the user actually recorded the highest point. That
-    # is, the true horizon is (h/2 - |iy|) pixels above the camera's
-    # equator. So rotate the pitch of the yaw-ed rectilinear image by the
-    # amount -(h/2 - |iy|)*180/h to get a nearly straight horizon.
+    # If iy<0 then the user actually recorded the highest point. That is, the
+    # true horizon is (h/2 - |iy|) pixels above the camera's equator. So rotate
+    # the pitch of the yaw-ed rectilinear image by the amount -(h/2 - |iy|)*180/h
+    # to get a nearly straight horizon.
     if iy < 0 :
         myP = -(h/2 - np.abs(iy))*180/h
 
-
-    print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'),
-            'deg). This can take a while ...')
+    print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
     # rotate (yaw, pitch, roll)
     equirectRot = EquirectRotate(h, w, (myY, myP, myR))
     rotated_image = equirectRot.rotate(src_image)
-    ###################################################################
 
     final_image = cv2.rotate(rotated_image, cv2.ROTATE_180)
-
-    opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-    cv2.imwrite(opfile, final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-    print('\nWrote output file: ', opfile)
     print('Done.')
+
+    return final_image
 
 def fixScreen(window, fileName):
     window['fig_cv'].update(visible=False)
