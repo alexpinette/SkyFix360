@@ -50,7 +50,8 @@ def createWindow():
          ])
         ],
 
-        [sg.Text('Progress: ', font="Arial 8 bold", key='ProgressText', visible=False), sg.ProgressBar(100, orientation='h', size=(15, 15), key='ProgressBar',  bar_color='#FFFFFF', visible=False)],
+        [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False),
+         sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
         [sg.Button('Help', key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
@@ -107,9 +108,10 @@ def successWindow():
         Summary: 
     """
 
-    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 14), size=(25, None), auto_size_text=True, justification='center')],
+    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
                      [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center')],
                      [sg.Button("Close", size=(10, 1), pad=(100, 10))]]
+    
     return successLayout
 
 
@@ -253,16 +255,27 @@ def runEvents(window):
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
 
-        if event == ('-DONE-'):
-            window['ProgressText'].update(visible=True)
-            window['ProgressBar'].update(visible=True)
+        if event == ('-DONE-') and lineCoords != []:
+
+            # Find the min and max x and y values in the list of coordinates
+            x_coords, y_coords = zip(*lineCoords)
+
+            window['-ProgressText-'].update(visible=True)
+            window['-ProgressBar-'].update(visible=True)
+
+            # Clear the plot and redraw the image
+            ax.clear()
+            ax.imshow(img)
+            plt.axis('off')
+            fig.set_facecolor('none') # set the background to transparent
+            fig.canvas.draw()
 
             # Disconnect from the figure
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
 
             # Find the min and max x and y values in the list of coordinates
-            x_coords, y_coords = zip(*lineCoords)
+            # x_coords, y_coords = zip(*lineCoords)    
             min_x, max_x = min(x_coords), max(x_coords)
             min_y, max_y = min(y_coords), max(y_coords)
             print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
@@ -270,8 +283,8 @@ def runEvents(window):
             ix = min_x
             iy = min_y
 
+            fixScreen(window)
             finalImg = correctImageMan(fileName, ix, iy, window)
-            fixScreen(window, finalImg)
             correctWindow.close()
 
             window['-TITLE-'].update("SkyFix360")
@@ -287,11 +300,23 @@ def runEvents(window):
             window['-FILE LIST-'].update(visible=True)
             window['-CORRECT-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
+
+            # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+            # Convert the array from BGR to RGB
+            finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+            # Create a PIL Image object from the numpy array
+            pilImg = PIL.Image.fromarray(finalImg)
+
+            # Resize the image to fit the window
+            data = imageToData(pilImg, window["-IMAGE-"].get_size())
+            window['-IMAGE-'].update(data=data)
+
             updateProgressBar(90,101, window)
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
 
-            window['ProgressText'].update(visible=False)
-            window['ProgressBar'].update(visible=False)
+            window['-ProgressText-'].update(visible=False)
+            window['-ProgressBar-'].update(visible=False)
 
             displaySuccess()
 
@@ -443,7 +468,7 @@ def correctImageMan(fileName, ix, iy, window):
 
 # ------------------------------------------------------------------------------  
 
-def fixScreen(window, finalImg):
+def fixScreen(window):
     """ 
         Args:    
         Returns: 
@@ -457,6 +482,8 @@ def fixScreen(window, finalImg):
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget() 
     window['-EXPORT-'].Widget.master.pack_forget() 
+    window['-ProgressText-'].Widget.master.pack_forget() 
+    window['-ProgressBar-'].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
 
@@ -465,19 +492,21 @@ def fixScreen(window, finalImg):
 
     # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
     # Convert the array from BGR to RGB
-    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+    # finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
 
     # Create a PIL Image object from the numpy array
-    pilImg = PIL.Image.fromarray(finalImg)
+    # pilImg = PIL.Image.fromarray(finalImg)
 
     # Resize the image to fit the window
-    data = imageToData(pilImg, window["-IMAGE-"].get_size())
-    window['-IMAGE-'].update(data=data)
+    # data = imageToData(pilImg, window["-IMAGE-"].get_size())
+    # window['-IMAGE-'].update(data=data)
 
     window['-FOLDROW-'].Widget.master.pack()
     window['-FILE LIST-'].Widget.master.pack()
     window['-CORRECT-'].Widget.master.pack()
     window['-EXPORT-'].Widget.master.pack()
+    window['-ProgressText-'].Widget.master.pack()
+    window['-ProgressBar-'].Widget.master.pack()
     window['-HELP-'].Widget.master.pack()
     window['-QUIT-'].Widget.master.pack()
 
@@ -515,7 +544,7 @@ def updateProgressBar(start,end, window):
     """
     
     for i in range(start,end):
-        window["ProgressBar"].update(i)
+        window['-ProgressBar-'].update(i)
         
 # ------------------------------------------------------------------------------  
 
