@@ -44,8 +44,8 @@ def createWindow():
                ]
 
     secondRow = [ #first col
-        [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
-                    [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
+        [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(180, 1))],
+                    [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 9), visible=False, size=(60, 5))],
             
                     [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
@@ -116,7 +116,7 @@ def successWindow():
         Returns: 
         Summary: 
     """
-    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
+    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 14), auto_size_text=True, justification='center')],
                      [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center')],
                      [sg.Button("Close", size=(10, 1), pad=(100, 10))]]
     return successLayout
@@ -132,8 +132,11 @@ def runEvents(window):
     
     fileNames = []
     
+    # displaySuccess() debug
+    
     while True:
         event, values = window.read()
+                
         # if user selects 'Help' button, display help window with instructions
         if event == ('-HELP-'):
             helplayout = helpWindow()
@@ -328,6 +331,10 @@ def runEvents(window):
 
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
             
+            
+            window["ProgressText"].update(visible=False)
+            window["ProgressBar"].update(visible=False)
+            
 
 
             displaySuccess()
@@ -362,25 +369,21 @@ def runEvents(window):
         
         
 # ------------------------------------------------------------------------------  
-'''
-    def imageToData  - the method resizes the image if the resize parameter is not
-                       None and saves the image as bytes in PNG format.
-    @ param pilImage - a PIL image object that will be converted to bytes & returned
-                       by the function
-    @ param resize   - a tuple containing two integers representing the new width
-                       and height of the image. If None, the image will not be resized.
-    precondition     - the pilImage parameter should be a PIL image object. Otherwise,
-                       the function will throw an exception. The resize parameter
-                       should be a tuple containing two integers. Otherwise, the
-                       function will treat it as None and not resize the image.
-    postcondition    - function returns a bytes object representing the image in
-                       PNG format
-'''  
+
 def imageToData(pilImage, resize):
-    """ 
-        Args:    
-        Returns: 
-        Summary: 
+    """"
+        def imageToData  - the method resizes the image if the resize parameter is not
+                        None and saves the image as bytes in PNG format.
+        @ param pilImage - a PIL image object that will be converted to bytes & returned
+                        by the function
+        @ param resize   - a tuple containing two integers representing the new width
+                        and height of the image. If None, the image will not be resized.
+        precondition     - the pilImage parameter should be a PIL image object. Otherwise,
+                        the function will throw an exception. The resize parameter
+                        should be a tuple containing two integers. Otherwise, the
+                        function will treat it as None and not resize the image.
+        postcondition    - function returns a bytes object representing the image in
+                        PNG format
     """
     
     # store current image and its width and height
@@ -542,7 +545,7 @@ def displaySuccess():
         Summary: 
     """
     successMWindow = successWindow()
-    sucessWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
+    sucessWindow = sg.Window('Success', successMWindow, size=(500,200), margins=(10, 10), element_justification='c')
     while True:
         successevent, successVal = sucessWindow.read()
         if successevent == sg.WIN_CLOSED or successevent == ('Close'):
