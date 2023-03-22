@@ -19,11 +19,7 @@ import textwrap
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from sqlalchemy import false
 from equirectRotate import EquirectRotate, pointRotate
-
-# global list of all opened windows
-openWindows = []
     
-
 def createWindow():
     sg.theme ("DarkGrey1")
 
@@ -61,13 +57,12 @@ def createWindow():
 
     # Display the window
     window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True)
-    openWindows.append(window)
     
     # bind to config so can check when window size changes
     window.bind('<Configure>', '-CONFIG-')
     
     # bind the closeAllWindows function to the WM_DELETE_WINDOW event of the main window
-    window.TKroot.protocol("WM_DELETE_WINDOW", lambda: closeAllWindows(openWindows))
+    window.TKroot.protocol("WM_DELETE_WINDOW", closeAllWindows)
 
     return window
 
@@ -110,7 +105,6 @@ def runEvents(window):
         if event == ('-HELP-'):
             helplayout = helpWindow()
             help = sg.Window('Help', helplayout, size=(370, 300), margins=(15, 15))
-            openWindows.append(help)
             while True:
                 helpEvent, helpValues = help.read()
                 if helpEvent == sg.WIN_CLOSED or helpEvent == ('Close'):
@@ -169,7 +163,6 @@ def runEvents(window):
         if event == ('-CORRECT-'):
             correctMWindow = correctMethodWindow()
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
-            openWindows.append(correctWindow)
             while True:
                 correctEvent, correctVal = correctWindow.read(timeout=0)
                 if correctEvent == sg.WIN_CLOSED or correctEvent == ('-CANCEL-'):
@@ -272,7 +265,7 @@ def runEvents(window):
             window['-BROWSE-'].update(visible=True)
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
 
-            displaySuccess()
+            successWindow = displaySuccess()
 
         if event == '-EXPORT-':
             opfile = os.path.splitext(fileName)[0]+'_f.jpg'
@@ -337,9 +330,7 @@ def imageToData(pilImage, resize):
 # ------------------------------------------------------------------------------  
 
 # close all opened windows
-def closeAllWindows(openWindows):
-    for window in openWindows:
-        window.close()
+def closeAllWindows():
     sys.exit()
 
 # ------------------------------------------------------------------------------  
@@ -435,14 +426,16 @@ def fixScreen(window, finalImg):
 
 def displaySuccess():
     successMWindow = successWindow()
-    sucessWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
+    successWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
     while True:
-        successevent, successVal = sucessWindow.read()
+        successevent, successVal = successWindow.read()
         if successevent == sg.WIN_CLOSED or successevent == ('Close'):
             # Close the help popup
-            sucessWindow.close()
+            successWindow.close()
             # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
             break
+
+    return successWindow
 
 # ------------------------------------------------------------------------------  
 
