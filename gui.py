@@ -14,19 +14,15 @@ import matplotlib.pyplot as plt
 import sys
 import cv2
 import matplotlib.image as mpimg
-import time
 import textwrap
 
-from pydoc import visiblename
-from matplotlib.pyplot import margins
-from matplotlib.widgets  import RectangleSelector
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from sqlalchemy import false
 from equirectRotate import EquirectRotate, pointRotate
-from pathlib import Path
 
-# list of all opened windows
+# global list of all opened windows
 openWindows = []
+    
 
 def createWindow():
     sg.theme ("DarkGrey1")
@@ -107,7 +103,7 @@ def successWindow():
 def runEvents(window):
     
     fileNames = []
-
+    
     while True:
         event, values = window.read()
         # if user selects 'Help' button, display help window with instructions
@@ -198,8 +194,8 @@ def runEvents(window):
 
                     window['-TITLE-'].update("Manual Correction Instructions")
                     window['-MANUAL DESCRIPTION-'].update(visible=True)
-                    window["-CANCEL-"].update(visible=True)
-                    window["-DONE-"].update(visible=True)
+                    window['-CANCEL-'].update(visible=True)
+                    window['-DONE-'].update(visible=True)
 
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
@@ -257,11 +253,10 @@ def runEvents(window):
             print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
             ix = min_x
             iy = min_y
-            final_image = correctImageMan(fileName, ix, iy)
-            fixScreen(window, fileName)
+            finalImg = correctImageMan(fileName, ix, iy)
+            fixScreen(window, finalImg)
             correctWindow.close()
 
-            # CODE IN PROGRESS... UPDATING IT TO WORK WITH fixScreen()
             window['-TITLE-'].update("SkyFix360")
             window['-MANUAL DESCRIPTION-'].update(visible=False)
             window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
@@ -277,22 +272,14 @@ def runEvents(window):
             window['-BROWSE-'].update(visible=True)
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
 
-            retval, buffer = cv2.imencode('.jpg', final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-
-            # Convert the encoded buffer to a NumPy array
-            jpegBuffer = io.BytesIO(buffer)
-
-            pilImage = PIL.Image.open(jpegBuffer)
-            # # Get image data, and then use it to update window["-IMAGE-"]
-            data = imageToData(pilImage, window["-IMAGE-"].get_size())
-            window['-IMAGE-'].update(data=data)
-
             displaySuccess()
 
         if event == '-EXPORT-':
             opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-            cv2.imwrite(opfile, final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
             print('\nWrote output file: ', opfile)
+
 
         # if user clicks Cancel button, clear canvas (restart drawing)
         if event == ('-CANCEL-'):
@@ -408,12 +395,12 @@ def correctImageMan(fileName, ix, iy):
     equirectRot = EquirectRotate(h, w, (myY, myP, myR))
     rotated_image = equirectRot.rotate(src_image)
 
-    final_image = cv2.rotate(rotated_image, cv2.ROTATE_180)
+    finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
     print('Done.')
 
-    return final_image
+    return finalImg
 
-def fixScreen(window, fileName):
+def fixScreen(window, finalImg):
     window['fig_cv'].update(visible=False)
     window['fig_cv'].Widget.master.pack_forget() 
     window['controls_cv'].Widget.master.pack_forget() 
@@ -427,12 +414,23 @@ def fixScreen(window, fileName):
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
 
+    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+    # Convert the array from BGR to RGB
+    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+    # Create a PIL Image object from the numpy array
+    pilImg = PIL.Image.fromarray(finalImg)
+
+    # Resize the image to fit the window
+    data = imageToData(pilImg, window["-IMAGE-"].get_size())
+    window['-IMAGE-'].update(data=data)
+
     window['-FOLDROW-'].Widget.master.pack()
     window['-FILE LIST-'].Widget.master.pack()
     window['-CORRECT-'].Widget.master.pack()
     window['-EXPORT-'].Widget.master.pack()
     window['-HELP-'].Widget.master.pack()
-    window['-QUIT-'].Widget.master.pack() 
+    window['-QUIT-'].Widget.master.pack()
 
 
 def displaySuccess():
