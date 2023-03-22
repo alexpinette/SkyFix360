@@ -61,7 +61,7 @@ def createWindow():
          ])
         ],
     
-        [sg.Text('Progress: ', font="Arial 8 bold", key='ProgressText', visible=False), sg.ProgressBar(100, orientation='h', size=(15, 15), key='ProgressBar',  bar_color='#FFFFFF', visible=False)],
+        [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False), sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
@@ -132,7 +132,8 @@ def runEvents(window):
     
     fileNames = []
     
-    # displaySuccess() debug
+    # debug
+    # displaySuccess() 
     
     while True:
         event, values = window.read()
@@ -275,19 +276,24 @@ def runEvents(window):
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
 
+
+
         if event == ('-DONE-'):
-            
+                        
             # Putting here so lineCoords is not empty before reassigning the list to []
             x_coords, y_coords = zip(*lineCoords)       
 
             
-            window["ProgressText"].update(visible=True)
-            window["ProgressBar"].update(visible=True)
+            window["-ProgressText-"].update(visible=True)
+            window["-ProgressBar-"].update(visible=True)
             
             lineCoords = []
-            # Clear the plot and redraw the image
+            
+            # Clear the plot
             ax.clear()
             ax.imshow(img)
+            plt.axis('off')
+            fig.set_facecolor('none') # set the background to transparent
             fig.canvas.draw()
 
 
@@ -306,11 +312,13 @@ def runEvents(window):
             ix = min_x
             iy = min_y
             
+            fixScreen(window)
+
             
             finalImg = correctImageMan(fileName, ix, iy, window)
             
             
-            fixScreen(window, finalImg)
+            # fixScreen(window, finalImg)
             correctWindow.close()
 
             window['-TITLE-'].update("SkyFix360")
@@ -327,13 +335,28 @@ def runEvents(window):
             window['-CORRECT-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
             
+            # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+            # Convert the array from BGR to RGB
+            finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+            # Create a PIL Image object from the numpy array
+            pilImg = PIL.Image.fromarray(finalImg)
+
+            # Resize the image to fit the window
+            data = imageToData(pilImg, window["-IMAGE-"].get_size())
+            window['-IMAGE-'].update(data=data)
+            
             updateProgressBar(90,101, window)
 
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
             
             
-            window["ProgressText"].update(visible=False)
-            window["ProgressBar"].update(visible=False)
+            window["-ProgressText-"].update(visible=False)
+            window["-ProgressBar-"].update(visible=False)
+                        
+           
+ 
+
             
 
 
@@ -350,10 +373,13 @@ def runEvents(window):
 
         # if user clicks Cancel button, clear canvas (restart drawing)
         if event == ('-CANCEL-'):
+            
+            
             lineCoords = []
+            
             # Clear the plot and redraw the image
             ax.clear()
-            ax.imshow(img)
+            ax.imshow(img)            
             fig.canvas.draw()
 
         # if user maximizies/minimizes, or change screen size, the image rescales and
@@ -499,7 +525,7 @@ def correctImageMan(fileName, ix, iy, window):
 # ------------------------------------------------------------------------------  
 
 
-def fixScreen(window, finalImg):
+def fixScreen(window):
     """ 
         Args:    
         Returns: 
@@ -513,27 +539,31 @@ def fixScreen(window, finalImg):
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget() 
     window['-EXPORT-'].Widget.master.pack_forget() 
+    window["-ProgressText-"].Widget.master.pack_forget()
+    window["-ProgressBar-"].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
 
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
 
-    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
-    # Convert the array from BGR to RGB
-    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+    # # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+    # # Convert the array from BGR to RGB
+    # finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
 
-    # Create a PIL Image object from the numpy array
-    pilImg = PIL.Image.fromarray(finalImg)
+    # # Create a PIL Image object from the numpy array
+    # pilImg = PIL.Image.fromarray(finalImg)
 
-    # Resize the image to fit the window
-    data = imageToData(pilImg, window["-IMAGE-"].get_size())
-    window['-IMAGE-'].update(data=data)
+    # # Resize the image to fit the window
+    # data = imageToData(pilImg, window["-IMAGE-"].get_size())
+    # window['-IMAGE-'].update(data=data)
 
     window['-FOLDROW-'].Widget.master.pack()
     window['-FILE LIST-'].Widget.master.pack()
     window['-CORRECT-'].Widget.master.pack()
     window['-EXPORT-'].Widget.master.pack()
+    window["-ProgressText-"].Widget.master.pack()
+    window["-ProgressBar-"].Widget.master.pack() 
     window['-HELP-'].Widget.master.pack()
     window['-QUIT-'].Widget.master.pack()
 
@@ -569,7 +599,7 @@ def updateProgressBar(start,end, window):
     """
     
     for i in range(start,end):
-        window["ProgressBar"].update(i)
+        window["-ProgressBar-"].update(i)
         
     return
 
