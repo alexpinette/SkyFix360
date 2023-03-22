@@ -36,7 +36,8 @@ def createWindow():
         [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
                     [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
             
-                    [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"), sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
+                    [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"),
+                     sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
          #second col
          sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]], size=(300, 85)),
@@ -489,17 +490,6 @@ def fixScreen(window):
 
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
-
-    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
-    # Convert the array from BGR to RGB
-    # finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
-
-    # Create a PIL Image object from the numpy array
-    # pilImg = PIL.Image.fromarray(finalImg)
-
-    # Resize the image to fit the window
-    # data = imageToData(pilImg, window["-IMAGE-"].get_size())
-    # window['-IMAGE-'].update(data=data)
 
     window['-FOLDROW-'].Widget.master.pack()
     window['-FILE LIST-'].Widget.master.pack()
