@@ -201,7 +201,7 @@ def runEvents(window):
                     window['fig_cv'].update(visible=True)
 
                     window['-FOLDER-'].update(visible=False)
-                    window['-FILE LIST-'].update(visible=False)
+                    window['-FILE LIST-'].Widget.master.pack_forget() 
                     window['-CORRECT-'].update(visible=False)
                     window['-BROWSE-'].update(visible=False)
                     window['-EXPORT-'].update(visible=False)
@@ -285,7 +285,6 @@ def runEvents(window):
             iy = min_y
 
             fixScreen(window)
-            finalImg = correctImageMan(fileName, ix, iy, window)
             correctWindow.close()
 
             window['-TITLE-'].update("SkyFix360")
@@ -302,6 +301,10 @@ def runEvents(window):
             window['-CORRECT-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
 
+            window['-EXPORT-'].update(visible=True)
+
+            finalImg = correctImageMan(fileName, ix, iy, window)
+
             # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
             # Convert the array from BGR to RGB
             finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
@@ -314,7 +317,7 @@ def runEvents(window):
             window['-IMAGE-'].update(data=data)
 
             updateProgressBar(90,101, window)
-            window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+            window['-EXPORT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
 
             window['-ProgressText-'].update(visible=False)
             window['-ProgressBar-'].update(visible=False)
@@ -493,6 +496,7 @@ def fixScreen(window):
 
     window['-FOLDROW-'].Widget.master.pack()
     window['-FILE LIST-'].Widget.master.pack()
+
     window['-CORRECT-'].Widget.master.pack()
     window['-EXPORT-'].Widget.master.pack()
     window['-ProgressText-'].Widget.master.pack()
