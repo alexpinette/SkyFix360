@@ -414,8 +414,14 @@ def fixScreen(window, finalImg):
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
 
-    # Update the UI to display the corrected image
-    window['-IMAGE-'].update(data=cv2.imencode('.png', finalImg)[1].tobytes())
+
+    # Convert finalImg to PIL image
+    pilImg = PIL.Image.fromarray(finalImg)
+
+    # Resize the image to fit the window
+    new_size = (800, 600)  # set the size of the window
+    data = imageToData(pilImg, new_size)
+    window['-IMAGE-'].update(data=data)
 
     window['-FOLDROW-'].Widget.master.pack()
     window['-FILE LIST-'].Widget.master.pack()
