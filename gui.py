@@ -274,8 +274,18 @@ def runEvents(window):
 
         if event == ('-DONE-'):
             
+            # Putting here so lineCoords is not empty before reassigning the list to []
+            x_coords, y_coords = zip(*lineCoords)       
+
+            
             window["ProgressText"].update(visible=True)
             window["ProgressBar"].update(visible=True)
+            
+            lineCoords = []
+            # Clear the plot and redraw the image
+            ax.clear()
+            ax.imshow(img)
+            fig.canvas.draw()
 
 
             # Disconnect from the figure
@@ -286,7 +296,7 @@ def runEvents(window):
 
 
             # Find the min and max x and y values in the list of coordinates
-            x_coords, y_coords = zip(*lineCoords)       
+            # x_coords, y_coords = zip(*lineCoords)       
             min_x, max_x = min(x_coords), max(x_coords)
             min_y, max_y = min(y_coords), max(y_coords)
             print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
