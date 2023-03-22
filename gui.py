@@ -277,6 +277,16 @@ def runEvents(window):
             window['-BROWSE-'].update(visible=True)
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
 
+            retval, buffer = cv2.imencode('.jpg', final_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+
+            # Convert the encoded buffer to a NumPy array
+            jpegBuffer = io.BytesIO(buffer)
+
+            pilImage = PIL.Image.open(jpegBuffer)
+            # # Get image data, and then use it to update window["-IMAGE-"]
+            data = imageToData(pilImage, window["-IMAGE-"].get_size())
+            window['-IMAGE-'].update(data=data)
+
             displaySuccess()
 
         if event == '-EXPORT-':
@@ -416,11 +426,6 @@ def fixScreen(window, fileName):
 
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
-    opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-    pilImage = PIL.Image.open(opfile)
-    # Get image data, and then use it to update window["-IMAGE-"]
-    data = imageToData(pilImage, window["-IMAGE-"].get_size())
-    window['-IMAGE-'].update(data=data)
 
     window['-FOLDROW-'].Widget.master.pack()
     window['-FILE LIST-'].Widget.master.pack()
