@@ -414,8 +414,11 @@ def fixScreen(window, finalImg):
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
 
+    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+    # Convert the array from BGR to RGB
+    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
 
-    # Convert finalImg to PIL image
+    # Create a PIL Image object from the numpy array
     pilImg = PIL.Image.fromarray(finalImg)
 
     # Resize the image to fit the window
