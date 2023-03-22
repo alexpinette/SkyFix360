@@ -442,7 +442,7 @@ def displaySuccess():
 def main():
     window = createWindow() # Create window
     runEvents(window) # Run Tasks
-    window.close() # Close the window
+    sys.exit()
 
 # ------------------------------------------------------------------------------  
 
