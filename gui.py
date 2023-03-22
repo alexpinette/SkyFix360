@@ -419,8 +419,7 @@ def fixScreen(window, finalImg):
     pilImg = PIL.Image.fromarray(finalImg)
 
     # Resize the image to fit the window
-    new_size = (800, 600)  # set the size of the window
-    data = imageToData(pilImg, new_size)
+    data = imageToData(pilImg, window["-IMAGE-"].get_size())
     window['-IMAGE-'].update(data=data)
 
     window['-FOLDROW-'].Widget.master.pack()
