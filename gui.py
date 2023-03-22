@@ -9,24 +9,24 @@ import os
 import io
 import numpy as np
 import PySimpleGUI as sg
-import matplotlib.figure as figure
 import matplotlib.pyplot as plt
 import sys
 import cv2
 import matplotlib.image as mpimg
 import textwrap
 
+from scipy.ndimage import gaussian_filter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from sqlalchemy import false
-from equirectRotate import EquirectRotate, pointRotate
-
+from equirectRotate import EquirectRotate
+    
 def createWindow():
     sg.theme ("DarkGrey1")
 
     manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the hotizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
-    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Input(disabled=True, key="-FILENAME-", visible=False)],
+    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), key="-FILETEXT-"), sg.Input('',disabled=True, key="-FILENAME-")],
                 [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],
                 [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
@@ -43,14 +43,15 @@ def createWindow():
 
          #third col
          sg.Column([
-         [sg.Button("Correct", key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
-         [sg.Button("Export ", key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
-         [sg.Button("Done ", key='-DONE-', visible=False, size=(10, 1))],
-         [sg.Button("Cancel ", key='-CANCEL-', visible=False, size=(10, 1))],
+         [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
+         [sg.Button('Export', key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
+         [sg.Button('Done', key='-DONE-', visible=False, size=(10, 1))],
+         [sg.Button('Restart', key='-RESTART-', visible=False, size=(10, 1))],
          ])
         ],
-    
-        [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
+
+        [sg.Text('Progress: ', font="Arial 8 bold", key='ProgressText', visible=False), sg.ProgressBar(100, orientation='h', size=(15, 15), key='ProgressBar',  bar_color='#FFFFFF', visible=False)],
+        [sg.Button('Help', key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
     layout = [ firstRow, secondRow ]
@@ -68,6 +69,12 @@ def createWindow():
 
 
 def helpWindow():
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
+
     helpLayout = [[sg.Text('Need Help?', font=("Arial", 14, "bold"), size=(40, None), auto_size_text=True, justification='center', pad=(0, 5))],
                   [sg.Text("  1.   Click the 'Browse' button to select a folder containing any\n        images or videos.")],
                   [sg.Text("  2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n        white space to the right.")],
@@ -80,6 +87,12 @@ def helpWindow():
 
 
 def correctMethodWindow():
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
+
     correctionLayout = [ [sg.Text('Choose a Correction Method', font=("Arial", 16, "bold"), size=(40, None), auto_size_text=True, justification='center', pad=(0, 5))],      
                          [sg.Button('Manual', size=(10,1)), sg.Text('This method allows for custom specification \nof the horizon by a drawing from the user.\n')], 
                          [sg.Button('Automatic', size=(10,1)), sg.Text('This method automaticaaly finds the horizon \nline and corrects the image/video.')], 
@@ -88,7 +101,13 @@ def correctMethodWindow():
 
 
 def successWindow():
-    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
+
+    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 14), size=(25, None), auto_size_text=True, justification='center')],
                      [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center')],
                      [sg.Button("Close", size=(10, 1), pad=(100, 10))]]
     return successLayout
@@ -96,9 +115,14 @@ def successWindow():
 
 
 def runEvents(window):
-    
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
+
     fileNames = []
-    
+
     while True:
         event, values = window.read()
         # if user selects 'Help' button, display help window with instructions
@@ -133,8 +157,6 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update(fileNames)
 
-
-
         # User chose file from File List
         if event == "-FILE LIST-":   
             try:
@@ -143,10 +165,6 @@ def runEvents(window):
                 # display filename in appropriate spot in right column
                 window["-FILENAME-"].update(fileName)  
                 
-                # update visibility of filename on GUI
-                window["-FILETEXT-"].update(visible=True)
-                window["-FILENAME-"].update(visible=True)
-        
                 # Open the image
                 pilImage = PIL.Image.open(fileName)
                 
@@ -165,7 +183,7 @@ def runEvents(window):
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
             while True:
                 correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED or correctEvent == ('-CANCEL-'):
+                if correctEvent == sg.WIN_CLOSED or correctEvent == ('-RESTART-'):
                     # Close the help popup
                     correctWindow.close()
                     break
@@ -187,7 +205,7 @@ def runEvents(window):
 
                     window['-TITLE-'].update("Manual Correction Instructions")
                     window['-MANUAL DESCRIPTION-'].update(visible=True)
-                    window['-CANCEL-'].update(visible=True)
+                    window['-RESTART-'].update(visible=True)
                     window['-DONE-'].update(visible=True)
 
                     fig = plt.figure()
@@ -236,6 +254,10 @@ def runEvents(window):
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
 
         if event == ('-DONE-'):
+            window['ProgressText'].update(visible=True)
+            window['ProgressBar'].update(visible=True)
+
+            # Disconnect from the figure
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
 
@@ -244,26 +266,32 @@ def runEvents(window):
             min_x, max_x = min(x_coords), max(x_coords)
             min_y, max_y = min(y_coords), max(y_coords)
             print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
+
             ix = min_x
             iy = min_y
-            finalImg = correctImageMan(fileName, ix, iy)
+
+            finalImg = correctImageMan(fileName, ix, iy, window)
             fixScreen(window, finalImg)
             correctWindow.close()
 
             window['-TITLE-'].update("SkyFix360")
             window['-MANUAL DESCRIPTION-'].update(visible=False)
             window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
-            window["-DONE-"].update(visible=False)
-            window["-DONE-"].Widget.master.pack_forget() 
-            window["-CANCEL-"].update(visible=False)
-            window["-CANCEL-"].Widget.master.pack_forget() 
+            window['-DONE-'].update(visible=False)
+            window['-DONE-'].Widget.master.pack_forget() 
+            window['-RESTART-'].update(visible=False)
+            window['-RESTART-'].Widget.master.pack_forget() 
 
             window['fig_cv'].update(visible=True)
             window['-FOLDER-'].update(visible=True)
             window['-FILE LIST-'].update(visible=True)
             window['-CORRECT-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
+            updateProgressBar(90,101, window)
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+
+            window['ProgressText'].update(visible=False)
+            window['ProgressBar'].update(visible=False)
 
             displaySuccess()
 
@@ -275,7 +303,7 @@ def runEvents(window):
 
 
         # if user clicks Cancel button, clear canvas (restart drawing)
-        if event == ('-CANCEL-'):
+        if event == ('-RESTART-'):
             lineCoords = []
             # Clear the plot and redraw the image
             ax.clear()
@@ -295,7 +323,9 @@ def runEvents(window):
         
         
 # ------------------------------------------------------------------------------  
-'''
+
+def imageToData(pilImage, resize):
+    '''
     def imageToData  - the method resizes the image if the resize parameter is not
                        None and saves the image as bytes in PNG format.
     @ param pilImage - a PIL image object that will be converted to bytes & returned
@@ -309,7 +339,6 @@ def runEvents(window):
     postcondition    - function returns a bytes object representing the image in
                        PNG format
 '''  
-def imageToData(pilImage, resize):
     
     # store current image and its width and height
     img = pilImage.copy() 
@@ -329,13 +358,22 @@ def imageToData(pilImage, resize):
 
 # ------------------------------------------------------------------------------  
 
-# close all opened windows
 def closeAllWindows():
+    """ 
+        Args:    
+        Returns: 
+        Summary: close all opened windows
+    """
     sys.exit()
 
 # ------------------------------------------------------------------------------  
 
 def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
     if canvas.children:
         for child in canvas.winfo_children():
             child.destroy()
@@ -345,11 +383,25 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
     figure_canvas_agg.draw()
 
+    toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)
+    toolbar.update()
     figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
 
 # ------------------------------------------------------------------------------  
 
-def correctImageMan(fileName, ix, iy):
+class Toolbar(NavigationToolbar2Tk):
+    def __init__(self, *args, **kwargs):
+        super(Toolbar, self).__init__(*args, **kwargs)
+
+# ------------------------------------------------------------------------------  
+
+def correctImageMan(fileName, ix, iy, window):
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
+
     print('\n Now rotating the image to straighten the horizon.')
     src_image = cv2.imread(fileName)
     h, w, c = src_image.shape
@@ -360,6 +412,7 @@ def correctImageMan(fileName, ix, iy):
     # is simply sliding the image horizontally, and is done very fast by np.roll
     shiftx=int(w/2 - ix)
     src_image = np.roll(src_image, shiftx, axis=1) 
+    updateProgressBar(0,11, window)
 
     # If iy>0 then the user selected the lowest point of the horizon. After the
     # above 'yaw', the true horizon at the middle of the image is still
@@ -378,14 +431,25 @@ def correctImageMan(fileName, ix, iy):
     print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
     # rotate (yaw, pitch, roll)
     equirectRot = EquirectRotate(h, w, (myY, myP, myR))
+    updateProgressBar(10, 41, window)
+
     rotated_image = equirectRot.rotate(src_image)
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
+    updateProgressBar(40,91, window)
     print('Done.')
 
     return finalImg
 
+# ------------------------------------------------------------------------------  
+
 def fixScreen(window, finalImg):
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
+     
     window['fig_cv'].update(visible=False)
     window['fig_cv'].Widget.master.pack_forget() 
     window['controls_cv'].Widget.master.pack_forget() 
@@ -417,8 +481,15 @@ def fixScreen(window, finalImg):
     window['-HELP-'].Widget.master.pack()
     window['-QUIT-'].Widget.master.pack()
 
+# ------------------------------------------------------------------------------  
 
 def displaySuccess():
+    """ 
+        Args:    
+        Returns: 
+        Summary: 
+    """
+     
     successMWindow = successWindow()
     successWin = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
     while True:
@@ -433,10 +504,25 @@ def displaySuccess():
 
 # ------------------------------------------------------------------------------  
 
+def updateProgressBar(start,end, window):
+    """ 
+        Args:    start   --> integer signifying where to start the updating
+                 end     --> integer signifying where to start the updating
+                 window  --> the data of the window that is displayed to user
+        Returns: N/A
+        Summary: This function updates the progress bar with the window based
+                 on the passed in values of start/end.
+    """
+    
+    for i in range(start,end):
+        window["ProgressBar"].update(i)
+        
+# ------------------------------------------------------------------------------  
+
 def main():
     window = createWindow() # Create window
     runEvents(window) # Run Tasks
-    sys.exit()
+    window.close() # Close the window
 
 # ------------------------------------------------------------------------------  
 
