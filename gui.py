@@ -426,6 +426,8 @@ def fixScreen(window, fileName):
     window['-FILE LIST-'].Widget.master.pack()
     window['-CORRECT-'].Widget.master.pack()
     window['-EXPORT-'].Widget.master.pack()
+    window['-HELP-'].Widget.master.pack()
+    window['-QUIT-'].Widget.master.pack() 
 
 
 def displaySuccess():
