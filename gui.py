@@ -337,6 +337,7 @@ def runEvents(window):
             # Clear the plot and redraw the image
             ax.clear()
             ax.imshow(img)
+            plt.grid()
             fig.canvas.draw()
 
         # if user maximizies/minimizes, or change screen size, the image rescales and
