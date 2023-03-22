@@ -10,6 +10,7 @@ from matplotlib.pyplot import margins
 import PIL
 from PIL import Image
 import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import io
 import numpy as np
 from matplotlib.widgets  import RectangleSelector
