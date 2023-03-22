@@ -164,7 +164,7 @@ def runEvents(window):
             correctMWindow = correctMethodWindow()
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
             while True:
-                correctEvent, correctVal = correctWindow.read(timeout=0)
+                correctEvent, correctVal = correctWindow.read()
                 if correctEvent == sg.WIN_CLOSED or correctEvent == ('-CANCEL-'):
                     # Close the help popup
                     correctWindow.close()
@@ -265,7 +265,7 @@ def runEvents(window):
             window['-BROWSE-'].update(visible=True)
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
 
-            successWindow = displaySuccess()
+            displaySuccess()
 
         if event == '-EXPORT-':
             opfile = os.path.splitext(fileName)[0]+'_f.jpg'
@@ -426,23 +426,23 @@ def fixScreen(window, finalImg):
 
 def displaySuccess():
     successMWindow = successWindow()
-    successWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
+    successWin = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
     while True:
-        successevent, successVal = successWindow.read()
+        successevent, successVal = successWin.read()
         if successevent == sg.WIN_CLOSED or successevent == ('Close'):
             # Close the help popup
-            successWindow.close()
+            successWin.close()
             # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
             break
 
-    return successWindow
+    return successWin
 
 # ------------------------------------------------------------------------------  
 
 def main():
     window = createWindow() # Create window
     runEvents(window) # Run Tasks
-    sys.exit()
+    window.close() # Close the window
 
 # ------------------------------------------------------------------------------  
 
