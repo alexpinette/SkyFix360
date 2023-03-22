@@ -8,6 +8,7 @@ from pydoc import visiblename
 import PySimpleGUI as sg
 from matplotlib.pyplot import margins
 import PIL
+from PIL import Image
 import os
 import io
 import numpy as np
@@ -18,10 +19,11 @@ import matplotlib.pyplot as plt
 import sys
 import cv2
 import matplotlib.image as mpimg
-from sqlalchemy import false
+# from sqlalchemy import false
 from equirectRotate import EquirectRotate, pointRotate
 import time
 from pathlib import Path
+from automatic import auto_correct_process
 
 def createWindow():
     sg.theme ("DarkGrey1")
@@ -238,7 +240,10 @@ def runEvents(window):
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
         
-        
+
+                elif correctEvent == 'Automatic':
+
+                    corrected_image = auto_correct_process(fileName)
          
         # if user selects 'Quit' button or default exit button, close window
         if event == ('Quit') or event == sg.WIN_CLOSED:
@@ -247,6 +252,58 @@ def runEvents(window):
         
 # ------------------------------------------------------------------------------  
         
+def opencv_to_pysimplegui_image(image):
+    # Convert the OpenCV image (BGR) to a PIL.Image (RGB)
+    pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+    # Resize the image while maintaining aspect ratio
+    pil_image.thumbnail((400,400), Image.LANCZOS)
+
+    # Save the PIL.Image to a BytesIO object
+    byte_io = io.BytesIO()
+    pil_image.save(byte_io, format="PNG")
+    byte_io.seek(0)
+    return byte_io
+
+
+def auto_correct_horizon(image_path):
+    # Load the image
+    image = cv2.imread(image_path)
+    
+    # Convert the image to grayscale
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Apply Gaussian blur to reduce noise
+    blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
+    
+    # Apply Canny edge detection
+    edges = cv2.Canny(blurred_image, 50, 150)
+    
+    # Apply Hough Transform to detect lines
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, minLineLength=100, maxLineGap=10)
+    
+    # Calculate the angles of each line
+    angles = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+        angles.append(angle)
+    
+    # Calculate the median angle
+    median_angle = np.median(angles)
+    
+    # Compute the rotation matrix
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+    rotation_matrix = cv2.getRotationMatrix2D(center, median_angle, 1.0)
+    
+    # Rotate the image
+    corrected_image = cv2.warpAffine(image, rotation_matrix, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    
+    return corrected_image
+
+
+
 def imageToData(pilImage, resize):
     """ 
     Insert comments here
