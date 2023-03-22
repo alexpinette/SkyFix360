@@ -265,7 +265,7 @@ def runEvents(window):
             window['-BROWSE-'].update(visible=True)
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
 
-            successWindow = displaySuccess()
+            displaySuccess()
 
         if event == '-EXPORT-':
             opfile = os.path.splitext(fileName)[0]+'_f.jpg'
@@ -420,23 +420,23 @@ def fixScreen(window, finalImg):
 
 def displaySuccess():
     successMWindow = successWindow()
-    successWindow = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
+    successWin = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
     while True:
-        successevent, successVal = successWindow.read()
+        successevent, successVal = successWin.read()
         if successevent == sg.WIN_CLOSED or successevent == ('Close'):
             # Close the help popup
-            successWindow.close()
+            successWin.close()
             # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
             break
 
-    return successWindow
+    return successWin
 
 # ------------------------------------------------------------------------------  
 
 def main():
     window = createWindow() # Create window
     runEvents(window) # Run Tasks
-    window.close()
+    sys.exit()
 
 # ------------------------------------------------------------------------------  
 
