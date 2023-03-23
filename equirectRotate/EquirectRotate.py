@@ -24,7 +24,6 @@ class EquirectRotate:
 
     # mapping LatLon coordinate into xyz(sphere) coordinate system
     self.out_xyz = LatLon2Sphere(self.out_LonLat)  # (H, W, (x, y, z))
-    updateProgressBar(10,31, window)
 
 
     self.src_xyz = np.zeros_like(self.out_xyz)  # (H, W, (x, y, z))
@@ -33,7 +32,7 @@ class EquirectRotate:
     # src_xyz @ R = out_xyz
     # src_xyz     = out_xyz @ R^t
     self.R = getRotMatrix(np.array(rotation))
-    updateProgressBar(30,41, window)
+    updateProgressBar(10,21, window)
 
     Rt = np.transpose(self.R)  # we should fill out the output image, so use R^t.
     
@@ -41,8 +40,8 @@ class EquirectRotate:
     # THIS IS THE LONGEST PROCESS IN THE CORRECTION
     # Will update progress bar slowly by doing some math computations
     
-    benchmark = self.height // 20
-    start = 40
+    benchmark = self.height // 40
+    start = 20
     end = start + 1
     
     for i in range(self.height):
@@ -60,12 +59,11 @@ class EquirectRotate:
 
     # mapping xyz(sphere) coordinate into LatLon coordinate system
     self.src_LonLat = Sphere2LatLon(self.src_xyz)  # (H, W, 2)
-    updateProgressBar(61,66, window)
 
 
     # mapping LatLon coordinate into equirect coordinate system
     self.src_Pixel = LatLon2Pixel(self.src_LonLat)  # (H, W, 2)
-    updateProgressBar(65,76, window)
+    updateProgressBar(61,66, window)
 
     
 # ------------------------------------------------------------------------------  
@@ -84,8 +82,8 @@ class EquirectRotate:
     rotated_img = np.zeros_like(image)  # (H, W, C)
     
     # THIS IS SECOND LONGEST PROCESS IN CORRECTION
-    benchmark = self.height // 10
-    start = 75
+    benchmark = self.height // 25
+    start = 61
     end = start + 1
     
     for i in range(self.height):
@@ -93,6 +91,7 @@ class EquirectRotate:
         updateProgressBar(start,end,window)
         start += 1
         end += 1
+        
       for j in range(self.width):
         pixel = self.src_Pixel[i][j]
         rotated_img[i][j] = image[pixel[0]][pixel[1]]

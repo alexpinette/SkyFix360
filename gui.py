@@ -480,10 +480,8 @@ def correctImageMan(fileName, ix, iy, window):
     
     equirectRot = EquirectRotate(h, w, (myY, myP, myR), window)
     
-    # updateProgressBar(10, 41, window)
 
     rotated_image = equirectRot.rotate(src_image, window)
-    # updateProgressBar(75,86, window)
 
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
