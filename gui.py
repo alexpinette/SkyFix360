@@ -38,7 +38,7 @@ def createWindow():
     newManualDescription = textwrap.fill(manualDescription, 52)
 
     firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), visible=False, key="-FILETEXT-"), sg.Input(disabled=True, key="-FILENAME-", visible=False)],
-                [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))], [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False), sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
+                [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],
 
                 [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
@@ -62,7 +62,8 @@ def createWindow():
          ])
         ],
     
-        # [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False), sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
+        [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False), sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
+        [sg.Text("", pad=(0,94), key="-PAD FOR CORRECTION-", visible=False)],
         [sg.Button("Help", key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
@@ -355,6 +356,10 @@ def runEvents(window):
             window["-ProgressText-"].update(visible=False)
             window["-ProgressBar-"].update(visible=False)
             
+            window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
+            window["-PAD FOR CORRECTION-"].update(visible=False)
+
+            
             
             
             # Moved from fixScreen to here as discussed on 3/22 night ~ 9pm
@@ -556,6 +561,9 @@ def fixScreen(window, fileName):
     window["-ProgressBar-"].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
+    
+    window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
+
 
 
     window['-IMAGE-'].Widget.master.pack()
@@ -581,6 +589,10 @@ def fixScreen(window, fileName):
     
     window["-ProgressText-"].Widget.master.pack()
     window["-ProgressBar-"].Widget.master.pack() 
+    
+    window["-PAD FOR CORRECTION-"].Widget.master.pack()
+    window["-PAD FOR CORRECTION-"].update(visible=True)
+    
     # window['-HELP-'].Widget.master.pack()
     # window['-QUIT-'].Widget.master.pack()
     
