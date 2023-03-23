@@ -15,9 +15,8 @@ import cv2
 import matplotlib.image as mpimg
 import textwrap
 
-from scipy.ndimage import gaussian_filter
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from sqlalchemy import false
+from PIL import Image, ImageFilter
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from equirectRotate import EquirectRotate
     
 def createWindow():
@@ -28,6 +27,8 @@ def createWindow():
 
     firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), key="-FILETEXT-"), sg.Input('',disabled=True, key="-FILENAME-")],
                 [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],
+                [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False),
+                 sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
                 [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
                ]
@@ -51,8 +52,6 @@ def createWindow():
          ])
         ],
 
-        [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False),
-         sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
         [sg.Button('Help', key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
@@ -261,9 +260,6 @@ def runEvents(window):
             # Find the min and max x and y values in the list of coordinates
             x_coords, y_coords = zip(*lineCoords)
 
-            window['-ProgressText-'].update(visible=True)
-            window['-ProgressBar-'].update(visible=True)
-
             # Clear the plot and redraw the image
             ax.clear()
             ax.imshow(img)
@@ -276,35 +272,38 @@ def runEvents(window):
             fig.canvas.mpl_disconnect(cid2)
 
             # Find the min and max x and y values in the list of coordinates
-            # x_coords, y_coords = zip(*lineCoords)    
+            # x_coords, y_coords = zip(*lineCoords)       
             min_x, max_x = min(x_coords), max(x_coords)
             min_y, max_y = min(y_coords), max(y_coords)
             print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
-
             ix = min_x
             iy = min_y
-
-            fixScreen(window)
-            correctWindow.close()
-
-            window['-TITLE-'].update("SkyFix360")
-            window['-MANUAL DESCRIPTION-'].update(visible=False)
-            window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
+            
+            # Forget these since there's no point in having them while image is processing.
             window['-DONE-'].update(visible=False)
             window['-DONE-'].Widget.master.pack_forget() 
             window['-RESTART-'].update(visible=False)
             window['-RESTART-'].Widget.master.pack_forget() 
+            
+            # Fix the screen to prepare for image processing
+            fixScreen(window, fileName)
+
+            # Correct the image (long process)
+            finalImg = correctImageMan(fileName, ix, iy, window)
+            
+            correctWindow.close()
+
+            window['-TITLE-'].update("SkyFix360")
+            
+            window['-MANUAL DESCRIPTION-'].update(visible=False)
+            window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget()  
 
             window['fig_cv'].update(visible=True)
             window['-FOLDER-'].update(visible=True)
             window['-FILE LIST-'].update(visible=True)
             window['-CORRECT-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
-
-            window['-EXPORT-'].update(visible=True)
-
-            finalImg = correctImageMan(fileName, ix, iy, window)
-
+            
             # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
             # Convert the array from BGR to RGB
             finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
@@ -317,14 +316,27 @@ def runEvents(window):
             window['-IMAGE-'].update(data=data)
 
             updateProgressBar(90,101, window)
-            window['-EXPORT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
 
-            window['-ProgressText-'].update(visible=False)
-            window['-ProgressBar-'].update(visible=False)
+            window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+            window["-ProgressText-"].update(visible=False)
+            window["-ProgressBar-"].update(visible=False)
+            
+            # Moved from fixScreen to here as discussed on 3/22 night ~ 9pm
+            window['-FOLDROW-'].Widget.master.pack()
+            window['-FILE LIST-'].Widget.master.pack()
+            window['-CORRECT-'].Widget.master.pack()
+            window['-EXPORT-'].Widget.master.pack()
+            window['-HELP-'].Widget.master.pack()
+            window['-QUIT-'].Widget.master.pack()
 
             displaySuccess()
 
+        # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
+            # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+            # Convert the array from BGR to RGB
+            finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
             opfile = os.path.splitext(fileName)[0]+'_f.jpg'
             cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
@@ -339,13 +351,6 @@ def runEvents(window):
             ax.imshow(img)
             plt.grid()
             fig.canvas.draw()
-
-        # if user maximizies/minimizes, or change screen size, the image rescales and
-        #  adjusts accordingly to the window size.
-        # if event == '-CONFIG-' and values['-FILENAME-']:
-        #     data = imageToData(pilImage, window["-IMAGE-"].get_size())
-        #     window['-IMAGE-'].update(data=data)
-
             
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
@@ -354,7 +359,7 @@ def runEvents(window):
         
 # ------------------------------------------------------------------------------  
 
-def imageToData(pilImage, resize):
+def imageToData(pilImage, resize, blur=False):
     '''
     def imageToData  - the method resizes the image if the resize parameter is not
                        None and saves the image as bytes in PNG format.
@@ -362,6 +367,7 @@ def imageToData(pilImage, resize):
                        by the function
     @ param resize   - a tuple containing two integers representing the new width
                        and height of the image. If None, the image will not be resized.
+    @ param blur     - a boolean signifying if the image should be blurred.
     precondition     - the pilImage parameter should be a PIL image object. Otherwise,
                        the function will throw an exception. The resize parameter
                        should be a tuple containing two integers. Otherwise, the
@@ -371,7 +377,12 @@ def imageToData(pilImage, resize):
 '''  
     
     # store current image and its width and height
-    img = pilImage.copy() 
+    img = pilImage.copy()
+
+    if (blur == True):
+         # Apply Gaussian blur filter to the image
+         img = img.filter(ImageFilter.GaussianBlur(radius=50))
+
     currentW, currentH = img.size
     
     # if resize image, make new height and width to scale image
@@ -412,16 +423,7 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
             child.destroy()
     figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
     figure_canvas_agg.draw()
-
-    toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)
-    toolbar.update()
     figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
-
-# ------------------------------------------------------------------------------  
-
-class Toolbar(NavigationToolbar2Tk):
-    def __init__(self, *args, **kwargs):
-        super(Toolbar, self).__init__(*args, **kwargs)
 
 # ------------------------------------------------------------------------------  
 
@@ -473,7 +475,7 @@ def correctImageMan(fileName, ix, iy, window):
 
 # ------------------------------------------------------------------------------  
 
-def fixScreen(window):
+def fixScreen(window, fileName):
     """ 
         Args:    
         Returns: 
@@ -495,15 +497,19 @@ def fixScreen(window):
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
 
-    window['-FOLDROW-'].Widget.master.pack()
-    window['-FILE LIST-'].Widget.master.pack()
+    # Open the ORIGINAL image
+    pilImage = PIL.Image.open(fileName)
 
-    window['-CORRECT-'].Widget.master.pack()
-    window['-EXPORT-'].Widget.master.pack()
+    # Get image data, and then use it to update window["-IMAGE-"]
+    # Blur the image because it wil be corrected next after returning from this function
+    data = imageToData(pilImage, window["-IMAGE-"].get_size(), blur=True)
+    window['-IMAGE-'].update(data=data) 
+
     window['-ProgressText-'].Widget.master.pack()
     window['-ProgressBar-'].Widget.master.pack()
-    window['-HELP-'].Widget.master.pack()
-    window['-QUIT-'].Widget.master.pack()
+
+    window['-ProgressText-'].update(visible=True)
+    window['-ProgressBar-'].update(visible=True)
 
 # ------------------------------------------------------------------------------  
 
