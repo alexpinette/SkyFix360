@@ -324,7 +324,8 @@ def runEvents(window):
             # Resize the image to fit the window
             data = imageToData(pilImg, window["-IMAGE-"].get_size())
             window['-IMAGE-'].update(data=data)
-            updateProgressBar(90,101, window)
+            
+            updateProgressBar(95,101, window)
 
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
             window["-ProgressText-"].update(visible=False)
@@ -476,13 +477,17 @@ def correctImageMan(fileName, ix, iy, window):
 
     print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
     # rotate (yaw, pitch, roll)
-    equirectRot = EquirectRotate(h, w, (myY, myP, myR))
-    updateProgressBar(10, 41, window)
+    
+    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window)
+    
+    # updateProgressBar(10, 41, window)
 
-    rotated_image = equirectRot.rotate(src_image)
+    rotated_image = equirectRot.rotate(src_image, window)
+    # updateProgressBar(75,86, window)
+
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
-    updateProgressBar(40,91, window)
+    updateProgressBar(85,96, window)
     print('Done.')
 
     return finalImg
