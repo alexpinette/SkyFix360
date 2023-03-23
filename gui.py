@@ -56,7 +56,8 @@ def createWindow():
          [sg.Button('Restart', key='-RESTART-', visible=False, size=(10, 1))],
          ])
         ],
-
+        
+        [sg.Text("", pad=(0,66), key="-PAD FOR CORRECTION-", visible=False)],
         [sg.Button('Help', key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
@@ -329,21 +330,8 @@ def runEvents(window):
             window["-ProgressText-"].update(visible=False)
             window["-ProgressBar-"].update(visible=False)
             
-            # Moved from fixScreen to here as discussed on 3/22 night ~ 9pm
-            window['-FOLDROW-'].Widget.master.pack()
-            window['-FILE LIST-'].Widget.master.pack()
-            window['-CORRECT-'].Widget.master.pack()
-            window['-EXPORT-'].Widget.master.pack()
-            window['-HELP-'].Widget.master.pack()
-            window['-QUIT-'].Widget.master.pack()
-            window["-ProgressText-"].update(visible=False)
-            window["-ProgressBar-"].update(visible=False)
-            
             window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
             window["-PAD FOR CORRECTION-"].update(visible=False)
-
-            
-            
             
             # Moved from fixScreen to here as discussed on 3/22 night ~ 9pm
             window['-FOLDROW-'].Widget.master.pack()
@@ -352,7 +340,6 @@ def runEvents(window):
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
             window['-QUIT-'].Widget.master.pack()
-    
 
             displaySuccess()
 
@@ -538,9 +525,13 @@ def fixScreen(window, fileName):
 
     window['-ProgressText-'].Widget.master.pack()
     window['-ProgressBar-'].Widget.master.pack()
+    
+    window["-PAD FOR CORRECTION-"].Widget.master.pack()
+    window["-PAD FOR CORRECTION-"].update(visible=True)
 
     window['-ProgressText-'].update(visible=True)
     window['-ProgressBar-'].update(visible=True)
+    
 
 # ------------------------------------------------------------------------------  
 
