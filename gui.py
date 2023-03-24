@@ -46,7 +46,7 @@ def createWindow():
                      sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
          #second col
-         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]], size=(300, 85)),
+         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,6), key="-FILE LIST-")]], size=(300, 85)),
 
          #third col
          sg.Column([
@@ -194,7 +194,6 @@ def runEvents(window):
                 if correctEvent == sg.WIN_CLOSED or correctEvent == ('-RESTART-'):
                     # Close the help popup
                     correctWindow.close()
-                    
                     break
                 elif correctEvent == 'Manual':
                     correctWindow.close()
@@ -261,6 +260,10 @@ def runEvents(window):
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+
+                elif correctEvent == 'Cancel':
+                    correctWindow.close()
+                    break
 
         if event == ('-DONE-') and lineCoords != []:
 
