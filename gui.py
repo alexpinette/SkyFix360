@@ -221,7 +221,7 @@ def runEvents(window):
                     # fig = plt.subplots(figsize=(600*px, 200*px))
 
                     # fig = plt.figure(figsize=(6.5, 3.25))
-                    fig = plt.figure(figsize=(6.675, 3.25))
+                    fig = plt.figure(figsize=(6.675, 6.675/2))
                     # fig, ax = plt.subplots()
                     # fig = plt.figure()
                     ax = fig.add_subplot(111)
