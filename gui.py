@@ -35,7 +35,7 @@ def createWindow():
                 [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
-               ], size=(1019, 516), element_justification='c')]
+               ], size=(1016, 516), element_justification='c')]
 
     secondRow = [ #first col
         [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(180, 1))],
@@ -45,7 +45,7 @@ def createWindow():
                      sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
          #second col
-         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]], size=(300, 85)),
+         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,6), key="-FILE LIST-")]], size=(300, 85)),
 
          #third col
          sg.Column([
@@ -221,8 +221,9 @@ def runEvents(window):
                     # fig = plt.subplots(figsize=(600*px, 200*px))
 
                     # fig = plt.figure(figsize=(6.5, 3.25))
+                    fig = plt.figure(figsize=(6.675, 3.25))
                     # fig, ax = plt.subplots()
-                    fig = plt.figure()
+                    # fig = plt.figure()
                     ax = fig.add_subplot(111)
                     DPI = fig.get_dpi()
 
@@ -269,6 +270,10 @@ def runEvents(window):
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
+
+                elif correctEvent == 'Cancel':
+                    correctWindow.close()
+                    break
 
         if event == ('-DONE-') and lineCoords != []:
 
@@ -442,7 +447,7 @@ def draw_figure_w_toolbar(canvas, fig):
             child.destroy()
     figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
     figure_canvas_agg.draw()
-    figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
+    figure_canvas_agg.get_tk_widget().pack(side='bottom', fill='both', expand=1)
 
 # ------------------------------------------------------------------------------  
 
