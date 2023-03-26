@@ -82,15 +82,17 @@ def helpWindow():
         Returns: 
         Summary: 
     """
+    
+    helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, None), justification='center')],
+              [sg.Text("   1.   Click the 'Browse' button to select a folder containing any\n         images or videos.", font=("Arial", 12))],
+              [sg.Text("   2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n         white space to the right.", font=("Arial", 12))],
+              [sg.Text("   3.   Select an image/video from this panel. It will then be\n        shown on the preview screen above.", font=("Arial", 12))],
+              [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12))],
+              [sg.Text("   5.   Select 'Export' to save your corrected photo/video to\n         your device.", font=("Arial", 12))],
+              [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12))],
+              [sg.Button("Close",font=("Arial", 12), size=(10, 1), pad=((135), (20, 0)))]
+             ]
 
-    helpLayout = [[sg.Text('Need Help?', font=("Arial", 14, "bold"), size=(40, None), auto_size_text=True, justification='center', pad=(0, 5))],
-                  [sg.Text("  1.   Click the 'Browse' button to select a folder containing any\n        images or videos.")],
-                  [sg.Text("  2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n        white space to the right.")],
-                  [sg.Text("  3.   Select an image/video from this panel. It will then be\n        shown on the preview screen above.")],
-                  [sg.Text("  4.   Click 'Correct' button to begin the correction process. Follow\n        the steps in the pop-up window.")],
-                  [sg.Text("  5.   Select 'Export' to save your corrected photo/video to\n        your device.")],
-                  [sg.Text("  6.   If you wish to quit at any time, select the 'Quit' button.")],
-                  [sg.Button("Close", size=(10, 1), pad=((135), (20, 0)))]]
     return helpLayout
 
 
@@ -117,8 +119,8 @@ def successWindow():
     """
 
     successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
-                     [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center')],
-                     [sg.Button("Close", size=(10, 1), pad=(100, 10))]]
+                     [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center', pad=(15, 10))],
+                     [sg.Button("Close", size=(10, 1), pad=(100, 5))]]
     
     return successLayout
 
@@ -138,7 +140,7 @@ def runEvents(window):
         # if user selects 'Help' button, display help window with instructions
         if event == ('-HELP-'):
             helplayout = helpWindow()
-            help = sg.Window('Help', helplayout, size=(370, 300), margins=(15, 15))
+            help = sg.Window('Help', helplayout, size=(405, 330), margins=(15, 15))
             while True:
                 helpEvent, helpValues = help.read()
                 if helpEvent == sg.WIN_CLOSED or helpEvent == ('Close'):
@@ -598,7 +600,7 @@ def displaySuccess():
     """
      
     successMWindow = successWindow()
-    successWin = sg.Window('Success', successMWindow, size=(300,155), margins=(10, 10))
+    successWin = sg.Window('Success', successMWindow, size=(310,165), margins=(10, 10))
     while True:
         successevent, successVal = successWin.read()
         if successevent == sg.WIN_CLOSED or successevent == ('Close'):
