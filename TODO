@@ -1,0 +1,15 @@
+Task lists:
+
+- [x] Add previous Button in manual correction window
+- [ ] When previous button is clicked, `FOLDER` && `BROWSE` are not displaying
+- [ ] Make help & success window bigger (to display appropriately on Windoms & Mac)
+- [ ] Make Window resizeable (`-CONFIG-`)
+- [ ] When user clicks `Help` button, `Quit` button does not work anymore
+- [ ] Fix padding Nick added (looks weird on Mac)
+- [ ] When user clicks `Correct` then `Manual`, window does not display image
+- [ ] Display text on screen when no image/video selected
+- [ ] Disable buttons is weird (Mac issue), do hover
+    - https://github.com/PySimpleGUI/PySimpleGUI/issues/903
+    - https://github.com/PySimpleGUI/PySimpleGUI/issues/3947
+- [ ] Remove all calculations using DPI
+- [ ] Keep window constant size throughtout process (smooth GUI)

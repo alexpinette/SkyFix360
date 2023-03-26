@@ -25,9 +25,16 @@ def createWindow():
     manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the hotizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
-    firstRow = [[sg.Text("File:", font="Arial 10 bold", size=(4,1), key="-FILETEXT-"), sg.Input('',disabled=True, key="-FILENAME-")],
-                [sg.Image(key="-IMAGE-", background_color = "black", size=(1000, 500))],
-                [sg.Text('Progress: ', font="Arial 8 bold", key='-ProgressText-', visible=False),
+
+    firstRow = [[ sg.Button('<', key='-PREVIOUS BTN-', visible=False, size=(5, 1)),
+                  sg.Text('', key='-SPACE1-', visible=True, expand_x=True),
+                  sg.Text('File', font="Arial 10 bold", size=(4,1), key='-FILETEXT-', justification='center'), 
+                  sg.Input('', key='-FILENAME-', disabled=True, justification='center'),
+                  sg.Text('    ', key='-SPACE2-', visible=True, expand_x=True),
+                ],
+
+                [sg.Image(key='-IMAGE-', background_color = 'black', size=(1000, 500))],
+                [sg.Text('Progress: ', font='Arial 8 bold', key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
                 [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
@@ -36,7 +43,6 @@ def createWindow():
     secondRow = [ #first col
         [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
                     [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
-            
                     [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"),
                      sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
@@ -52,6 +58,7 @@ def createWindow():
          ])
         ],
 
+        [sg.Text("", pad=(0,66), key="-PAD FOR CORRECTION-", visible=False)],
         [sg.Button('Help', key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]
     ] 
 
@@ -68,7 +75,7 @@ def createWindow():
 
     return window
 
-
+########### FIXME: MAKE WINDOW LARGER
 def helpWindow():
     """ 
         Args:    
@@ -101,6 +108,7 @@ def correctMethodWindow():
     return correctionLayout
 
 
+########### FIXME: MAKE WINDOW LARGER
 def successWindow():
     """ 
         Args:    
@@ -195,6 +203,17 @@ def runEvents(window):
                     ix = 0
                     iy = 0
 
+                    window['-FILETEXT-'].update(visible=False)
+                    window['-FILENAME-'].update(visible=False)
+                    window['-SPACE1-'].update(visible=False)
+                    window['-SPACE2-'].update(visible=False)
+
+                    window['-PREVIOUS BTN-'].update(visible=True)
+                    window['-SPACE1-'].update(visible=True)
+                    window['-FILETEXT-'].update(visible=True)
+                    window['-FILENAME-'].update(visible=True)
+                    window['-SPACE2-'].update(visible=True)
+
                     window['-IMAGE-'].update(visible=False)
                     window['-IMAGE-'].Widget.master.pack_forget() 
                     window['fig_cv'].update(visible=True)
@@ -254,6 +273,55 @@ def runEvents(window):
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+                
+                elif correctEvent == 'Cancel':
+                    correctWindow.close()
+                    break
+
+        # If user clicks the previous button, return to main window
+        if event == '-PREVIOUS BTN-':
+
+            window['-PREVIOUS BTN-'].update(visible=False)
+            window['-TITLE-'].update(visible=False)
+            window['-MANUAL DESCRIPTION-'].update(visible=False)
+            window['fig_cv'].update(visible=False)
+            window['-DONE-'].update(visible=False)
+            window['-RESTART-'].update(visible=False)
+
+            window['fig_cv'].Widget.master.pack_forget() 
+            window['-TITLE-'].Widget.master.pack_forget() 
+            window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
+            window['-FOLDER-'].Widget.master.pack_forget() 
+            window['-BROWSE-'].Widget.master.pack_forget() 
+            window['-FOLDROW-'].Widget.master.pack_forget() 
+            window['-FILE LIST-'].Widget.master.pack_forget() 
+            window['-CORRECT-'].Widget.master.pack_forget()
+            window['-EXPORT-'].Widget.master.pack_forget() 
+            window['-DONE-'].Widget.master.pack_forget() 
+            window['-RESTART-'].Widget.master.pack_forget()
+            window['-HELP-'].Widget.master.pack_forget() 
+            window['-QUIT-'].Widget.master.pack_forget() 
+
+            window['-IMAGE-'].Widget.master.pack()
+            window['-IMAGE-'].update(visible=True)
+            window['-TITLE-'].Widget.master.pack()
+            window['-TITLE-'].update(visible=True)
+            window['-TITLE-'].update('SkyFix360')
+            window['-FOLDER-'].Widget.master.pack()
+            window['-FOLDER-'].update(visible=True)
+            window['-BROWSE-'].Widget.master.pack()
+            window['-BROWSE-'].update(visible=True)
+            window['-FOLDROW-'].Widget.master.pack()
+            window['-FOLDROW-'].update(visible=True)
+            window['-FILE LIST-'].Widget.master.pack()
+            window['-FILE LIST-'].update(visible=True)
+            window['-CORRECT-'].Widget.master.pack()
+            window['-CORRECT-'].update(visible=True)
+            window['-EXPORT-'].Widget.master.pack()
+            window['-EXPORT-'].update(visible=True)
+            window['-HELP-'].Widget.master.pack()
+            window['-QUIT-'].Widget.master.pack()
+
 
         if event == ('-DONE-') and lineCoords != []:
 
@@ -280,6 +348,7 @@ def runEvents(window):
             iy = min_y
             
             # Forget these since there's no point in having them while image is processing.
+            window['-PREVIOUS BTN-'].update(visible=False)
             window['-DONE-'].update(visible=False)
             window['-DONE-'].Widget.master.pack_forget() 
             window['-RESTART-'].update(visible=False)
@@ -315,15 +384,15 @@ def runEvents(window):
             data = imageToData(pilImg, window["-IMAGE-"].get_size())
             window['-IMAGE-'].update(data=data)
 
-            updateProgressBar(90,101, window)
+            updateProgressBar(95,101, window)
 
             window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
-            window["-ProgressText-"].update(visible=False)
-            window["-ProgressBar-"].update(visible=False)
+            window['-ProgressText-'].update(visible=False)
+            window['-ProgressBar-'].update(visible=False)
             
-            # Moved from fixScreen to here as discussed on 3/22 night ~ 9pm
             window['-FOLDROW-'].Widget.master.pack()
             window['-FILE LIST-'].Widget.master.pack()
+            window['-BROWSE-'].Widget.master.pack()
             window['-CORRECT-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
@@ -462,13 +531,16 @@ def correctImageMan(fileName, ix, iy, window):
 
     print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
     # rotate (yaw, pitch, roll)
-    equirectRot = EquirectRotate(h, w, (myY, myP, myR))
-    updateProgressBar(10, 41, window)
 
-    rotated_image = equirectRot.rotate(src_image)
+    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window)
+
+    # updateProgressBar(10, 41, window)
+
+    rotated_image = equirectRot.rotate(src_image, window)
+    # updateProgressBar(75,86, window)
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
-    updateProgressBar(40,91, window)
+    updateProgressBar(85,96, window)
     print('Done.')
 
     return finalImg
@@ -507,6 +579,9 @@ def fixScreen(window, fileName):
 
     window['-ProgressText-'].Widget.master.pack()
     window['-ProgressBar-'].Widget.master.pack()
+
+    window["-PAD FOR CORRECTION-"].Widget.master.pack()
+    window["-PAD FOR CORRECTION-"].update(visible=True)
 
     window['-ProgressText-'].update(visible=True)
     window['-ProgressBar-'].update(visible=True)
