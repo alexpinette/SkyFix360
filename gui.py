@@ -390,6 +390,10 @@ def runEvents(window):
             window['-ProgressText-'].update(visible=False)
             window['-ProgressBar-'].update(visible=False)
             
+            window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
+            window["-PAD FOR CORRECTION-"].update(visible=False)
+            
+            
             window['-FOLDROW-'].Widget.master.pack()
             window['-FILE LIST-'].Widget.master.pack()
             window['-BROWSE-'].Widget.master.pack()
@@ -534,10 +538,7 @@ def correctImageMan(fileName, ix, iy, window):
 
     equirectRot = EquirectRotate(h, w, (myY, myP, myR), window)
 
-    # updateProgressBar(10, 41, window)
-
     rotated_image = equirectRot.rotate(src_image, window)
-    # updateProgressBar(75,86, window)
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
     updateProgressBar(85,96, window)
@@ -565,6 +566,7 @@ def fixScreen(window, fileName):
     window['-ProgressBar-'].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
+    window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
 
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
@@ -580,8 +582,8 @@ def fixScreen(window, fileName):
     window['-ProgressText-'].Widget.master.pack()
     window['-ProgressBar-'].Widget.master.pack()
 
-    window["-PAD FOR CORRECTION-"].Widget.master.pack()
-    window["-PAD FOR CORRECTION-"].update(visible=True)
+    window['-PAD FOR CORRECTION-'].Widget.master.pack()
+    window['-PAD FOR CORRECTION-'].update(visible=True)
 
     window['-ProgressText-'].update(visible=True)
     window['-ProgressBar-'].update(visible=True)
