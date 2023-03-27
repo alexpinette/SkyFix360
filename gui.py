@@ -27,7 +27,7 @@ def createWindow():
     """
     sg.theme ("DarkGrey1")
 
-    manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the hotizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+    manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
 
@@ -137,6 +137,7 @@ def runEvents(window):
     """
 
     fileNames = []
+    prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
 
     while True:
         event, values = window.read()
@@ -210,32 +211,81 @@ def runEvents(window):
 
                     ix = 0
                     iy = 0
+                    
+                    # Normal 
+                    if (prevButtonClickedOnce == False):
 
-                    window['-FILETEXT-'].update(visible=False)
-                    window['-FILENAME-'].update(visible=False)
-                    window['-SPACE1-'].update(visible=False)
-                    window['-SPACE2-'].update(visible=False)
+                        window['-FILETEXT-'].update(visible=False)
+                        window['-FILENAME-'].update(visible=False)
+                        window['-SPACE1-'].update(visible=False)
+                        window['-SPACE2-'].update(visible=False)
 
-                    window['-PREVIOUS BTN-'].update(visible=True)
-                    window['-SPACE1-'].update(visible=True)
-                    window['-FILETEXT-'].update(visible=True)
-                    window['-FILENAME-'].update(visible=True)
-                    window['-SPACE2-'].update(visible=True)
+                        window['-PREVIOUS BTN-'].update(visible=True)
+                        window['-SPACE1-'].update(visible=True)
+                        window['-FILETEXT-'].update(visible=True)
+                        window['-FILENAME-'].update(visible=True)
+                        window['-SPACE2-'].update(visible=True)
 
-                    window['-IMAGE-'].update(visible=False)
-                    window['-IMAGE-'].Widget.master.pack_forget() 
-                    window['fig_cv'].update(visible=True)
+                        window['-IMAGE-'].update(visible=False)
+                        window['-IMAGE-'].Widget.master.pack_forget()
+                        window['fig_cv'].update(visible=True)
+                        window['-FOLDER-'].update(visible=False)
+                        window['-FILE LIST-'].Widget.master.pack_forget() 
+                        window['-CORRECT-'].update(visible=False)
+                        window['-BROWSE-'].update(visible=False)
+                        window['-EXPORT-'].update(visible=False)
+                        window['-TITLE-'].update("Manual Correction Instructions")
+                        window['-MANUAL DESCRIPTION-'].update(visible=True)
+                        window['-RESTART-'].update(visible=True)
+                        window['-DONE-'].update(visible=True)
+                    
+                    # Fixes "correctWindow" display issues
+                    elif (prevButtonClickedOnce == True):
+                        
+                        window['-FILETEXT-'].update(visible=False)
+                        window['-FILENAME-'].update(visible=False)
+                        window['-SPACE1-'].update(visible=False)
+                        window['-SPACE2-'].update(visible=False)
+                                                                        
+                        
+                        window['-IMAGE-'].Widget.master.pack_forget() 
+                        window['-FOLDER-'].Widget.master.pack_forget() 
+                        window['-BROWSE-'].Widget.master.pack_forget() 
+                        window['-FOLDROW-'].Widget.master.pack_forget() 
+                        window['-FILE LIST-'].Widget.master.pack_forget() 
+                        window['-CORRECT-'].Widget.master.pack_forget()
+                        window['-EXPORT-'].Widget.master.pack_forget() 
+                        window['-HELP-'].Widget.master.pack_forget() 
+                        window['-QUIT-'].Widget.master.pack_forget() 
 
-                    window['-FOLDER-'].update(visible=False)
-                    window['-FILE LIST-'].Widget.master.pack_forget() 
-                    window['-CORRECT-'].update(visible=False)
-                    window['-BROWSE-'].update(visible=False)
-                    window['-EXPORT-'].update(visible=False)
+                        
+                        window['-PREVIOUS BTN-'].update(visible=True)
+                        window['-SPACE1-'].update(visible=True)
+                        window['-FILETEXT-'].update(visible=True)
+                        window['-FILENAME-'].update(visible=True)
+                        window['-SPACE2-'].update(visible=True)
+                        
+                        window['fig_cv'].Widget.master.pack() 
+                        window['fig_cv'].update(visible=True)
+     
 
-                    window['-TITLE-'].update("Manual Correction Instructions")
-                    window['-MANUAL DESCRIPTION-'].update(visible=True)
-                    window['-RESTART-'].update(visible=True)
-                    window['-DONE-'].update(visible=True)
+                        window['-HELP-'].Widget.master.pack() 
+                        window['-HELP-'].update(visible=True)
+
+                        window['-QUIT-'].Widget.master.pack() 
+                        window['-QUIT-'].update(visible=True)
+                        
+                        window['-TITLE-'].update('Manual Correction Instructions')
+                        
+                        window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
+                        window['-MANUAL DESCRIPTION-'].update(visible=True)
+
+
+                       
+            
+                    
+
+                        
 
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
@@ -245,6 +295,8 @@ def runEvents(window):
                     img = mpimg.imread(fileName)
                     imgplot = plt.imshow(img)
                     plt.grid()
+                    
+            
 
                     # Define a list to store the coordinates of the line
                     lineCoords = []
@@ -329,6 +381,8 @@ def runEvents(window):
             window['-EXPORT-'].update(visible=True)
             window['-HELP-'].Widget.master.pack()
             window['-QUIT-'].Widget.master.pack()
+            
+            prevButtonClickedOnce = True
 
 
         if event == ('-DONE-') and lineCoords != []:
