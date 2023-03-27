@@ -21,7 +21,6 @@ class EquirectRotate:
     self.out_LonLat = Pixel2LatLon(out_img)  # (H, W, (lat, lon))
     # updateProgressBar(10,21, window)
 
-
     # mapping LatLon coordinate into xyz(sphere) coordinate system
     self.out_xyz = LatLon2Sphere(self.out_LonLat)  # (H, W, (x, y, z))
 
@@ -35,7 +34,6 @@ class EquirectRotate:
     updateProgressBar(10,21, window)
 
     Rt = np.transpose(self.R)  # we should fill out the output image, so use R^t.
-    
     
     # THIS IS THE LONGEST PROCESS IN THE CORRECTION
     # Will update progress bar slowly by doing some math computations
