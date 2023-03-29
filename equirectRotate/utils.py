@@ -20,6 +20,9 @@ def getRotMatrix(rotation):
 
   return Rz @ Ry @ Rx
 
+# ------------------------------------------------------------------------------  
+
+
 def Pixel2LatLon(equirect):
   # LatLon (H, W, (lat, lon))
   h, w = equirect.shape
@@ -32,6 +35,8 @@ def Pixel2LatLon(equirect):
 
   return np.dstack((Lat, Lon))
 
+# ------------------------------------------------------------------------------  
+
 def LatLon2Sphere(LatLon):
   Lat = LatLon[:, :, 0]
   Lon = LatLon[:, :, 1]
@@ -40,12 +45,17 @@ def LatLon2Sphere(LatLon):
   z = np.sin(Lat)
 
   return np.dstack((x, y, z))
+# ------------------------------------------------------------------------------  
+
 
 def Sphere2LatLon(xyz):
   Lat = np.pi / 2 - np.arccos(xyz[:, :, 2])
   Lon = np.arctan2(xyz[:, :, 1], xyz[:, :, 0])
 
   return np.dstack((Lat, Lon))
+
+
+# ------------------------------------------------------------------------------  
 
 
 def LatLon2Pixel(LatLon):
