@@ -246,11 +246,10 @@ def runEvents(window):
                         window['-FILENAME-'].update(visible=False)
                         window['-SPACE1-'].update(visible=False)
                         window['-SPACE2-'].update(visible=False)
-                                                                        
-                        
+
+                        # window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
+                        # window['-MANUAL DESCRIPTION-'].update(visible=True)                          
                         window['-IMAGE-'].Widget.master.pack_forget() 
-                        window['-FOLDER-'].Widget.master.pack_forget() 
-                        window['-BROWSE-'].Widget.master.pack_forget() 
                         window['-FOLDROW-'].Widget.master.pack_forget() 
                         window['-FILE LIST-'].Widget.master.pack_forget() 
                         window['-CORRECT-'].Widget.master.pack_forget()
@@ -267,26 +266,29 @@ def runEvents(window):
                         
                         window['fig_cv'].Widget.master.pack() 
                         window['fig_cv'].update(visible=True)
-     
+                        window['-FOLDER-'].update(visible=False)
+                        window['-BROWSE-'].update(visible=False)
+
+                        window['-FOLDROW-'].Widget.master.pack()
+                        window['-TITLE-'].update('Manual Correction Instructions')
+                        # window['-FOLDER-'].Widget.master.pack() 
+                        # window['-BROWSE-'].Widget.master.pack() 
+                        window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
+                        window['-MANUAL DESCRIPTION-'].update(visible=True)
+                        window['-FOLDROW-'].Widget.master.pack()
+                        # window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
+                        # window['-MANUAL DESCRIPTION-'].update('Manual Correction Instructions')
+                        window['-DONE-'].Widget.master.pack() 
+                        window['-DONE-'].update(visible=True)
+                        window['-RESTART-'].Widget.master.pack() 
+                        window['-RESTART-'].update(visible=True)
 
                         window['-HELP-'].Widget.master.pack() 
                         window['-HELP-'].update(visible=True)
 
                         window['-QUIT-'].Widget.master.pack() 
                         window['-QUIT-'].update(visible=True)
-                        
-                        window['-TITLE-'].update('Manual Correction Instructions')
-                        
-                        window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
-                        window['-MANUAL DESCRIPTION-'].update(visible=True)
-
-
-                       
-            
                     
-
-                        
-
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
                     DPI = fig.get_dpi()
@@ -349,10 +351,7 @@ def runEvents(window):
             window['-RESTART-'].update(visible=False)
 
             window['fig_cv'].Widget.master.pack_forget() 
-            window['-TITLE-'].Widget.master.pack_forget() 
             window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
-            window['-FOLDER-'].Widget.master.pack_forget() 
-            window['-BROWSE-'].Widget.master.pack_forget() 
             window['-FOLDROW-'].Widget.master.pack_forget() 
             window['-FILE LIST-'].Widget.master.pack_forget() 
             window['-CORRECT-'].Widget.master.pack_forget()
@@ -364,15 +363,14 @@ def runEvents(window):
 
             window['-IMAGE-'].Widget.master.pack()
             window['-IMAGE-'].update(visible=True)
-            window['-TITLE-'].Widget.master.pack()
+            window['-FOLDROW-'].Widget.master.pack()
+            window['-FOLDROW-'].update(visible=True)
             window['-TITLE-'].update(visible=True)
             window['-TITLE-'].update('SkyFix360')
             window['-FOLDER-'].Widget.master.pack()
             window['-FOLDER-'].update(visible=True)
             window['-BROWSE-'].Widget.master.pack()
             window['-BROWSE-'].update(visible=True)
-            window['-FOLDROW-'].Widget.master.pack()
-            window['-FOLDROW-'].update(visible=True)
             window['-FILE LIST-'].Widget.master.pack()
             window['-FILE LIST-'].update(visible=True)
             window['-CORRECT-'].Widget.master.pack()
