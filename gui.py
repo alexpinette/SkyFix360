@@ -357,7 +357,7 @@ def runEvents(window):
                 
                 elif correctEvent == 'Automatic':
 
-                    predicted_points = auto_correct_process(fileName)
+                    predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
                     
                     predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
 
