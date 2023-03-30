@@ -14,6 +14,7 @@ import sys
 import cv2
 import matplotlib.image as mpimg
 import textwrap
+import tkinter as tk
 
 from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -138,7 +139,7 @@ def runEvents(window):
 
     fileNames = []
     prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
-
+        
     while True:
         event, values = window.read()
                 
@@ -278,10 +279,10 @@ def runEvents(window):
 
                         window['-FOLDROW-'].Widget.master.pack()
                         window['-TITLE-'].update('Manual Correction Instructions')
-                        # window['-FOLDER-'].Widget.master.pack() 
-                        # window['-BROWSE-'].Widget.master.pack() 
+
                         
                         manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+                        manualDescription = textwrap.fill(manualDescription, 52)
 
                         
                         
@@ -291,8 +292,7 @@ def runEvents(window):
 
 
                         window['-FOLDROW-'].Widget.master.pack()
-                        # window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
-                        # window['-MANUAL DESCRIPTION-'].update('Manual Correction Instructions')
+
                         window['-DONE-'].Widget.master.pack() 
                         window['-DONE-'].update(visible=True)
                         window['-RESTART-'].Widget.master.pack() 
@@ -421,6 +421,8 @@ def runEvents(window):
 
             # Find the min and max x and y values in the list of coordinates
             # x_coords, y_coords = zip(*lineCoords)       
+            
+            # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
             min_x, max_x = min(x_coords), max(x_coords)
             min_y, max_y = min(y_coords), max(y_coords)
             print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
@@ -482,6 +484,9 @@ def runEvents(window):
             window['-QUIT-'].Widget.master.pack()
 
             displaySuccess()
+            
+            # Reset progress bar to zero
+            updateProgressBar(0,1,window)
 
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
