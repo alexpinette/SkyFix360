@@ -241,6 +241,7 @@ def runEvents(window):
                     
                     # Fixes "correctWindow" display issues
                     elif (prevButtonClickedOnce == True):
+  
                         
                         window['-FILETEXT-'].update(visible=False)
                         window['-FILENAME-'].update(visible=False)
@@ -268,13 +269,27 @@ def runEvents(window):
                         window['fig_cv'].update(visible=True)
                         window['-FOLDER-'].update(visible=False)
                         window['-BROWSE-'].update(visible=False)
+                        
+                        window['-FOLDER-'].Widget.master.pack_forget() 
+                        window['-BROWSE-'].Widget.master.pack_forget() 
+                        
+                        
+                        
 
                         window['-FOLDROW-'].Widget.master.pack()
                         window['-TITLE-'].update('Manual Correction Instructions')
                         # window['-FOLDER-'].Widget.master.pack() 
                         # window['-BROWSE-'].Widget.master.pack() 
-                        window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
+                        
+                        manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+
+                        
+                        
+                        window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
                         window['-MANUAL DESCRIPTION-'].update(visible=True)
+                        window['-MANUAL DESCRIPTION-'].update(manualDescription)
+
+
                         window['-FOLDROW-'].Widget.master.pack()
                         # window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
                         # window['-MANUAL DESCRIPTION-'].update('Manual Correction Instructions')
@@ -288,6 +303,8 @@ def runEvents(window):
 
                         window['-QUIT-'].Widget.master.pack() 
                         window['-QUIT-'].update(visible=True)
+                        
+                        
                     
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
@@ -367,9 +384,9 @@ def runEvents(window):
             window['-FOLDROW-'].update(visible=True)
             window['-TITLE-'].update(visible=True)
             window['-TITLE-'].update('SkyFix360')
-            window['-FOLDER-'].Widget.master.pack()
+            window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-FOLDER-'].update(visible=True)
-            window['-BROWSE-'].Widget.master.pack()
+            window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-BROWSE-'].update(visible=True)
             window['-FILE LIST-'].Widget.master.pack()
             window['-FILE LIST-'].update(visible=True)
