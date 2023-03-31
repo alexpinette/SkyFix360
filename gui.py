@@ -409,6 +409,8 @@ def runEvents(window):
             # Find the min and max x and y values in the list of coordinates
             x_coords, y_coords = zip(*lineCoords)
 
+            print(lineCoords)
+
             # Clear the plot and redraw the image
             ax.clear()
             ax.imshow(img)
@@ -419,19 +421,16 @@ def runEvents(window):
             # Disconnect from the figure
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
-            
-        
-
-
-            # Find the min and max x and y values in the list of coordinates
-            # x_coords, y_coords = zip(*lineCoords)       
+              
             
             # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
-            min_x, max_x = min(x_coords), max(x_coords)
-            min_y, max_y = min(y_coords), max(y_coords)
-            print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
-            ix = min_x
-            iy = min_y
+            # min_x, max_x = min(x_coords), max(x_coords)
+            # min_y, max_y = min(y_coords), max(y_coords)
+            # print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
+            point_with_highest_y = max(lineCoords, key=lambda point: point[1])
+            ix = point_with_highest_y[0]
+            iy = -point_with_highest_y[1]
+            print(ix, iy)
             
             # Forget these since there's no point in having them while image is processing.
             window['-PREVIOUS BTN-'].update(visible=False)
