@@ -4,7 +4,9 @@ Task lists:
 - [?] Make help & success window bigger (to display appropriately on Windoms & Mac)
     - Test on Nick && Alex's laptop
 - [x] When previous button is clicked, `FOLDER` && `BROWSE` are not displaying in original window
-- [ ] When user clicks `Correct` then `Manual` (2nd run), manual description is not visible
+- [x] When user clicks `Correct` then `Manual` (2nd run), manual description is not visible
+- [ ] When user clicks `Correct` then `Manual` (2nd run), `Done` && `Restart` get pushed down
+- [ ] When user selects another photo and doesnt export result, disable `Export`
 - [ ] Make Window resizeable (`-CONFIG-`)
 - [ ] When user clicks `Help` button, `Quit` button does not work anymore
 - [ ] Padding looks weird on Mac (when correction is taking place, maybe make progress bar wider?)

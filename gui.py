@@ -39,7 +39,7 @@ def createWindow():
                 ],
 
                 [sg.Image(key='-IMAGE-', background_color = 'black', size=(1000, 500))],
-                [sg.Text('Progress: ', font='Arial 8 bold', key='-ProgressText-', visible=False),
+                [sg.Text('Progress: ', font='Arial 10 bold', key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
                 [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
@@ -409,9 +409,6 @@ def runEvents(window):
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
             
-        
-
-
             # Find the min and max x and y values in the list of coordinates
             # x_coords, y_coords = zip(*lineCoords)       
             min_x, max_x = min(x_coords), max(x_coords)
