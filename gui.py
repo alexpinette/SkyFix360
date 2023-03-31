@@ -274,9 +274,7 @@ def runEvents(window):
                         window['-FOLDER-'].Widget.master.pack_forget() 
                         window['-BROWSE-'].Widget.master.pack_forget() 
                         
-                        
-                        
-
+                    
                         window['-FOLDROW-'].Widget.master.pack()
                         window['-TITLE-'].update('Manual Correction Instructions')
 
@@ -422,11 +420,6 @@ def runEvents(window):
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
               
-            
-            # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
-            # min_x, max_x = min(x_coords), max(x_coords)
-            # min_y, max_y = min(y_coords), max(y_coords)
-            # print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
             point_with_highest_y = max(lineCoords, key=lambda point: point[1])
             ix = point_with_highest_y[0]
             iy = -point_with_highest_y[1]
@@ -697,29 +690,7 @@ def displaySuccess():
         if successevent == sg.WIN_CLOSED or successevent == ('Close'):
             # Close the help popup
             successWin.close()
-            # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
             break
-        
-        
-        
-#----------------------------------------------------------- 
-
-def updateProgressBar(start,end, window):
-    """ 
-        Args:    start   --> integer signifying where to start the updating
-                 end     --> integer signifying where to start the updating
-                 window  --> the data of the window that is displayed to user
-        Returns: N/A
-        Summary: This function updates the progress bar with the window based
-                 on the passed in values of start/end.
-    """
-    
-    for i in range(start,end):
-        window["-ProgressBar-"].update(i)
-        
-    return
-
-    return successWin
 
 # ------------------------------------------------------------------------------  
 
