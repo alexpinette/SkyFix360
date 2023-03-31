@@ -14,6 +14,7 @@ import sys
 import cv2
 import matplotlib.image as mpimg
 import textwrap
+import tkinter as tk
 
 from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -28,7 +29,7 @@ def createWindow():
     sg.theme ("DarkGrey1")
 
     manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
-    newManualDescription = textwrap.fill(manualDescription, 70)
+    newManualDescription = textwrap.fill(manualDescription, 52)
 
 
     firstRow = [[ sg.Button('<', key='-PREVIOUS BTN-', visible=False, size=(5, 1)),
@@ -39,7 +40,7 @@ def createWindow():
                 ],
 
                 [sg.Image(key='-IMAGE-', background_color = 'black', size=(1000, 500))],
-                [sg.Text('Progress: ', font='Arial 10 bold', key='-ProgressText-', visible=False),
+                [sg.Text('Progress: ', font='Arial 8 bold', key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
                 [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
@@ -47,7 +48,7 @@ def createWindow():
 
     secondRow = [ #first col
         [sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
-                    [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(70, 3))],
+                    [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
                     [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"),
                      sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
@@ -138,7 +139,7 @@ def runEvents(window):
 
     fileNames = []
     prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
-
+        
     while True:
         event, values = window.read()
                 
@@ -241,6 +242,7 @@ def runEvents(window):
                     
                     # Fixes "correctWindow" display issues
                     elif (prevButtonClickedOnce == True):
+  
                         
                         window['-FILETEXT-'].update(visible=False)
                         window['-FILENAME-'].update(visible=False)
@@ -268,26 +270,31 @@ def runEvents(window):
                         window['fig_cv'].update(visible=True)
                         window['-FOLDER-'].update(visible=False)
                         window['-BROWSE-'].update(visible=False)
-
+                        
                         window['-FOLDER-'].Widget.master.pack_forget() 
                         window['-BROWSE-'].Widget.master.pack_forget() 
-
+                        
+                    
                         window['-FOLDROW-'].Widget.master.pack()
                         window['-TITLE-'].update('Manual Correction Instructions')
-                        # window['-FOLDER-'].Widget.master.pack() 
-                        # window['-BROWSE-'].Widget.master.pack() 
-              
-                        manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
-                        newManualDescription = textwrap.fill(manualDescription, 70)
 
+                        
+                        manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+                        manualDescription = textwrap.fill(manualDescription, 52)
+
+                        
+                        
                         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
                         window['-MANUAL DESCRIPTION-'].update(visible=True)
-                        window['-MANUAL DESCRIPTION-'].update(newManualDescription)
-                        window['-MANUAL DESCRIPTION-'].update(visible=True)
-                        
+                        window['-MANUAL DESCRIPTION-'].update(manualDescription)
+
+
                         window['-FOLDROW-'].Widget.master.pack()
-                        # window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
-                        # window['-MANUAL DESCRIPTION-'].update('Manual Correction Instructions')
+
+                        window['-CORRECT-'].Widget.master.pack()
+                        window['-EXPORT-'].Widget.master.pack() 
+                        window['-CORRECT-'].update(visible=False)
+                        window['-EXPORT-'].update(visible=False)
                         window['-DONE-'].Widget.master.pack() 
                         window['-DONE-'].update(visible=True)
                         window['-RESTART-'].Widget.master.pack() 
@@ -298,6 +305,8 @@ def runEvents(window):
 
                         window['-QUIT-'].Widget.master.pack() 
                         window['-QUIT-'].update(visible=True)
+                        
+                        
                     
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
@@ -374,10 +383,10 @@ def runEvents(window):
             window['-IMAGE-'].Widget.master.pack()
             window['-IMAGE-'].update(visible=True)
             window['-FOLDROW-'].Widget.master.pack()
-            window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+            window['-FOLDROW-'].update(visible=True)
             window['-TITLE-'].update(visible=True)
             window['-TITLE-'].update('SkyFix360')
-            window['-FOLDER-'].Widget.master.pack()
+            window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-FOLDER-'].update(visible=True)
             window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-BROWSE-'].update(visible=True)
@@ -398,6 +407,8 @@ def runEvents(window):
             # Find the min and max x and y values in the list of coordinates
             x_coords, y_coords = zip(*lineCoords)
 
+            print(lineCoords)
+
             # Clear the plot and redraw the image
             ax.clear()
             ax.imshow(img)
@@ -408,14 +419,11 @@ def runEvents(window):
             # Disconnect from the figure
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
-            
-            # Find the min and max x and y values in the list of coordinates
-            # x_coords, y_coords = zip(*lineCoords)       
-            min_x, max_x = min(x_coords), max(x_coords)
-            min_y, max_y = min(y_coords), max(y_coords)
-            print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
-            ix = min_x
-            iy = min_y
+              
+            point_with_highest_y = max(lineCoords, key=lambda point: point[1])
+            ix = point_with_highest_y[0]
+            iy = -point_with_highest_y[1]
+            print(ix, iy)
             
             # Forget these since there's no point in having them while image is processing.
             window['-PREVIOUS BTN-'].update(visible=False)
@@ -472,6 +480,9 @@ def runEvents(window):
             window['-QUIT-'].Widget.master.pack()
 
             displaySuccess()
+            
+            # Reset progress bar to zero
+            updateProgressBar(0,1,window)
 
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
@@ -679,29 +690,7 @@ def displaySuccess():
         if successevent == sg.WIN_CLOSED or successevent == ('Close'):
             # Close the help popup
             successWin.close()
-            # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
             break
-        
-        
-        
-#----------------------------------------------------------- 
-
-def updateProgressBar(start,end, window):
-    """ 
-        Args:    start   --> integer signifying where to start the updating
-                 end     --> integer signifying where to start the updating
-                 window  --> the data of the window that is displayed to user
-        Returns: N/A
-        Summary: This function updates the progress bar with the window based
-                 on the passed in values of start/end.
-    """
-    
-    for i in range(start,end):
-        window["-ProgressBar-"].update(i)
-        
-    return
-
-    return successWin
 
 # ------------------------------------------------------------------------------  
 

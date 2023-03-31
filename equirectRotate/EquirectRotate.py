@@ -20,6 +20,10 @@ class EquirectRotate:
     # mapping equirect coordinate into LatLon coordinate system
     self.out_LonLat = Pixel2LatLon(out_img)  # (H, W, (lat, lon))
     # updateProgressBar(10,21, window)
+<<<<<<< HEAD
+=======
+
+>>>>>>> d1608b43e42f26a7374a2309757ce28961033bef
 
     # mapping LatLon coordinate into xyz(sphere) coordinate system
     self.out_xyz = LatLon2Sphere(self.out_LonLat)  # (H, W, (x, y, z))
@@ -35,6 +39,10 @@ class EquirectRotate:
 
     Rt = np.transpose(self.R)  # we should fill out the output image, so use R^t.
     
+<<<<<<< HEAD
+=======
+    
+>>>>>>> d1608b43e42f26a7374a2309757ce28961033bef
     # THIS IS THE LONGEST PROCESS IN THE CORRECTION
     # Will update progress bar slowly by doing some math computations
     
@@ -165,4 +173,8 @@ def updateProgressBar(start,end, window):
     for i in range(start,end):
         window['-ProgressBar-'].update(i)
         
+<<<<<<< HEAD
 # ------------------------------------------------------------------------------  
+=======
+# ------------------------------------------------------------------------------  
+>>>>>>> d1608b43e42f26a7374a2309757ce28961033bef
