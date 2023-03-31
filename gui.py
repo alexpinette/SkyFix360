@@ -42,7 +42,6 @@ def createWindow():
                 [sg.Image(key='-IMAGE-', background_color = 'black', size=(1000, 500))],
                 [sg.Text('Progress: ', font='Arial 8 bold', key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
-                [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
                ]
 
@@ -353,7 +352,7 @@ def runEvents(window):
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
-                    draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+                    draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
                 
                 elif correctEvent == 'Cancel':
                     correctWindow.close()
@@ -563,7 +562,7 @@ def closeAllWindows():
 
 # ------------------------------------------------------------------------------  
 
-def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
+def draw_figure_w_toolbar(canvas, fig):
     """ 
         Args:    
         Returns: 
@@ -571,9 +570,6 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     """
     if canvas.children:
         for child in canvas.winfo_children():
-            child.destroy()
-    if canvas_toolbar.children:
-        for child in canvas_toolbar.winfo_children():
             child.destroy()
     figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
     figure_canvas_agg.draw()
@@ -639,7 +635,6 @@ def fixScreen(window, fileName):
      
     window['fig_cv'].update(visible=False)
     window['fig_cv'].Widget.master.pack_forget() 
-    window['controls_cv'].Widget.master.pack_forget() 
     window['-FOLDROW-'].Widget.master.pack_forget() 
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget() 
