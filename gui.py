@@ -20,7 +20,9 @@ from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from equirectRotate import EquirectRotate
 
-global revButtonClickedOnce
+global prevButtonClickedOnce
+global doneButtonClickedOnce
+
 
 def createWindow():
     """ 
@@ -140,6 +142,7 @@ def runEvents(window):
 
     fileNames = []
     prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
+    doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
         
     while True:
         event, values = window.read()
@@ -312,7 +315,7 @@ def runEvents(window):
 
 
         if event == ('-DONE-') and lineCoords != []:
-            reformatScreen(window, prevButtonClickedOnce)
+            reformatScreen(window, doneButtonClickedOnce)
 
             # Find the min and max x and y values in the list of coordinates
             x_coords, y_coords = zip(*lineCoords)
@@ -393,6 +396,8 @@ def runEvents(window):
             
             # Reset progress bar to zero
             updateProgressBar(0,1,window)
+
+            doneButtonClickedOnce = True
 
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
@@ -615,9 +620,9 @@ def updateProgressBar(start,end, window):
         
 # ------------------------------------------------------------------------------  
 
-def reformatScreen(window, prevButtonClickedOnce):
+def reformatScreen(window, btnClick):
     # Normal 
-    if (prevButtonClickedOnce == False):
+    if (btnClick == False):
 
         window['-FILETEXT-'].update(visible=False)
         window['-FILENAME-'].update(visible=False)
@@ -644,7 +649,7 @@ def reformatScreen(window, prevButtonClickedOnce):
         window['-DONE-'].update(visible=True)
     
     # Fixes "correctWindow" display issues
-    elif (prevButtonClickedOnce == True):
+    elif (btnClick == True):
 
         window['-FILETEXT-'].update(visible=False)
         window['-FILENAME-'].update(visible=False)
