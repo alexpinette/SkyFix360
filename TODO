@@ -11,6 +11,7 @@ Task lists:
 - [ ] Keep window constant size throughtout process (smooth GUI)
 - [?] Make help & success window bigger (to display appropriately on Windoms & Mac)
     - Test on Nick && Alex's laptop
+- [x] Fix the extra padding under name file in manual page when prv btn clicked
 - [x] Add previous Button in manual correction window
 - [x] When previous button is clicked, `FOLDER` && `BROWSE` are not displaying in original window
 - [x] When user clicks `Correct` then `Manual` (2nd run), manual description is not visible
