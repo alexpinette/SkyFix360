@@ -80,12 +80,15 @@ def createWindow():
 
     return window
 
+
 ########### FIXME: MAKE WINDOW LARGER
+# ------------------------------------------------------------------------------  
 def helpWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:     None
+        Returns:  helpLayout (list): The layout as a list of PySimpleGUI text elements to help the user if he/she is confused.
+        Summary:  This function creates a help window layout using PySimpleGUI, which provides a step-by-step guide on how to 
+                  use the photo/video correction application. The function returns the layout as a list of PySimpleGUI elements.
     """
     
     helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, None), justification='center')],
@@ -101,11 +104,14 @@ def helpWindow():
     return helpLayout
 
 
+# ------------------------------------------------------------------------------  
 def correctMethodWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:     None
+        Returns:  correctionLayout (list): The layout as a list of PySimpleGUI text and button elements
+        Summary:  This function creates a correction method window layout using PySimpleGUI, which allows
+                  the user to choose between manual and automatic correction methods. The function returns 
+                  the layout as a list of PySimpleGUI elements.
     """
     correctionLayout = [ [sg.Text('Choose a Correction Method', font=("Arial", 16, "bold"), size=(40, None), auto_size_text=True, justification='center', pad=(0, 5))],      
                          [sg.Button('Manual', size=(10,1)), sg.Text('This method allows for custom specification \nof the horizon by a drawing from the user.\n')], 
@@ -114,12 +120,16 @@ def correctMethodWindow():
     return correctionLayout
 
 
+
 ########### FIXME: MAKE WINDOW LARGER
+# ------------------------------------------------------------------------------  
 def successWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:      None
+        Returns:   successLayout (list): The layout as a list of PySimpleGUI text and button elements.
+        Summary:   This function creates a success window layout using PySimpleGUI, which notifies the 
+                   user that their image or video has been successfully corrected. The function returns
+                   the layout as a list of PySimpleGUI elements.
     """
 
     successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
@@ -129,12 +139,13 @@ def successWindow():
     return successLayout
 
 
-
+# ------------------------------------------------------------------------------  
 def runEvents(window):
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:      window (PySimpleGUI Window): the main window of the application
+        Returns:   None
+        Summary:   This function handles the event loop of the application.
+                   It listens for events triggered by the user and responds accordingly.
     """
 
     fileNames = []
@@ -174,6 +185,9 @@ def runEvents(window):
             ]
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update(fileNames)
+            
+            
+            
 
         # User chose file from File List
         if event == "-FILE LIST-":   
@@ -194,6 +208,9 @@ def runEvents(window):
         
             except:
                 pass
+            
+            
+            
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
         if event == ('-CORRECT-'):
@@ -518,21 +535,14 @@ def runEvents(window):
 # ------------------------------------------------------------------------------  
 
 def imageToData(pilImage, resize, blur=False):
-    '''
-    def imageToData  - the method resizes the image if the resize parameter is not
-                       None and saves the image as bytes in PNG format.
-    @ param pilImage - a PIL image object that will be converted to bytes & returned
-                       by the function
-    @ param resize   - a tuple containing two integers representing the new width
-                       and height of the image. If None, the image will not be resized.
-    @ param blur     - a boolean signifying if the image should be blurred.
-    precondition     - the pilImage parameter should be a PIL image object. Otherwise,
-                       the function will throw an exception. The resize parameter
-                       should be a tuple containing two integers. Otherwise, the
-                       function will treat it as None and not resize the image.
-    postcondition    - function returns a bytes object representing the image in
-                       PNG format
-'''  
+    """ 
+        Args:    pilImage (PIL.Image): The PIL Image to be converted to bytes.
+                 resize (tuple): A tuple of two integers representing the desired width and height of the image.
+                 blur (bool, optional): A boolean indicating whether to apply a Gaussian blur filter to the image. Defaults to False.
+        Returns: bytes: A byte stream representing the converted image.
+        Summary: Converts a PIL Image to bytes and returns said bytes for display in a PySimpleGUI window.
+    """
+
     
     # store current image and its width and height
     img = pilImage.copy()
