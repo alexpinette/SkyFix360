@@ -158,6 +158,9 @@ def runEvents(window):
     fileNames = []
     prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
     doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
+    
+    automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
+    correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
         
     while True:
         event, values = window.read()
@@ -322,10 +325,29 @@ def runEvents(window):
 
                     #     window['-QUIT-'].Widget.master.pack() 
                     #     window['-QUIT-'].update(visible=True)
+                    
+                    
+                    # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
+                    if (automaticCorrectedOnce == True and correctionsCompleted == 1):
+                        reformatScreen(window,True)
+                        
+                        # I know its _forget() here, but the buttons look good
+                        window['-CORRECT-'].Widget.master.pack_forget()
+                        window['-EXPORT-'].Widget.master.pack_forget() 
+                        
+                        # window['-CORRECT-'].update(visible=False)
+                        # window['-EXPORT-'].update(visible=False) 
                         
                         
-                    reformatScreen(window, prevButtonClickedOnce, doneButtonClickedOnce)
-                                                
+                    
+                    # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
+                    elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
+                              
+                        if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
+                            reformatScreen(window, True)
+                        elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
+                            reformatScreen(window, False)
+                                                        
                     
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
@@ -371,18 +393,13 @@ def runEvents(window):
                     # Connect the onclick function to the mouse click event
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
-                    
-
-                    # old
-                    # draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
-                    
-                    
+                                  
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
                     
                     
                 
                 elif correctEvent == 'Automatic':
-                    correctWindow.close()
+                    correctWindow.close()                                        
 
 
                     predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
@@ -453,6 +470,10 @@ def runEvents(window):
                     
                     # Reset progress bar to zero
                     updateProgressBar(0,1,window)
+                    
+                    automaticCorrectedOnce = True
+                    correctionsCompleted += 1
+
 
 
                     
@@ -505,7 +526,14 @@ def runEvents(window):
 
 
         if event == ('-DONE-') and lineCoords != []:
-            reformatScreen(window, prevButtonClickedOnce, doneButtonClickedOnce)
+
+                
+            if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
+                reformatScreen(window, True)
+            elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
+                reformatScreen(window, False)
+            
+            # reformatScreen(window, prevButtonClickedOnce)
 
 
             print(lineCoords)
@@ -521,24 +549,7 @@ def runEvents(window):
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
             
-        
-
-
-            # Find the min and max x and y values in the list of coordinates
-            # x_coords, y_coords = zip(*lineCoords)       
-            
-            # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
-            # old
-            # min_x, max_x = min(x_coords), max(x_coords)
-            # min_y, max_y = min(y_coords), max(y_coords)
-            # print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
-            # ix = min_x
-            # iy = min_y
-              
-            # point_with_highest_y = max(lineCoords, key=lambda point: point[1])
-            # ix = point_with_highest_y[0]
-            # iy = -point_with_highest_y[1]
-            # print(ix, iy)
+    
             
             point_with_highest_y = max(lineCoords, key=lambda point:point[1])
             ix = point_with_highest_y[0]
@@ -604,6 +615,9 @@ def runEvents(window):
             updateProgressBar(0,1,window)
 
             doneButtonClickedOnce = True
+            correctionsCompleted += 1
+            
+            
 
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
@@ -830,9 +844,9 @@ def updateProgressBar(start,end, window):
         
 # ------------------------------------------------------------------------------  
 
-def reformatScreen(window, btnClick, btnClick2):
-    # Normal 
-    if (btnClick == False and btnClick2 == False):
+def reformatScreen(window, btnClick):
+    # Normal
+    if (btnClick == False):
 
         window['-FILETEXT-'].update(visible=False)
         window['-FILENAME-'].update(visible=False)
@@ -847,6 +861,7 @@ def reformatScreen(window, btnClick, btnClick2):
 
         window['-IMAGE-'].update(visible=False)
         window['-IMAGE-'].Widget.master.pack_forget()
+            
         window['fig_cv'].update(visible=True)
         window['-FOLDER-'].update(visible=False)
         window['-FILE LIST-'].Widget.master.pack_forget() 
@@ -859,7 +874,7 @@ def reformatScreen(window, btnClick, btnClick2):
         window['-DONE-'].update(visible=True)
     
     # Fixes "correctWindow" display issues
-    elif (btnClick == True or btnClick2 == True):
+    elif (btnClick == True):
 
         window['-FILETEXT-'].update(visible=False)
         window['-FILENAME-'].update(visible=False)
@@ -915,8 +930,9 @@ def reformatScreen(window, btnClick, btnClick2):
         window['-QUIT-'].Widget.master.pack() 
         window['-QUIT-'].update(visible=True)
 
+    
+# ------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------  
 
 def main():
     window = createWindow() # Create MAIN window of the program
