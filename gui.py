@@ -324,7 +324,7 @@ def runEvents(window):
                     #     window['-QUIT-'].update(visible=True)
                         
                         
-                    reformatScreen(window, prevButtonClickedOnce)
+                    reformatScreen(window, prevButtonClickedOnce, doneButtonClickedOnce)
                                                 
                     
                     fig = plt.figure()
@@ -494,7 +494,7 @@ def runEvents(window):
 
 
         if event == ('-DONE-') and lineCoords != []:
-            reformatScreen(window, doneButtonClickedOnce)
+            reformatScreen(window, prevButtonClickedOnce, doneButtonClickedOnce)
 
             # Find the min and max x and y values in the list of coordinates
             x_coords, y_coords = zip(*lineCoords)
@@ -817,9 +817,9 @@ def updateProgressBar(start,end, window):
         
 # ------------------------------------------------------------------------------  
 
-def reformatScreen(window, btnClick):
+def reformatScreen(window, btnClick, btnClick2):
     # Normal 
-    if (btnClick == False):
+    if (btnClick == False and btnClick2 == False):
 
         window['-FILETEXT-'].update(visible=False)
         window['-FILENAME-'].update(visible=False)
@@ -846,7 +846,7 @@ def reformatScreen(window, btnClick):
         window['-DONE-'].update(visible=True)
     
     # Fixes "correctWindow" display issues
-    elif (btnClick == True):
+    elif (btnClick == True or btnClick2 == True):
 
         window['-FILETEXT-'].update(visible=False)
         window['-FILENAME-'].update(visible=False)
