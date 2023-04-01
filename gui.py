@@ -378,20 +378,26 @@ def runEvents(window):
                     predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
                     
                     predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+                    for i in range(len(predicted_points_list)):
+                        if predicted_points_list[i] < 0:
+                            predicted_points_list[i] = 1.00
 
+                    print(predicted_points)
+                    print(predicted_points_list)
                     # Split the array into two separate arrays for x and y coordinates
                     x_coords = predicted_points_list[::2]
                     y_coords = predicted_points_list[1::2]
-
-                    print(x_coords)
-                    print(y_coords)
-
-                    min_x, max_x = min(x_coords), max(x_coords)
-                    min_y, max_y = min(y_coords), max(y_coords)
-                    print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
-                    ix = min_x
-                    iy = min_y
                     
+                    lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
+
+
+                    
+                    # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+                    point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+                    ix = point_with_highest_y[0]
+                    iy = -point_with_highest_y[1]
+
+
                     # Fix the screen to prepare for image processing
                     fixScreen(window, fileName)
 
@@ -437,6 +443,9 @@ def runEvents(window):
                     
                     # Reset progress bar to zero
                     updateProgressBar(0,1,window)
+
+
+                    
 
                 elif correctEvent == 'Cancel':
                     correctWindow.close()
@@ -487,8 +496,6 @@ def runEvents(window):
 
         if event == ('-DONE-') and lineCoords != []:
 
-            # Find the min and max x and y values in the list of coordinates
-            x_coords, y_coords = zip(*lineCoords)
 
             # Clear the plot and redraw the image
             ax.clear()
@@ -508,11 +515,9 @@ def runEvents(window):
             # x_coords, y_coords = zip(*lineCoords)       
             
             # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
-            min_x, max_x = min(x_coords), max(x_coords)
-            min_y, max_y = min(y_coords), max(y_coords)
-            print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
-            ix = min_x
-            iy = min_y
+            point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+            ix = point_with_highest_y[0]
+            iy = -point_with_highest_y[1]
             
             # Forget these since there's no point in having them while image is processing.
             window['-PREVIOUS BTN-'].update(visible=False)
