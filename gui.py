@@ -21,12 +21,14 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from equirectRotate import EquirectRotate
 
 from auto_fix import auto_correct_process
-    
+
+
+#------------------------------------------------------------------------------
 def createWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:     None
+        Returns:  window --> list: The main layout of the program. List of many PySimpleGUI elements 
+        Summary:  Creates the main GUI window for the SkyFix360 application with all necessary elements and returns it.
     """
     sg.theme ("DarkGrey1")
 
@@ -88,7 +90,7 @@ def createWindow():
 def helpWindow():
     """ 
         Args:     None
-        Returns:  helpLayout (list): The layout as a list of PySimpleGUI text elements to help the user if he/she is confused.
+        Returns:  helpLayout --> list: The layout as a list of PySimpleGUI text elements to help the user if he/she is confused.
         Summary:  This function creates a help window layout using PySimpleGUI, which provides a step-by-step guide on how to 
                   use the photo/video correction application. The function returns the layout as a list of PySimpleGUI elements.
     """
@@ -110,7 +112,7 @@ def helpWindow():
 def correctMethodWindow():
     """ 
         Args:     None
-        Returns:  correctionLayout (list): The layout as a list of PySimpleGUI text and button elements
+        Returns:  correctionLayout --> list: The layout as a list of PySimpleGUI text and button elements
         Summary:  This function creates a correction method window layout using PySimpleGUI, which allows
                   the user to choose between manual and automatic correction methods. The function returns 
                   the layout as a list of PySimpleGUI elements.
@@ -128,7 +130,7 @@ def correctMethodWindow():
 def successWindow():
     """ 
         Args:      None
-        Returns:   successLayout (list): The layout as a list of PySimpleGUI text and button elements.
+        Returns:   successLayout --> list: The layout as a list of PySimpleGUI text and button elements.
         Summary:   This function creates a success window layout using PySimpleGUI, which notifies the 
                    user that their image or video has been successfully corrected. The function returns
                    the layout as a list of PySimpleGUI elements.
@@ -144,7 +146,7 @@ def successWindow():
 # ------------------------------------------------------------------------------  
 def runEvents(window):
     """ 
-        Args:      window (PySimpleGUI Window): the main window of the application
+        Args:      window --> PySimpleGUI Window: the main window of the application
         Returns:   None
         Summary:   This function handles the event loop of the application.
                    It listens for events triggered by the user and responds accordingly.
@@ -602,9 +604,9 @@ def runEvents(window):
 
 def imageToData(pilImage, resize, blur=False):
     """ 
-        Args:    pilImage (PIL.Image): The PIL Image to be converted to bytes.
-                 resize (tuple): A tuple of two integers representing the desired width and height of the image.
-                 blur (bool, optional): A boolean indicating whether to apply a Gaussian blur filter to the image. Defaults to False.
+        Args:    pilImage --> PIL.Image: The PIL Image to be converted to bytes.
+                 resize   --> tuple: A tuple of two integers representing the desired width and height of the image.
+                 blur     --> bool, optional: A boolean indicating whether to apply a Gaussian blur filter to the image. Defaults to False.
         Returns: bytes: A byte stream representing the converted image.
         Summary: Converts a PIL Image to bytes and returns said bytes for display in a PySimpleGUI window.
     """
@@ -635,9 +637,9 @@ def imageToData(pilImage, resize, blur=False):
 
 def closeAllWindows():
     """ 
-        Args:    
-        Returns: 
-        Summary: close all opened windows
+        Args:    None
+        Returns: None
+        Summary: Close all opened windows
     """
     sys.exit()
 
@@ -645,8 +647,10 @@ def closeAllWindows():
 
 def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     """ 
-        Args:    
-        Returns: 
+        Args:    canvas:         --> tkinter canvas onto which the figure will be drawn
+                 fig:            --> matplotlib figure to be drawn
+                 canvas_toolbar: --> tkinter canvas onto which the toolbar will be packed
+        Returns: None
         Summary: 
     """
     if canvas.children:
@@ -663,9 +667,14 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
 
 def correctImageMan(fileName, ix, iy, window):
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:    fileName --> Str: Name of the file to be corrected
+                 ix       --> Int: The x-position (column) of the point on the horizon that needs to be aligned with the center column of the corrected image
+                 iy       --> Int: The y-position (row) of the point on the horizon that needs to be aligned with the horizontal center of the corrected image
+                 window   --> PySimplueGui Object: The main window running the program
+        Returns: finalImg --> Image: The corrected image as a NumPy array
+        Summary: Corrects an equirectangular image by rotating it such that the horizon becomes straight. This is accomplished by creating an EquirectRotate
+                 object. Return the fixed image.
+
     """
 
     print('\n Now rotating the image to straighten the horizon.')
@@ -712,9 +721,12 @@ def correctImageMan(fileName, ix, iy, window):
 
 def fixScreen(window, fileName):
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:    window    --> PySimpleGui Object: The main window running the application
+                 fileName: --> Str: The file name of the image to be opened
+        Returns: None
+        Summary: This function sets up the PySimpleGUI window to display the original image 
+                 and the progress bar and progress text. It hides the controls and toolbar 
+                 until the image has been corrected.
     """
      
     window['fig_cv'].update(visible=False)
@@ -758,9 +770,9 @@ def fixScreen(window, fileName):
 
 def displaySuccess():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:    None
+        Returns: None
+        Summary: Diplsay the successWindow for when an image is successfully corrected until the user closes it.
     """
      
     successMWindow = successWindow()
@@ -773,27 +785,6 @@ def displaySuccess():
             # window['-SUCCESS-'].update(disabled=False, button_color=('white', sg.theme_button_color_background()))
             break
         
-        
-        
-#----------------------------------------------------------- 
-
-def updateProgressBar(start,end, window):
-    """ 
-        Args:    start   --> integer signifying where to start the updating
-                 end     --> integer signifying where to start the updating
-                 window  --> the data of the window that is displayed to user
-        Returns: N/A
-        Summary: This function updates the progress bar with the window based
-                 on the passed in values of start/end.
-    """
-    
-    for i in range(start,end):
-        window["-ProgressBar-"].update(i)
-        
-    return
-
-    return successWin
-
 # ------------------------------------------------------------------------------  
 
 def updateProgressBar(start,end, window):
@@ -812,9 +803,9 @@ def updateProgressBar(start,end, window):
 # ------------------------------------------------------------------------------  
 
 def main():
-    window = createWindow() # Create window
-    runEvents(window) # Run Tasks
-    window.close() # Close the window
+    window = createWindow() # Create MAIN window of the program
+    runEvents(window)       # Run Tasks
+    window.close()          # Close the window
 
 # ------------------------------------------------------------------------------  
 
