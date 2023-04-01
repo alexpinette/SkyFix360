@@ -374,6 +374,8 @@ def runEvents(window):
                     
                 
                 elif correctEvent == 'Automatic':
+                    correctWindow.close()
+
 
                     predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
                     
