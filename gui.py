@@ -19,6 +19,8 @@ import tkinter as tk
 from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from equirectRotate import EquirectRotate
+
+from auto_fix import auto_correct_process
     
 def createWindow():
     """ 
@@ -185,9 +187,6 @@ def runEvents(window):
             ]
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update(fileNames)
-            
-            
-            
 
         # User chose file from File List
         if event == "-FILE LIST-":   
@@ -369,7 +368,74 @@ def runEvents(window):
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
 
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+                    
+                    
                 
+                elif correctEvent == 'Automatic':
+
+                    predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
+                    
+                    predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+
+                    # Split the array into two separate arrays for x and y coordinates
+                    x_coords = predicted_points_list[::2]
+                    y_coords = predicted_points_list[1::2]
+
+                    print(x_coords)
+                    print(y_coords)
+
+                    min_x, max_x = min(x_coords), max(x_coords)
+                    min_y, max_y = min(y_coords), max(y_coords)
+                    print(f"Min x: {min_x}, Max x: {max_x}, Min y: {min_y}, Max y: {max_y}")
+                    ix = min_x
+                    iy = min_y
+                    
+                    # Fix the screen to prepare for image processing
+                    fixScreen(window, fileName)
+
+                    # Correct the image (long process)
+                    finalImg = correctImageMan(fileName, ix, iy, window)
+                    
+                    correctWindow.close()
+
+                    window['-FOLDER-'].update(visible=True)
+                    window['-FILE LIST-'].update(visible=True)
+                    window['-CORRECT-'].update(visible=True)
+                    window['-BROWSE-'].update(visible=True)
+                    
+                    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+                    # Convert the array from BGR to RGB
+                    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+                    # Create a PIL Image object from the numpy array
+                    pilImg = PIL.Image.fromarray(finalImg)
+
+                    # Resize the image to fit the window
+                    data = imageToData(pilImg, window["-IMAGE-"].get_size())
+                    window['-IMAGE-'].update(data=data)
+                    updateProgressBar(95,101, window)
+
+                    window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+                    window['-ProgressText-'].update(visible=False)
+                    window['-ProgressBar-'].update(visible=False)
+                    
+                    window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
+                    window["-PAD FOR CORRECTION-"].update(visible=False)
+                    
+                    
+                    window['-FOLDROW-'].Widget.master.pack()
+                    window['-FILE LIST-'].Widget.master.pack()
+                    window['-BROWSE-'].Widget.master.pack()
+                    window['-CORRECT-'].Widget.master.pack()
+                    window['-EXPORT-'].Widget.master.pack()
+                    window['-HELP-'].Widget.master.pack()
+                    window['-QUIT-'].Widget.master.pack()
+
+                    displaySuccess()
+                    
+                    # Reset progress bar to zero
+                    updateProgressBar(0,1,window)
+
                 elif correctEvent == 'Cancel':
                     correctWindow.close()
                     break
