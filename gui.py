@@ -476,6 +476,8 @@ def runEvents(window):
             window['-HELP-'].Widget.master.pack()
             window['-QUIT-'].Widget.master.pack()
 
+            window.refresh()
+
             displaySuccess()
             
             # Reset progress bar to zero
@@ -742,6 +744,8 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-RESTART-'].update(visible=True)
         window['-DONE-'].update(visible=True)
+
+        window.refresh()
     
     # Fixes "correctWindow" display issues
     elif (btnClick == True):
@@ -838,6 +842,8 @@ def defaultWindow(window):
     window['-EXPORT-'].update(visible=True)
     window['-HELP-'].Widget.master.pack()
     window['-QUIT-'].Widget.master.pack()
+
+    window.refresh()
     
 # ------------------------------------------------------------------------------
 
