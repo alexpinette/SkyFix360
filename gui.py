@@ -468,15 +468,13 @@ def runEvents(window):
             
             
             window['-FOLDROW-'].Widget.master.pack()
-            window['-FILE LIST-'].Widget.master.pack()
             window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+            window['-FILE LIST-'].Widget.master.pack()
             window['-CORRECT-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
             window['-QUIT-'].Widget.master.pack()
-
-            window.refresh()
 
             displaySuccess()
             
@@ -744,8 +742,6 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-RESTART-'].update(visible=True)
         window['-DONE-'].update(visible=True)
-
-        window.refresh()
     
     # Fixes "correctWindow" display issues
     elif (btnClick == True):
@@ -828,6 +824,7 @@ def defaultWindow(window):
     window['-IMAGE-'].update(visible=True)
     window['-FOLDROW-'].Widget.master.pack()
     window['-FOLDROW-'].update(visible=True)
+    window['-FOLDROW-'].Widget.update()
     window['-TITLE-'].update(visible=True)
     window['-TITLE-'].update('SkyFix360')
     window['-FOLDER-'].Widget.master.pack()
@@ -836,14 +833,13 @@ def defaultWindow(window):
     window['-BROWSE-'].update(visible=True)
     window['-FILE LIST-'].Widget.master.pack()
     window['-FILE LIST-'].update(visible=True)
+    window['-FILE LIST-'].Widget.update()
     window['-CORRECT-'].Widget.master.pack()
     window['-CORRECT-'].update(visible=True)
     window['-EXPORT-'].Widget.master.pack()
     window['-EXPORT-'].update(visible=True)
     window['-HELP-'].Widget.master.pack()
     window['-QUIT-'].Widget.master.pack()
-
-    window.refresh()
     
 # ------------------------------------------------------------------------------
 
