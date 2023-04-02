@@ -1,5 +1,4 @@
 Task lists:
-- [ ] After first manual image corrected, second try with manual ruins window
 - [ ] When user selects another photo and doesnt export result, disable `Export`
 - [ ] Padding looks weird on Mac (when correction is taking place, maybe make progress bar wider?)
 - [ ] When user clicks `Help` button, `Quit` button does not work anymore
@@ -11,6 +10,7 @@ Task lists:
 - [ ] Keep window constant size throughtout process (smooth GUI)
 - [?] Make help & success window bigger (to display appropriately on Windoms & Mac)
     - Test on Nick && Alex's laptop
+- [x] After first manual image corrected, second try with manual ruins window
 - [x] Fix the extra padding under name file in manual page when prv btn clicked
 - [x] Add previous Button in manual correction window
 - [x] When previous button is clicked, `FOLDER` && `BROWSE` are not displaying in original window

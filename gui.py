@@ -20,15 +20,19 @@ from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from equirectRotate import EquirectRotate
 
+from auto_fix import auto_correct_process
+
+
+#------------------------------------------------------------------------------
 global prevButtonClickedOnce
 global doneButtonClickedOnce
 
 
 def createWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:     None
+        Returns:  window --> list: The main layout of the program. List of many PySimpleGUI elements 
+        Summary:  Creates the main GUI window for the SkyFix360 application with all necessary elements and returns it.
     """
     sg.theme ("DarkGrey1")
 
@@ -83,12 +87,15 @@ def createWindow():
 
     return window
 
+
 ########### FIXME: MAKE WINDOW LARGER
+# ------------------------------------------------------------------------------  
 def helpWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:     None
+        Returns:  helpLayout --> list: The layout as a list of PySimpleGUI text elements to help the user if he/she is confused.
+        Summary:  This function creates a help window layout using PySimpleGUI, which provides a step-by-step guide on how to 
+                  use the photo/video correction application. The function returns the layout as a list of PySimpleGUI elements.
     """
     
     helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, None), justification='center')],
@@ -104,11 +111,14 @@ def helpWindow():
     return helpLayout
 
 
+# ------------------------------------------------------------------------------  
 def correctMethodWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:     None
+        Returns:  correctionLayout --> list: The layout as a list of PySimpleGUI text and button elements
+        Summary:  This function creates a correction method window layout using PySimpleGUI, which allows
+                  the user to choose between manual and automatic correction methods. The function returns 
+                  the layout as a list of PySimpleGUI elements.
     """
     correctionLayout = [ [sg.Text('Choose a Correction Method', font=("Arial", 16, "bold"), size=(40, None), auto_size_text=True, justification='center', pad=(0, 5))],      
                          [sg.Button('Manual', size=(10,1)), sg.Text('This method allows for custom specification \nof the horizon by a drawing from the user.\n')], 
@@ -117,12 +127,16 @@ def correctMethodWindow():
     return correctionLayout
 
 
+
 ########### FIXME: MAKE WINDOW LARGER
+# ------------------------------------------------------------------------------  
 def successWindow():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:      None
+        Returns:   successLayout --> list: The layout as a list of PySimpleGUI text and button elements.
+        Summary:   This function creates a success window layout using PySimpleGUI, which notifies the 
+                   user that their image or video has been successfully corrected. The function returns
+                   the layout as a list of PySimpleGUI elements.
     """
 
     successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
@@ -132,17 +146,21 @@ def successWindow():
     return successLayout
 
 
-
+# ------------------------------------------------------------------------------  
 def runEvents(window):
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:      window --> PySimpleGUI Window: the main window of the application
+        Returns:   None
+        Summary:   This function handles the event loop of the application.
+                   It listens for events triggered by the user and responds accordingly.
     """
 
     fileNames = []
     prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
     doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
+    
+    automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
+    correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
         
     while True:
         event, values = window.read()
@@ -198,6 +216,9 @@ def runEvents(window):
         
             except:
                 pass
+            
+            
+            
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
         if event == ('-CORRECT-'):
@@ -216,9 +237,28 @@ def runEvents(window):
 
                     ix = 0
                     iy = 0
-
-                    reformatScreen(window, prevButtonClickedOnce)
-                                                
+                    
+                    # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
+                    if (automaticCorrectedOnce == True and correctionsCompleted == 1):
+                        reformatScreen(window,True)
+                        
+                        # I know its _forget() here, but the buttons look good
+                        window['-CORRECT-'].Widget.master.pack_forget()
+                        window['-EXPORT-'].Widget.master.pack_forget() 
+                        
+                        # window['-CORRECT-'].update(visible=False)
+                        # window['-EXPORT-'].update(visible=False) 
+                        
+                        
+                    
+                    # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
+                    elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
+                              
+                        if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
+                            reformatScreen(window, True)
+                        elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
+                            reformatScreen(window, False)
+                                                        
                     
                     fig = plt.figure()
                     ax = fig.add_subplot(111)
@@ -264,63 +304,105 @@ def runEvents(window):
                     # Connect the onclick function to the mouse click event
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
-
+                                  
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
+                    
+                    
                 
+                elif correctEvent == 'Automatic':
+                    correctWindow.close()                                        
+
+
+                    predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
+                    
+                    predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+                    for i in range(len(predicted_points_list)):
+                        if predicted_points_list[i] < 0:
+                            predicted_points_list[i] = 1.00
+
+                    # Split the array into two separate arrays for x and y coordinates
+                    x_coords = predicted_points_list[::2]
+                    y_coords = predicted_points_list[1::2]
+                    
+                    lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
+
+
+                    
+                    # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+                    point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+                    ix = point_with_highest_y[0]
+                    iy = -point_with_highest_y[1]
+
+
+                    # Fix the screen to prepare for image processing
+                    fixScreen(window, fileName)
+
+                    # Correct the image (long process)
+                    finalImg = correctImageMan(fileName, ix, iy, window)
+                    
+                    correctWindow.close()
+
+                    window['-FOLDER-'].update(visible=True)
+                    window['-FILE LIST-'].update(visible=True)
+                    window['-CORRECT-'].update(visible=True)
+                    window['-BROWSE-'].update(visible=True)
+                    
+                    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+                    # Convert the array from BGR to RGB
+                    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+                    # Create a PIL Image object from the numpy array
+                    pilImg = PIL.Image.fromarray(finalImg)
+
+                    # Resize the image to fit the window
+                    data = imageToData(pilImg, window["-IMAGE-"].get_size())
+                    window['-IMAGE-'].update(data=data)
+                    updateProgressBar(95,101, window)
+
+                    window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+                    window['-ProgressText-'].update(visible=False)
+                    window['-ProgressBar-'].update(visible=False)
+                    
+                    window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
+                    window["-PAD FOR CORRECTION-"].update(visible=False)
+                    
+                    
+                    window['-FOLDROW-'].Widget.master.pack()
+                    window['-FILE LIST-'].Widget.master.pack()
+                    window['-BROWSE-'].Widget.master.pack()
+                    window['-CORRECT-'].Widget.master.pack()
+                    window['-EXPORT-'].Widget.master.pack()
+                    window['-HELP-'].Widget.master.pack()
+                    window['-QUIT-'].Widget.master.pack()
+
+                    displaySuccess()
+                    
+                    # Reset progress bar to zero
+                    updateProgressBar(0,1,window)
+                    
+                    automaticCorrectedOnce = True
+                    correctionsCompleted += 1
+
+                    
+
                 elif correctEvent == 'Cancel':
                     correctWindow.close()
                     break
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
-
-            window['-PREVIOUS BTN-'].update(visible=False)
-            window['-TITLE-'].update(visible=False)
-            window['-MANUAL DESCRIPTION-'].update(visible=False)
-            window['fig_cv'].update(visible=False)
-            window['-DONE-'].update(visible=False)
-            window['-RESTART-'].update(visible=False)
-
-            window['fig_cv'].Widget.master.pack_forget() 
-            window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
-            window['-FOLDROW-'].Widget.master.pack_forget() 
-            window['-FILE LIST-'].Widget.master.pack_forget() 
-            window['-CORRECT-'].Widget.master.pack_forget()
-            window['-EXPORT-'].Widget.master.pack_forget() 
-            window['-DONE-'].Widget.master.pack_forget() 
-            window['-RESTART-'].Widget.master.pack_forget()
-            window['-HELP-'].Widget.master.pack_forget() 
-            window['-QUIT-'].Widget.master.pack_forget() 
-
-            window['-IMAGE-'].Widget.master.pack()
-            window['-IMAGE-'].update(visible=True)
-            window['-FOLDROW-'].Widget.master.pack()
-            window['-FOLDROW-'].update(visible=True)
-            window['-TITLE-'].update(visible=True)
-            window['-TITLE-'].update('SkyFix360')
-            window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
-            window['-FOLDER-'].update(visible=True)
-            window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
-            window['-BROWSE-'].update(visible=True)
-            window['-FILE LIST-'].Widget.master.pack()
-            window['-FILE LIST-'].update(visible=True)
-            window['-CORRECT-'].Widget.master.pack()
-            window['-CORRECT-'].update(visible=True)
-            window['-EXPORT-'].Widget.master.pack()
-            window['-EXPORT-'].update(visible=True)
-            window['-HELP-'].Widget.master.pack()
-            window['-QUIT-'].Widget.master.pack()
-            
+            defaultWindow(window)
             prevButtonClickedOnce = True
 
 
         if event == ('-DONE-') and lineCoords != []:
-            reformatScreen(window, doneButtonClickedOnce)
 
-            # Find the min and max x and y values in the list of coordinates
-            x_coords, y_coords = zip(*lineCoords)
-
-            print(lineCoords)
+                
+            if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
+                reformatScreen(window, True)
+            elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
+                reformatScreen(window, False)
+            
 
             # Clear the plot and redraw the image
             ax.clear()
@@ -332,11 +414,12 @@ def runEvents(window):
             # Disconnect from the figure
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
-              
-            point_with_highest_y = max(lineCoords, key=lambda point: point[1])
+            
+    
+            
+            point_with_highest_y = max(lineCoords, key=lambda point:point[1])
             ix = point_with_highest_y[0]
             iy = -point_with_highest_y[1]
-            print(ix, iy)
             
             # Forget these since there's no point in having them while image is processing.
             window['-PREVIOUS BTN-'].update(visible=False)
@@ -386,7 +469,8 @@ def runEvents(window):
             
             window['-FOLDROW-'].Widget.master.pack()
             window['-FILE LIST-'].Widget.master.pack()
-            window['-BROWSE-'].Widget.master.pack()
+            window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+            window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-CORRECT-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
@@ -398,6 +482,12 @@ def runEvents(window):
             updateProgressBar(0,1,window)
 
             doneButtonClickedOnce = True
+            correctionsCompleted += 1
+
+            if(automaticCorrectedOnce):
+                defaultWindow(window)
+            
+            
 
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
@@ -429,21 +519,14 @@ def runEvents(window):
 # ------------------------------------------------------------------------------  
 
 def imageToData(pilImage, resize, blur=False):
-    '''
-    def imageToData  - the method resizes the image if the resize parameter is not
-                       None and saves the image as bytes in PNG format.
-    @ param pilImage - a PIL image object that will be converted to bytes & returned
-                       by the function
-    @ param resize   - a tuple containing two integers representing the new width
-                       and height of the image. If None, the image will not be resized.
-    @ param blur     - a boolean signifying if the image should be blurred.
-    precondition     - the pilImage parameter should be a PIL image object. Otherwise,
-                       the function will throw an exception. The resize parameter
-                       should be a tuple containing two integers. Otherwise, the
-                       function will treat it as None and not resize the image.
-    postcondition    - function returns a bytes object representing the image in
-                       PNG format
-'''  
+    """ 
+        Args:    pilImage --> PIL.Image: The PIL Image to be converted to bytes.
+                 resize   --> tuple: A tuple of two integers representing the desired width and height of the image.
+                 blur     --> bool, optional: A boolean indicating whether to apply a Gaussian blur filter to the image. Defaults to False.
+        Returns: bytes: A byte stream representing the converted image.
+        Summary: Converts a PIL Image to bytes and returns said bytes for display in a PySimpleGUI window.
+    """
+
     
     # store current image and its width and height
     img = pilImage.copy()
@@ -470,9 +553,9 @@ def imageToData(pilImage, resize, blur=False):
 
 def closeAllWindows():
     """ 
-        Args:    
-        Returns: 
-        Summary: close all opened windows
+        Args:    None
+        Returns: None
+        Summary: Close all opened windows
     """
     sys.exit()
 
@@ -480,8 +563,10 @@ def closeAllWindows():
 
 def draw_figure_w_toolbar(canvas, fig):
     """ 
-        Args:    
-        Returns: 
+        Args:    canvas:         --> tkinter canvas onto which the figure will be drawn
+                 fig:            --> matplotlib figure to be drawn
+                 canvas_toolbar: --> tkinter canvas onto which the toolbar will be packed
+        Returns: None
         Summary: 
     """
     if canvas.children:
@@ -495,9 +580,14 @@ def draw_figure_w_toolbar(canvas, fig):
 
 def correctImageMan(fileName, ix, iy, window):
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:    fileName --> Str: Name of the file to be corrected
+                 ix       --> Int: The x-position (column) of the point on the horizon that needs to be aligned with the center column of the corrected image
+                 iy       --> Int: The y-position (row) of the point on the horizon that needs to be aligned with the horizontal center of the corrected image
+                 window   --> PySimplueGui Object: The main window running the program
+        Returns: finalImg --> Image: The corrected image as a NumPy array
+        Summary: Corrects an equirectangular image by rotating it such that the horizon becomes straight. This is accomplished by creating an EquirectRotate
+                 object. Return the fixed image.
+
     """
 
     print('\n Now rotating the image to straighten the horizon.')
@@ -544,9 +634,12 @@ def correctImageMan(fileName, ix, iy, window):
 
 def fixScreen(window, fileName):
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:    window    --> PySimpleGui Object: The main window running the application
+                 fileName: --> Str: The file name of the image to be opened
+        Returns: None
+        Summary: This function sets up the PySimpleGUI window to display the original image 
+                 and the progress bar and progress text. It hides the controls and toolbar 
+                 until the image has been corrected.
     """
      
     window['fig_cv'].update(visible=False)
@@ -589,9 +682,9 @@ def fixScreen(window, fileName):
 
 def displaySuccess():
     """ 
-        Args:    
-        Returns: 
-        Summary: 
+        Args:    None
+        Returns: None
+        Summary: Diplsay the successWindow for when an image is successfully corrected until the user closes it.
     """
      
     successMWindow = successWindow()
@@ -602,6 +695,7 @@ def displaySuccess():
             # Close the help popup
             successWin.close()
             break
+        
 
 # ------------------------------------------------------------------------------  
 
@@ -621,7 +715,7 @@ def updateProgressBar(start,end, window):
 # ------------------------------------------------------------------------------  
 
 def reformatScreen(window, btnClick):
-    # Normal 
+    # Normal
     if (btnClick == False):
 
         window['-FILETEXT-'].update(visible=False)
@@ -637,6 +731,7 @@ def reformatScreen(window, btnClick):
 
         window['-IMAGE-'].update(visible=False)
         window['-IMAGE-'].Widget.master.pack_forget()
+            
         window['fig_cv'].update(visible=True)
         window['-FOLDER-'].update(visible=False)
         window['-FILE LIST-'].Widget.master.pack_forget() 
@@ -690,7 +785,7 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
 
 
-        window['-FOLDROW-'].Widget.master.pack()
+        # window['-FOLDROW-'].Widget.master.pack()
 
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
@@ -706,12 +801,51 @@ def reformatScreen(window, btnClick):
         window['-QUIT-'].update(visible=True)
 
 
-# ------------------------------------------------------------------------------  
+def defaultWindow(window):
+    window['-PREVIOUS BTN-'].update(visible=False)
+    window['-TITLE-'].update(visible=False)
+    window['-MANUAL DESCRIPTION-'].update(visible=False)
+    window['fig_cv'].update(visible=False)
+    window['-DONE-'].update(visible=False)
+    window['-RESTART-'].update(visible=False)
+
+    window['fig_cv'].Widget.master.pack_forget() 
+    window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
+    window['-FOLDROW-'].Widget.master.pack_forget() 
+    window['-FILE LIST-'].Widget.master.pack_forget() 
+    window['-CORRECT-'].Widget.master.pack_forget()
+    window['-EXPORT-'].Widget.master.pack_forget() 
+    window['-DONE-'].Widget.master.pack_forget() 
+    window['-RESTART-'].Widget.master.pack_forget()
+    window['-HELP-'].Widget.master.pack_forget() 
+    window['-QUIT-'].Widget.master.pack_forget() 
+
+    window['-IMAGE-'].Widget.master.pack()
+    window['-IMAGE-'].update(visible=True)
+    window['-FOLDROW-'].Widget.master.pack()
+    window['-FOLDROW-'].update(visible=True)
+    window['-TITLE-'].update(visible=True)
+    window['-TITLE-'].update('SkyFix360')
+    window['-FOLDER-'].Widget.master.pack()
+    window['-FOLDER-'].update(visible=True)
+    window['-BROWSE-'].Widget.master.pack()
+    window['-BROWSE-'].update(visible=True)
+    window['-FILE LIST-'].Widget.master.pack()
+    window['-FILE LIST-'].update(visible=True)
+    window['-CORRECT-'].Widget.master.pack()
+    window['-CORRECT-'].update(visible=True)
+    window['-EXPORT-'].Widget.master.pack()
+    window['-EXPORT-'].update(visible=True)
+    window['-HELP-'].Widget.master.pack()
+    window['-QUIT-'].Widget.master.pack()
+    
+# ------------------------------------------------------------------------------
+
 
 def main():
-    window = createWindow() # Create window
-    runEvents(window) # Run Tasks
-    window.close() # Close the window
+    window = createWindow() # Create MAIN window of the program
+    runEvents(window)       # Run Tasks
+    window.close()          # Close the window
 
 # ------------------------------------------------------------------------------  
 
