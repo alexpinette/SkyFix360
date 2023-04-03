@@ -86,10 +86,15 @@ def auto_correct_process(fileName, folder):
   # Read the image from file and resize it
   preprocessed_image = preprocess_image(fileName)
   
-  modelDir = "horizon_line_model.h5"
+  # modelDir = "horizon_line_model.h5"
   # modelDir = os.path.join(folder, "horizon_line_model.h5")
 
+  # print(modelDir)
+  currentDir = os.getcwd()
+  sep = os.path.sep
+  modelDir = currentDir + sep + "horizon_line_model.h5"
   print(modelDir)
+
   model = tf.keras.models.load_model(modelDir)
 
 
