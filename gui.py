@@ -36,7 +36,7 @@ def createWindow():
     """
     sg.theme ("DarkGrey1")
 
-    manualDescription = "Click the lowest and highest points on the horizon line. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
 
@@ -257,7 +257,7 @@ def runEvents(window):
 
                     fig = plt.figure(figsize=(8, 4), dpi=100)
                     DPI = fig.get_dpi()
-
+                    ax = fig.add_subplot(111)
                     fig.set_size_inches(900/100, 300/100)
                     img = mpimg.imread(fileName)
                     h, w, _ = img.shape
@@ -273,12 +273,8 @@ def runEvents(window):
                         if event.xdata != None and event.ydata != None:
                             lineCoords.append((event.xdata, event.ydata))
 
-                            # If there are two or more points in the list, draw a line
-                            if len(lineCoords) > 1:
-                                plt.plot([lineCoords[-2][0], lineCoords[-1][0]],
-                                        [lineCoords[-2][1], lineCoords[-1][1]],
-                                        color='r')
-                                fig.canvas.draw()
+                            ax.scatter(event.xdata, event.ydata, color='r')
+                            fig.canvas.draw()
 
                     def onkey(event):
                         # If the key pressed is 'z' and there are points to remove, remove the last point
@@ -288,10 +284,11 @@ def runEvents(window):
                             plt.clf()
                             plt.imshow(img)
                             plt.grid()
-                            for i in range(len(lineCoords)-1):
-                                plt.plot([lineCoords[i][0], lineCoords[i+1][0]],
-                                        [lineCoords[i][1], lineCoords[i+1][1]],
-                                        color='r')
+                            for point in lineCoords:
+                                 # Unpack the tuple into x and y coordinates
+                                 x, y = point
+                                 # Plot the point using ax.scatter()
+                                 ax.scatter(x, y, color='r')
                             fig.canvas.draw()
 
                     # Connect the onclick function to the mouse click event
@@ -768,15 +765,12 @@ def reformatScreen(window, btnClick):
         window['-FOLDROW-'].Widget.master.pack()
         window['-TITLE-'].update('Manual Correction Instructions')
 
-        manualDescription = "Click the lowest and highest points on the horizon line. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
         manualDescription = textwrap.fill(manualDescription, 52)
         
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
-
-
-        # window['-FOLDROW-'].Widget.master.pack()
 
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
