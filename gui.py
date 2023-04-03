@@ -782,8 +782,6 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
 
 
-        # window['-FOLDROW-'].Widget.master.pack()
-
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
         window['-CORRECT-'].update(visible=False)
