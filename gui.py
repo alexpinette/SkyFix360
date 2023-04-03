@@ -36,7 +36,7 @@ def createWindow():
     """
     sg.theme ("DarkGrey1")
 
-    manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+    manualDescription = "Click the lowest and highest points on the horizon line. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
 
@@ -47,10 +47,10 @@ def createWindow():
                   sg.Text('    ', key='-SPACE2-', visible=True, expand_x=True),
                 ],
 
-                [sg.Image(key='-IMAGE-', background_color = 'black', size=(1000, 500))],
+                [sg.Image(key='-IMAGE-', background_color = 'black', size=(1200, 600))],
                 [sg.Text('Progress: ', font='Arial 10 bold', key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
-                [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
+                [sg.Canvas(key='fig_cv', size=(800, 400), visible=False)]
                ]
 
     secondRow = [ #first col
@@ -77,18 +77,16 @@ def createWindow():
     layout = [ firstRow, secondRow ]
 
     # Display the window
-    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True)
+    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 800))
     
     # bind to config so can check when window size changes
-    window.bind('<Configure>', '-CONFIG-')
+    window.bind('<Configure>', key='-CONFIG-')
     
     # bind the closeAllWindows function to the WM_DELETE_WINDOW event of the main window
     window.TKroot.protocol("WM_DELETE_WINDOW", closeAllWindows)
 
     return window
 
-
-########### FIXME: MAKE WINDOW LARGER
 # ------------------------------------------------------------------------------  
 def helpWindow():
     """ 
@@ -158,9 +156,10 @@ def runEvents(window):
     fileNames = []
     prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
     doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
-    
     automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
+
     correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
+    imageSelected = False
         
     while True:
         event, values = window.read()
@@ -210,7 +209,8 @@ def runEvents(window):
                 
                 # Get image data, and then use it to update window["-IMAGE-"]
                 data = imageToData(pilImage, window["-IMAGE-"].get_size())
-                window['-IMAGE-'].update(data=data) 
+                window['-IMAGE-'].update(data=data)
+                imageSelected = True
                 
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
         
@@ -245,11 +245,6 @@ def runEvents(window):
                         # I know its _forget() here, but the buttons look good
                         window['-CORRECT-'].Widget.master.pack_forget()
                         window['-EXPORT-'].Widget.master.pack_forget() 
-                        
-                        # window['-CORRECT-'].update(visible=False)
-                        # window['-EXPORT-'].update(visible=False) 
-                        
-                        
                     
                     # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
                     elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
@@ -259,17 +254,15 @@ def runEvents(window):
                         elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
                             reformatScreen(window, False)
                                                         
-                    
-                    fig = plt.figure()
-                    ax = fig.add_subplot(111)
+
+                    fig = plt.figure(figsize=(8, 4), dpi=100)
                     DPI = fig.get_dpi()
 
-                    fig.set_size_inches(505 * 2 / float(DPI), 500 / float(DPI))
+                    fig.set_size_inches(900/100, 300/100)
                     img = mpimg.imread(fileName)
-                    imgplot = plt.imshow(img)
+                    h, w, _ = img.shape
+                    imgplot = plt.imshow(img, extent=[0, w, 0, h])
                     plt.grid()
-                    
-            
 
                     # Define a list to store the coordinates of the line
                     lineCoords = []
@@ -282,7 +275,7 @@ def runEvents(window):
 
                             # If there are two or more points in the list, draw a line
                             if len(lineCoords) > 1:
-                                ax.plot([lineCoords[-2][0], lineCoords[-1][0]],
+                                plt.plot([lineCoords[-2][0], lineCoords[-1][0]],
                                         [lineCoords[-2][1], lineCoords[-1][1]],
                                         color='r')
                                 fig.canvas.draw()
@@ -292,11 +285,11 @@ def runEvents(window):
                         if event.key == 'z' and len(lineCoords) > 0:
                             lineCoords.pop()
                             # Clear the plot and redraw the lines
-                            ax.clear()
-                            ax.imshow(img)
+                            plt.clf()
+                            plt.imshow(img)
                             plt.grid()
                             for i in range(len(lineCoords)-1):
-                                ax.plot([lineCoords[i][0], lineCoords[i+1][0]],
+                                plt.plot([lineCoords[i][0], lineCoords[i+1][0]],
                                         [lineCoords[i][1], lineCoords[i+1][1]],
                                         color='r')
                             fig.canvas.draw()
@@ -306,7 +299,6 @@ def runEvents(window):
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
                                   
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
-                    
                     
                 
                 elif correctEvent == 'Automatic':
@@ -405,8 +397,8 @@ def runEvents(window):
             
 
             # Clear the plot and redraw the image
-            ax.clear()
-            ax.imshow(img)
+            plt.clear()
+            plt.imshow(img)
             plt.axis('off')
             fig.set_facecolor('none') # set the background to transparent
             fig.canvas.draw()
@@ -506,11 +498,11 @@ def runEvents(window):
             lineCoords = []
             
             # Clear the plot and redraw the image
-            ax.clear()
-            ax.imshow(img)
+            plt.clear()
+            plt.imshow(img)
             plt.grid()
             fig.canvas.draw()
-            
+        
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
             break
@@ -776,8 +768,7 @@ def reformatScreen(window, btnClick):
         window['-FOLDROW-'].Widget.master.pack()
         window['-TITLE-'].update('Manual Correction Instructions')
 
-        
-        manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+        manualDescription = "Click the lowest and highest points on the horizon line. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
         manualDescription = textwrap.fill(manualDescription, 52)
         
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
