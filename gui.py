@@ -77,7 +77,7 @@ def createWindow():
     layout = [ firstRow, secondRow ]
 
     # Display the window
-    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 800))
+    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 810))
     
     # bind to config so can check when window size changes
     window.bind('<Configure>', key='-CONFIG-')
