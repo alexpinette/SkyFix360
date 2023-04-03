@@ -36,7 +36,7 @@ def createWindow():
     """
     sg.theme ("DarkGrey1")
 
-    manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
 
@@ -237,95 +237,6 @@ def runEvents(window):
 
                     ix = 0
                     iy = 0
-
-                    #     window['-FILETEXT-'].update(visible=False)
-                    #     window['-FILENAME-'].update(visible=False)
-                    #     window['-SPACE1-'].update(visible=False)
-                    #     window['-SPACE2-'].update(visible=False)
-
-                    #     window['-PREVIOUS BTN-'].update(visible=True)
-                    #     window['-SPACE1-'].update(visible=True)
-                    #     window['-FILETEXT-'].update(visible=True)
-                    #     window['-FILENAME-'].update(visible=True)
-                    #     window['-SPACE2-'].update(visible=True)
-
-                    #     window['-IMAGE-'].update(visible=False)
-                    #     window['-IMAGE-'].Widget.master.pack_forget()
-                    #     window['fig_cv'].update(visible=True)
-                    #     window['-FOLDER-'].update(visible=False)
-                    #     window['-FILE LIST-'].Widget.master.pack_forget() 
-                    #     window['-CORRECT-'].update(visible=False)
-                    #     window['-BROWSE-'].update(visible=False)
-                    #     window['-EXPORT-'].update(visible=False)
-                    #     window['-TITLE-'].update("Manual Correction Instructions")
-                    #     window['-MANUAL DESCRIPTION-'].update(visible=True)
-                    #     window['-RESTART-'].update(visible=True)
-                    #     window['-DONE-'].update(visible=True)
-                    
-                    # # Fixes "correctWindow" display issues
-                    # elif (prevButtonClickedOnce == True):
-  
-                        
-                    #     window['-FILETEXT-'].update(visible=False)
-                    #     window['-FILENAME-'].update(visible=False)
-                    #     window['-SPACE1-'].update(visible=False)
-                    #     window['-SPACE2-'].update(visible=False)
-
-                    #     # window['-MANUAL DESCRIPTION-'].Widget.master.pack() 
-                    #     # window['-MANUAL DESCRIPTION-'].update(visible=True)                          
-                    #     window['-IMAGE-'].Widget.master.pack_forget() 
-                    #     window['-FOLDROW-'].Widget.master.pack_forget() 
-                    #     window['-FILE LIST-'].Widget.master.pack_forget() 
-                    #     window['-CORRECT-'].Widget.master.pack_forget()
-                    #     window['-EXPORT-'].Widget.master.pack_forget() 
-                    #     window['-HELP-'].Widget.master.pack_forget() 
-                    #     window['-QUIT-'].Widget.master.pack_forget() 
-
-                        
-                    #     window['-PREVIOUS BTN-'].update(visible=True)
-                    #     window['-SPACE1-'].update(visible=True)
-                    #     window['-FILETEXT-'].update(visible=True)
-                    #     window['-FILENAME-'].update(visible=True)
-                    #     window['-SPACE2-'].update(visible=True)
-                        
-                    #     window['fig_cv'].Widget.master.pack() 
-                    #     window['fig_cv'].update(visible=True)
-                    #     window['-FOLDER-'].update(visible=False)
-                    #     window['-BROWSE-'].update(visible=False)
-                        
-                    #     window['-FOLDER-'].Widget.master.pack_forget() 
-                    #     window['-BROWSE-'].Widget.master.pack_forget() 
-                        
-                        
-                        
-
-                    #     window['-FOLDROW-'].Widget.master.pack()
-                    #     window['-TITLE-'].update('Manual Correction Instructions')
-
-                        
-                    #     manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
-                    #     manualDescription = textwrap.fill(manualDescription, 52)
-
-                        
-                        
-                    #     window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
-                    #     window['-MANUAL DESCRIPTION-'].update(visible=True)
-                    #     window['-MANUAL DESCRIPTION-'].update(manualDescription)
-
-
-                    #     window['-FOLDROW-'].Widget.master.pack()
-
-                    #     window['-DONE-'].Widget.master.pack() 
-                    #     window['-DONE-'].update(visible=True)
-                    #     window['-RESTART-'].Widget.master.pack() 
-                    #     window['-RESTART-'].update(visible=True)
-
-                    #     window['-HELP-'].Widget.master.pack() 
-                    #     window['-HELP-'].update(visible=True)
-
-                    #     window['-QUIT-'].Widget.master.pack() 
-                    #     window['-QUIT-'].update(visible=True)
-                    
                     
                     # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
                     if (automaticCorrectedOnce == True and correctionsCompleted == 1):
@@ -368,26 +279,23 @@ def runEvents(window):
                         # Append the coordinates of the click to the list
                         if event.xdata != None and event.ydata != None:
                             lineCoords.append((event.xdata, event.ydata))
-
-                            # If there are two or more points in the list, draw a line
-                            if len(lineCoords) > 1:
-                                ax.plot([lineCoords[-2][0], lineCoords[-1][0]],
-                                        [lineCoords[-2][1], lineCoords[-1][1]],
-                                        color='r')
-                                fig.canvas.draw()
+                            ax.scatter(event.xdata, event.ydata, color='r')
+                            fig.canvas.draw()
 
                     def onkey(event):
                         # If the key pressed is 'z' and there are points to remove, remove the last point
                         if event.key == 'z' and len(lineCoords) > 0:
                             lineCoords.pop()
-                            # Clear the plot and redraw the lines
+                            
+                            # Clear the plot and redraw the points
                             ax.clear()
                             ax.imshow(img)
                             plt.grid()
-                            for i in range(len(lineCoords)-1):
-                                ax.plot([lineCoords[i][0], lineCoords[i+1][0]],
-                                        [lineCoords[i][1], lineCoords[i+1][1]],
-                                        color='r')
+                            for point in lineCoords:
+                                # Unpack the tuple into x and y coordinates
+                                x, y = point
+                                # Plot the point using ax.scatter()
+                                ax.scatter(x, y, color='r')
                             fig.canvas.draw()
 
                     # Connect the onclick function to the mouse click event
@@ -409,8 +317,6 @@ def runEvents(window):
                         if predicted_points_list[i] < 0:
                             predicted_points_list[i] = 1.00
 
-                    print(predicted_points)
-                    print(predicted_points_list)
                     # Split the array into two separate arrays for x and y coordinates
                     x_coords = predicted_points_list[::2]
                     y_coords = predicted_points_list[1::2]
@@ -474,8 +380,6 @@ def runEvents(window):
                     automaticCorrectedOnce = True
                     correctionsCompleted += 1
 
-
-
                     
 
                 elif correctEvent == 'Cancel':
@@ -484,44 +388,7 @@ def runEvents(window):
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
-
-            window['-PREVIOUS BTN-'].update(visible=False)
-            window['-TITLE-'].update(visible=False)
-            window['-MANUAL DESCRIPTION-'].update(visible=False)
-            window['fig_cv'].update(visible=False)
-            window['-DONE-'].update(visible=False)
-            window['-RESTART-'].update(visible=False)
-
-            window['fig_cv'].Widget.master.pack_forget() 
-            window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
-            window['-FOLDROW-'].Widget.master.pack_forget() 
-            window['-FILE LIST-'].Widget.master.pack_forget() 
-            window['-CORRECT-'].Widget.master.pack_forget()
-            window['-EXPORT-'].Widget.master.pack_forget() 
-            window['-DONE-'].Widget.master.pack_forget() 
-            window['-RESTART-'].Widget.master.pack_forget()
-            window['-HELP-'].Widget.master.pack_forget() 
-            window['-QUIT-'].Widget.master.pack_forget() 
-
-            window['-IMAGE-'].Widget.master.pack()
-            window['-IMAGE-'].update(visible=True)
-            window['-FOLDROW-'].Widget.master.pack()
-            window['-FOLDROW-'].update(visible=True)
-            window['-TITLE-'].update(visible=True)
-            window['-TITLE-'].update('SkyFix360')
-            window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
-            window['-FOLDER-'].update(visible=True)
-            window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
-            window['-BROWSE-'].update(visible=True)
-            window['-FILE LIST-'].Widget.master.pack()
-            window['-FILE LIST-'].update(visible=True)
-            window['-CORRECT-'].Widget.master.pack()
-            window['-CORRECT-'].update(visible=True)
-            window['-EXPORT-'].Widget.master.pack()
-            window['-EXPORT-'].update(visible=True)
-            window['-HELP-'].Widget.master.pack()
-            window['-QUIT-'].Widget.master.pack()
-            
+            defaultWindow(window)
             prevButtonClickedOnce = True
 
 
@@ -533,10 +400,6 @@ def runEvents(window):
             elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
                 reformatScreen(window, False)
             
-            # reformatScreen(window, prevButtonClickedOnce)
-
-
-            print(lineCoords)
 
             # Clear the plot and redraw the image
             ax.clear()
@@ -602,8 +465,9 @@ def runEvents(window):
             
             
             window['-FOLDROW-'].Widget.master.pack()
+            window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+            window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-FILE LIST-'].Widget.master.pack()
-            window['-BROWSE-'].Widget.master.pack()
             window['-CORRECT-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
@@ -616,6 +480,9 @@ def runEvents(window):
 
             doneButtonClickedOnce = True
             correctionsCompleted += 1
+
+            if(automaticCorrectedOnce):
+                defaultWindow(window)
             
             
 
@@ -907,7 +774,7 @@ def reformatScreen(window, btnClick):
         window['-TITLE-'].update('Manual Correction Instructions')
 
         
-        manualDescription = "Draw a line from the LEFT side of the image to the RIGHT side of the image following the horizon. Once you are done, click the 'Done' button. If you wish to stop, click the 'Cancel' button and try again."
+        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
         manualDescription = textwrap.fill(manualDescription, 52)
         
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
@@ -915,7 +782,7 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
 
 
-        window['-FOLDROW-'].Widget.master.pack()
+        # window['-FOLDROW-'].Widget.master.pack()
 
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
@@ -930,6 +797,46 @@ def reformatScreen(window, btnClick):
         window['-QUIT-'].Widget.master.pack() 
         window['-QUIT-'].update(visible=True)
 
+
+def defaultWindow(window):
+    window['-PREVIOUS BTN-'].update(visible=False)
+    window['-TITLE-'].update(visible=False)
+    window['-MANUAL DESCRIPTION-'].update(visible=False)
+    window['fig_cv'].update(visible=False)
+    window['-DONE-'].update(visible=False)
+    window['-RESTART-'].update(visible=False)
+
+    window['fig_cv'].Widget.master.pack_forget() 
+    window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
+    window['-FOLDROW-'].Widget.master.pack_forget() 
+    window['-FILE LIST-'].Widget.master.pack_forget() 
+    window['-CORRECT-'].Widget.master.pack_forget()
+    window['-EXPORT-'].Widget.master.pack_forget() 
+    window['-DONE-'].Widget.master.pack_forget() 
+    window['-RESTART-'].Widget.master.pack_forget()
+    window['-HELP-'].Widget.master.pack_forget() 
+    window['-QUIT-'].Widget.master.pack_forget() 
+
+    window['-IMAGE-'].Widget.master.pack()
+    window['-IMAGE-'].update(visible=True)
+    window['-FOLDROW-'].Widget.master.pack()
+    window['-FOLDROW-'].update(visible=True)
+    window['-FOLDROW-'].Widget.update()
+    window['-TITLE-'].update(visible=True)
+    window['-TITLE-'].update('SkyFix360')
+    window['-FOLDER-'].Widget.master.pack()
+    window['-FOLDER-'].update(visible=True)
+    window['-BROWSE-'].Widget.master.pack()
+    window['-BROWSE-'].update(visible=True)
+    window['-FILE LIST-'].Widget.master.pack()
+    window['-FILE LIST-'].update(visible=True)
+    window['-FILE LIST-'].Widget.update()
+    window['-CORRECT-'].Widget.master.pack()
+    window['-CORRECT-'].update(visible=True)
+    window['-EXPORT-'].Widget.master.pack()
+    window['-EXPORT-'].update(visible=True)
+    window['-HELP-'].Widget.master.pack()
+    window['-QUIT-'].Widget.master.pack()
     
 # ------------------------------------------------------------------------------
 
