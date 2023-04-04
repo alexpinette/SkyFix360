@@ -391,8 +391,8 @@ def runEvents(window):
             
 
             # Clear the plot and redraw the image
-            plt.clear()
-            plt.imshow(img)
+            ax.clear()
+            ax.imshow(img)
             plt.axis('off')
             fig.set_facecolor('none') # set the background to transparent
             fig.canvas.draw()
@@ -487,8 +487,8 @@ def runEvents(window):
             lineCoords = []
             
             # Clear the plot and redraw the image
-            plt.clear()
-            plt.imshow(img)
+            ax.clear()
+            ax.imshow(img)
             plt.grid()
             fig.canvas.draw()
         
