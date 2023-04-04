@@ -255,13 +255,11 @@ def runEvents(window):
                             reformatScreen(window, False)
                                                         
 
-                    fig = plt.figure(figsize=(8, 4), dpi=100)
-                    DPI = fig.get_dpi()
+                    fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
                     ax = fig.add_subplot(111)
-                    fig.set_size_inches(900/100, 300/100)
+                    fig.set_size_inches(900/100, 300/100, forward=True)
                     img = mpimg.imread(fileName)
-                    h, w, _ = img.shape
-                    imgplot = plt.imshow(img, extent=[0, w, 0, h])
+                    imgplot = plt.imshow(img, aspect='auto')
                     plt.grid()
 
                     # Define a list to store the coordinates of the line
@@ -280,15 +278,16 @@ def runEvents(window):
                         # If the key pressed is 'z' and there are points to remove, remove the last point
                         if event.key == 'z' and len(lineCoords) > 0:
                             lineCoords.pop()
-                            # Clear the plot and redraw the lines
-                            plt.clf()
-                            plt.imshow(img)
+                            
+                            # Clear the plot and redraw the points
+                            ax.clear()
+                            ax.imshow(img)
                             plt.grid()
                             for point in lineCoords:
-                                 # Unpack the tuple into x and y coordinates
-                                 x, y = point
-                                 # Plot the point using ax.scatter()
-                                 ax.scatter(x, y, color='r')
+                                # Unpack the tuple into x and y coordinates
+                                x, y = point
+                                # Plot the point using ax.scatter()
+                                ax.scatter(x, y, color='r')
                             fig.canvas.draw()
 
                     # Connect the onclick function to the mouse click event
@@ -297,10 +296,8 @@ def runEvents(window):
                                   
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
                     
-                
                 elif correctEvent == 'Automatic':
                     correctWindow.close()                                        
-
 
                     predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
                     
@@ -404,8 +401,6 @@ def runEvents(window):
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
             
-    
-            
             point_with_highest_y = max(lineCoords, key=lambda point:point[1])
             ix = point_with_highest_y[0]
             iy = -point_with_highest_y[1]
@@ -426,10 +421,8 @@ def runEvents(window):
             correctWindow.close()
 
             window['-TITLE-'].update("SkyFix360")
-            
             window['-MANUAL DESCRIPTION-'].update(visible=False)
             window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget()  
-
             window['fig_cv'].update(visible=True)
             window['-FOLDER-'].update(visible=True)
             window['-FILE LIST-'].update(visible=True)
@@ -444,7 +437,7 @@ def runEvents(window):
             pilImg = PIL.Image.fromarray(finalImg)
 
             # Resize the image to fit the window
-            data = imageToData(pilImg, window["-IMAGE-"].get_size())
+            data = imageToData(pilImg, window['-IMAGE-'].get_size())
             window['-IMAGE-'].update(data=data)
             updateProgressBar(95,101, window)
 
@@ -452,9 +445,8 @@ def runEvents(window):
             window['-ProgressText-'].update(visible=False)
             window['-ProgressBar-'].update(visible=False)
             
-            window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
-            window["-PAD FOR CORRECTION-"].update(visible=False)
-            
+            window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
+            window['-PAD FOR CORRECTION-'].update(visible=False)
             
             window['-FOLDROW-'].Widget.master.pack()
             window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
