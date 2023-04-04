@@ -42,6 +42,7 @@ class EquirectRotate:
     start = 20
     end = start + 1
     
+<<<<<<< HEAD
     for i in range(self.height):
       
       if (i % benchmark == 0):
@@ -51,6 +52,19 @@ class EquirectRotate:
       
       for j in range(self.width):
         self.src_xyz[i][j] = self.out_xyz[i][j] @ Rt
+=======
+    # for i in range(self.height):
+      
+    #   if (i % benchmark == 0):
+    #     updateProgressBar(start,end,window)
+    #     start += 1
+    #     end += 1
+      
+    #   for j in range(self.width):
+    #     self.src_xyz[i][j] = self.out_xyz[i][j] @ Rt
+
+    self.src_xyz = np.einsum('ijk,kl->ijl', self.out_xyz, Rt)
+>>>>>>> f052c205b9b42b17cbf35ab660f060b708713270
         
     updateProgressBar(60,61, window)
 
@@ -84,6 +98,7 @@ class EquirectRotate:
     start = 61
     end = start + 1
     
+<<<<<<< HEAD
     for i in range(self.height):
       if (i % benchmark == 0):
         updateProgressBar(start,end,window)
@@ -93,6 +108,22 @@ class EquirectRotate:
       for j in range(self.width):
         pixel = self.src_Pixel[i][j]
         rotated_img[i][j] = image[pixel[0]][pixel[1]]
+=======
+    # for i in range(self.height):
+    #   if (i % benchmark == 0):
+    #     updateProgressBar(start,end,window)
+    #     start += 1
+    #     end += 1
+        
+    #   for j in range(self.width):
+    #     pixel = self.src_Pixel[i][j]
+    #     rotated_img[i][j] = image[pixel[0]][pixel[1]]
+
+    i_coords, j_coords = np.indices((self.height, self.width))
+    rotated_img = image[self.src_Pixel[..., 0], self.src_Pixel[..., 1]]
+
+
+>>>>>>> f052c205b9b42b17cbf35ab660f060b708713270
     return rotated_img
   
 # ------------------------------------------------------------------------------  
