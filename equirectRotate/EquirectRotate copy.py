@@ -52,7 +52,7 @@ class EquirectRotate:
     #   for j in range(self.width):
     #     self.src_xyz[i][j] = self.out_xyz[i][j] @ Rt
 
-    self.src_xyz = np.matmul(self.out_xyz, Rt)
+    self.src_xyz = np.einsum('ijk,kl->ijl', self.out_xyz, Rt)
         
     updateProgressBar(60,61, window)
 
