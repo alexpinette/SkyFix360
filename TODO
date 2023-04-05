@@ -1,5 +1,5 @@
 Task lists:
-- [ ] Show selected (x, y) coordinates points on GUI
+- [x] Show selected (x, y) coordinates points on GUI
 - [ ] Allow corrections made on corrected images
 - [ ] Change success window location(?)
 - [ ] Make a new directory to where the user wants to export correction
