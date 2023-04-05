@@ -36,7 +36,7 @@ def createWindow():
     """
     sg.theme ("DarkGrey1")
 
-    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
+    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to undo, click the 'Undo'."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
 
@@ -66,8 +66,8 @@ def createWindow():
          sg.Column([
          [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
          [sg.Button('Export', key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
+         [sg.Button('Undo', key='-UNDO-', visible=False, size=(10, 1))],
          [sg.Button('Done', key='-DONE-', visible=False, size=(10, 1))],
-         [sg.Button('Restart', key='-RESTART-', visible=False, size=(10, 1))],
          ])
         ],
         [sg.Text("", pad=(0,66), key="-PAD FOR CORRECTION-", visible=False)],
@@ -125,8 +125,6 @@ def correctMethodWindow():
     return correctionLayout
 
 
-
-########### FIXME: MAKE WINDOW LARGER
 # ------------------------------------------------------------------------------  
 def successWindow():
     """ 
@@ -159,7 +157,6 @@ def runEvents(window):
     automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
 
     correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
-    imageSelected = False
         
     while True:
         event, values = window.read()
@@ -210,14 +207,10 @@ def runEvents(window):
                 # Get image data, and then use it to update window["-IMAGE-"]
                 data = imageToData(pilImage, window["-IMAGE-"].get_size())
                 window['-IMAGE-'].update(data=data)
-                imageSelected = True
-                
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
         
             except:
                 pass
-            
-            
             
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
@@ -227,7 +220,7 @@ def runEvents(window):
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
             while True:
                 correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED or correctEvent == ('-RESTART-'):
+                if correctEvent == sg.WIN_CLOSED:
                     # Close the help popup
                     correctWindow.close()
                     
@@ -272,6 +265,11 @@ def runEvents(window):
                             lineCoords.append((event.xdata, event.ydata))
 
                             ax.scatter(event.xdata, event.ydata, color='r')
+
+
+                            print (f'x = {event.xdata}, y = {event.ydata}')
+
+
                             fig.canvas.draw()
 
                     def onkey(event):
@@ -281,7 +279,7 @@ def runEvents(window):
                             
                             # Clear the plot and redraw the points
                             ax.clear()
-                            ax.imshow(img)
+                            ax.imshow(img, aspect='auto')
                             plt.grid()
                             for point in lineCoords:
                                 # Unpack the tuple into x and y coordinates
@@ -369,11 +367,10 @@ def runEvents(window):
                     automaticCorrectedOnce = True
                     correctionsCompleted += 1
 
-                    
-
                 elif correctEvent == 'Cancel':
                     correctWindow.close()
                     break
+
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
@@ -382,8 +379,6 @@ def runEvents(window):
 
 
         if event == ('-DONE-') and lineCoords != []:
-
-                
             if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
                 reformatScreen(window, True)
             elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
@@ -392,7 +387,7 @@ def runEvents(window):
 
             # Clear the plot and redraw the image
             ax.clear()
-            ax.imshow(img)
+            ax.imshow(img, aspect='auto')
             plt.axis('off')
             fig.set_facecolor('none') # set the background to transparent
             fig.canvas.draw()
@@ -407,10 +402,10 @@ def runEvents(window):
             
             # Forget these since there's no point in having them while image is processing.
             window['-PREVIOUS BTN-'].update(visible=False)
+            window['-UNDO-'].update(visible=False)
+            window['-UNDO-'].Widget.master.pack_forget() 
             window['-DONE-'].update(visible=False)
             window['-DONE-'].Widget.master.pack_forget() 
-            window['-RESTART-'].update(visible=False)
-            window['-RESTART-'].Widget.master.pack_forget() 
             
             # Fix the screen to prepare for image processing
             fixScreen(window, fileName)
@@ -480,16 +475,20 @@ def runEvents(window):
             cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
             print('\nWrote output file: ', opfile)
-
-
-        # if user clicks Cancel button, clear canvas (restart drawing)
-        if event == ('-RESTART-'):
-            lineCoords = []
+        
+        # if user clicks `Undo` button, undo last click event on canvas
+        if event == ('-UNDO-'):
+            lineCoords.pop()
             
-            # Clear the plot and redraw the image
+            # Clear the plot and redraw the points
             ax.clear()
-            ax.imshow(img)
+            ax.imshow(img, aspect='auto')
             plt.grid()
+            for point in lineCoords:
+                # Unpack the tuple into x and y coordinates
+                x, y = point
+                # Plot the point using ax.scatter()
+                ax.scatter(x, y, color='r')
             fig.canvas.draw()
         
         # if user selects '-QUIT-' button or default exit button, close window
@@ -721,7 +720,7 @@ def reformatScreen(window, btnClick):
         window['-EXPORT-'].update(visible=False)
         window['-TITLE-'].update("Manual Correction Instructions")
         window['-MANUAL DESCRIPTION-'].update(visible=True)
-        window['-RESTART-'].update(visible=True)
+        window['-UNDO-'].update(visible=True)
         window['-DONE-'].update(visible=True)
     
     # Fixes "correctWindow" display issues
@@ -757,7 +756,7 @@ def reformatScreen(window, btnClick):
         window['-FOLDROW-'].Widget.master.pack()
         window['-TITLE-'].update('Manual Correction Instructions')
 
-        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
+        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to undo, click the 'Undo' button."
         manualDescription = textwrap.fill(manualDescription, 52)
         
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
@@ -770,8 +769,8 @@ def reformatScreen(window, btnClick):
         window['-EXPORT-'].update(visible=False)
         window['-DONE-'].Widget.master.pack() 
         window['-DONE-'].update(visible=True)
-        window['-RESTART-'].Widget.master.pack() 
-        window['-RESTART-'].update(visible=True)
+        window['-UNDO-'].Widget.master.pack() 
+        window['-UNDO-'].update(visible=True)
         window['-HELP-'].Widget.master.pack() 
         window['-HELP-'].update(visible=True)
         window['-QUIT-'].Widget.master.pack() 
@@ -783,8 +782,8 @@ def defaultWindow(window):
     window['-TITLE-'].update(visible=False)
     window['-MANUAL DESCRIPTION-'].update(visible=False)
     window['fig_cv'].update(visible=False)
+    window['-UNDO-'].update(visible=False)
     window['-DONE-'].update(visible=False)
-    window['-RESTART-'].update(visible=False)
 
     window['fig_cv'].Widget.master.pack_forget() 
     window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
@@ -792,8 +791,8 @@ def defaultWindow(window):
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget()
     window['-EXPORT-'].Widget.master.pack_forget() 
+    window['-UNDO-'].Widget.master.pack_forget()
     window['-DONE-'].Widget.master.pack_forget() 
-    window['-RESTART-'].Widget.master.pack_forget()
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
 
