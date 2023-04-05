@@ -666,8 +666,8 @@ def fixScreen(window, fileName):
     window["-PAD FOR CORRECTION-"].Widget.master.pack()
     window["-PAD FOR CORRECTION-"].update(visible=True)
 
-    window['-PAD FOR CORRECTION-'].Widget.master.pack()
-    window['-PAD FOR CORRECTION-'].update(visible=True)
+    # window['-PAD FOR CORRECTION-'].Widget.master.pack()
+    # window['-PAD FOR CORRECTION-'].update(visible=True)
 
     window['-ProgressText-'].update(visible=True)
     window['-ProgressBar-'].update(visible=True)
@@ -743,9 +743,19 @@ def reformatScreen(window, btnClick):
     elif (btnClick == True):
 
         window['-FILETEXT-'].update(visible=False)
+        # window['-FILETEXT-'].Widget.master.pack_forget() 
         window['-FILENAME-'].update(visible=False)
+        # window['-FILENAME-'].Widget.master.pack_forget() 
         window['-SPACE1-'].update(visible=False)
+        # window['-SPACE1-'].Widget.master.pack_forget() 
         window['-SPACE2-'].update(visible=False)
+        # window['-SPACE2-'].Widget.master.pack_forget() 
+
+        # window["-PAD FOR CORRECTION-"].update(visible=False)
+        # window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
+
+        window['-ProgressText-'].Widget.master.pack_forget()
+        window['-ProgressBar-'].Widget.master.pack_forget()
          
         window['-IMAGE-'].Widget.master.pack_forget() 
         window['-FOLDROW-'].Widget.master.pack_forget() 
