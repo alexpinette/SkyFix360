@@ -1,36 +1,21 @@
 Task lists:
-<<<<<<< HEAD
-
-- [x] Add previous Button in manual correction window
-- [?] Make help & success window bigger (to display appropriately on Windoms & Mac)
-    - Test on Nick && Alex's laptop
-- [ ] When previous button is clicked, `FOLDER` && `BROWSE` are not displaying in original window
+- [ ] Show selected (x, y) coordinates points on GUI
+- [ ] Allow corrections made on corrected images
+- [ ] Change success window location(?)
+- [ ] Make a new directory to where the user wants to export correction
 - [ ] Make Window resizeable (`-CONFIG-`)
 - [ ] When user clicks `Help` button, `Quit` button does not work anymore
-- [ ] Padding looks weird on Mac (when correction is taking place, maybe make progress bar wider?)
-- [ ] When user clicks `Correct` then `Manual` (2nd run), window does not display image
 - [ ] Display text on screen when no image/video selected
-- [ ] Disable buttons is weird (Mac issue), do hover
-    - https://github.com/PySimpleGUI/PySimpleGUI/issues/903
-    - https://github.com/PySimpleGUI/PySimpleGUI/issues/3947
-- [ ] Remove all calculations using DPI
-- [ ] Keep window constant size throughtout process (smooth GUI)
-=======
 - [ ] When user selects another photo and doesnt export result, disable `Export`
-- [ ] Padding looks weird on Mac (when correction is taking place, maybe make progress bar wider?)
-- [ ] When user clicks `Help` button, `Quit` button does not work anymore
-- [ ] Display text on screen when no image/video selected
-- [ ] Make Window resizeable (`-CONFIG-`)
-- [ ] Disable buttons is weird (Mac issue), do hover
-    - https://github.com/PySimpleGUI/PySimpleGUI/issues/903
-    - https://github.com/PySimpleGUI/PySimpleGUI/issues/3947
-- [ ] Keep window constant size throughtout process (smooth GUI)
+- [x] Add an undo button instead of ctrl+z
+- [x] Minimize white background on canvas when user is selecting points
 - [?] Make help & success window bigger (to display appropriately on Windoms & Mac)
     - Test on Nick && Alex's laptop
+- [x] Keep window constant size throughtout process (smooth GUI)
+- [x] Padding looks weird on Mac (when correction is taking place, maybe make progress bar wider?)
 - [x] After first manual image corrected, second try with manual ruins window
 - [x] Fix the extra padding under name file in manual page when prv btn clicked
 - [x] Add previous Button in manual correction window
 - [x] When previous button is clicked, `FOLDER` && `BROWSE` are not displaying in original window
 - [x] When user clicks `Correct` then `Manual` (2nd run), manual description is not visible
 - [x] When user clicks `Correct` then `Manual` (2nd run), `Done` && `Restart` get pushed down
->>>>>>> f052c205b9b42b17cbf35ab660f060b708713270
