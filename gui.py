@@ -36,7 +36,7 @@ def createWindow():
     """
     sg.theme ("DarkGrey1")
 
-    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
+    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to undo, click the 'Undo'."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
 
@@ -47,10 +47,10 @@ def createWindow():
                   sg.Text('    ', key='-SPACE2-', visible=True, expand_x=True),
                 ],
 
-                [sg.Image(key='-IMAGE-', background_color = 'black', size=(1000, 500))],
+                [sg.Image(key='-IMAGE-', background_color = 'black', size=(1200, 600))],
                 [sg.Text('Progress: ', font='Arial 10 bold', key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
-                [sg.Canvas(key='fig_cv', size=(1000, 500), visible=False)]
+                [sg.Canvas(key='fig_cv', size=(800, 400), visible=False)]
                ]
 
     secondRow = [ #first col
@@ -66,8 +66,8 @@ def createWindow():
          sg.Column([
          [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
          [sg.Button('Export', key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
+         [sg.Button('Undo', key='-UNDO-', visible=False, size=(10, 1))],
          [sg.Button('Done', key='-DONE-', visible=False, size=(10, 1))],
-         [sg.Button('Restart', key='-RESTART-', visible=False, size=(10, 1))],
          ])
         ],
         [sg.Text("", pad=(0,66), key="-PAD FOR CORRECTION-", visible=False)],
@@ -77,18 +77,16 @@ def createWindow():
     layout = [ firstRow, secondRow ]
 
     # Display the window
-    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True)
+    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 810))
     
     # bind to config so can check when window size changes
-    window.bind('<Configure>', '-CONFIG-')
+    window.bind('<Configure>', key='-CONFIG-')
     
     # bind the closeAllWindows function to the WM_DELETE_WINDOW event of the main window
     window.TKroot.protocol("WM_DELETE_WINDOW", closeAllWindows)
 
     return window
 
-
-########### FIXME: MAKE WINDOW LARGER
 # ------------------------------------------------------------------------------  
 def helpWindow():
     """ 
@@ -127,8 +125,6 @@ def correctMethodWindow():
     return correctionLayout
 
 
-
-########### FIXME: MAKE WINDOW LARGER
 # ------------------------------------------------------------------------------  
 def successWindow():
     """ 
@@ -158,8 +154,8 @@ def runEvents(window):
     fileNames = []
     prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
     doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
-    
     automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
+
     correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
         
     while True:
@@ -210,14 +206,11 @@ def runEvents(window):
                 
                 # Get image data, and then use it to update window["-IMAGE-"]
                 data = imageToData(pilImage, window["-IMAGE-"].get_size())
-                window['-IMAGE-'].update(data=data) 
-                
+                window['-IMAGE-'].update(data=data)
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
         
             except:
                 pass
-            
-            
             
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
@@ -227,7 +220,7 @@ def runEvents(window):
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
             while True:
                 correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED or correctEvent == ('-RESTART-'):
+                if correctEvent == sg.WIN_CLOSED:
                     # Close the help popup
                     correctWindow.close()
                     
@@ -245,11 +238,6 @@ def runEvents(window):
                         # I know its _forget() here, but the buttons look good
                         window['-CORRECT-'].Widget.master.pack_forget()
                         window['-EXPORT-'].Widget.master.pack_forget() 
-                        
-                        # window['-CORRECT-'].update(visible=False)
-                        # window['-EXPORT-'].update(visible=False) 
-                        
-                        
                     
                     # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
                     elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
@@ -259,17 +247,13 @@ def runEvents(window):
                         elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
                             reformatScreen(window, False)
                                                         
-                    
-                    fig = plt.figure()
-                    ax = fig.add_subplot(111)
-                    DPI = fig.get_dpi()
 
-                    fig.set_size_inches(505 * 2 / float(DPI), 500 / float(DPI))
+                    fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
+                    ax = fig.add_subplot(111)
+                    fig.set_size_inches(900/100, 300/100, forward=True)
                     img = mpimg.imread(fileName)
-                    imgplot = plt.imshow(img)
+                    imgplot = plt.imshow(img, aspect='auto')
                     plt.grid()
-                    
-            
 
                     # Define a list to store the coordinates of the line
                     lineCoords = []
@@ -279,7 +263,13 @@ def runEvents(window):
                         # Append the coordinates of the click to the list
                         if event.xdata != None and event.ydata != None:
                             lineCoords.append((event.xdata, event.ydata))
+
                             ax.scatter(event.xdata, event.ydata, color='r')
+
+
+                            print (f'x = {event.xdata}, y = {event.ydata}')
+
+
                             fig.canvas.draw()
 
                     def onkey(event):
@@ -289,7 +279,7 @@ def runEvents(window):
                             
                             # Clear the plot and redraw the points
                             ax.clear()
-                            ax.imshow(img)
+                            ax.imshow(img, aspect='auto')
                             plt.grid()
                             for point in lineCoords:
                                 # Unpack the tuple into x and y coordinates
@@ -304,11 +294,8 @@ def runEvents(window):
                                   
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
                     
-                    
-                
                 elif correctEvent == 'Automatic':
                     correctWindow.close()                                        
-
 
                     predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
                     
@@ -380,11 +367,10 @@ def runEvents(window):
                     automaticCorrectedOnce = True
                     correctionsCompleted += 1
 
-                    
-
                 elif correctEvent == 'Cancel':
                     correctWindow.close()
                     break
+
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
@@ -393,8 +379,6 @@ def runEvents(window):
 
 
         if event == ('-DONE-') and lineCoords != []:
-
-                
             if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
                 reformatScreen(window, True)
             elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
@@ -403,7 +387,7 @@ def runEvents(window):
 
             # Clear the plot and redraw the image
             ax.clear()
-            ax.imshow(img)
+            ax.imshow(img, aspect='auto')
             plt.axis('off')
             fig.set_facecolor('none') # set the background to transparent
             fig.canvas.draw()
@@ -412,18 +396,16 @@ def runEvents(window):
             fig.canvas.mpl_disconnect(cid)
             fig.canvas.mpl_disconnect(cid2)
             
-    
-            
             point_with_highest_y = max(lineCoords, key=lambda point:point[1])
             ix = point_with_highest_y[0]
             iy = -point_with_highest_y[1]
             
             # Forget these since there's no point in having them while image is processing.
             window['-PREVIOUS BTN-'].update(visible=False)
+            window['-UNDO-'].update(visible=False)
+            window['-UNDO-'].Widget.master.pack_forget() 
             window['-DONE-'].update(visible=False)
             window['-DONE-'].Widget.master.pack_forget() 
-            window['-RESTART-'].update(visible=False)
-            window['-RESTART-'].Widget.master.pack_forget() 
             
             # Fix the screen to prepare for image processing
             fixScreen(window, fileName)
@@ -434,10 +416,8 @@ def runEvents(window):
             correctWindow.close()
 
             window['-TITLE-'].update("SkyFix360")
-            
             window['-MANUAL DESCRIPTION-'].update(visible=False)
             window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget()  
-
             window['fig_cv'].update(visible=True)
             window['-FOLDER-'].update(visible=True)
             window['-FILE LIST-'].update(visible=True)
@@ -452,7 +432,7 @@ def runEvents(window):
             pilImg = PIL.Image.fromarray(finalImg)
 
             # Resize the image to fit the window
-            data = imageToData(pilImg, window["-IMAGE-"].get_size())
+            data = imageToData(pilImg, window['-IMAGE-'].get_size())
             window['-IMAGE-'].update(data=data)
             updateProgressBar(95,101, window)
 
@@ -460,9 +440,8 @@ def runEvents(window):
             window['-ProgressText-'].update(visible=False)
             window['-ProgressBar-'].update(visible=False)
             
-            window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
-            window["-PAD FOR CORRECTION-"].update(visible=False)
-            
+            window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
+            window['-PAD FOR CORRECTION-'].update(visible=False)
             
             window['-FOLDROW-'].Widget.master.pack()
             window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
@@ -496,18 +475,22 @@ def runEvents(window):
             cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
             print('\nWrote output file: ', opfile)
-
-
-        # if user clicks Cancel button, clear canvas (restart drawing)
-        if event == ('-RESTART-'):
-            lineCoords = []
+        
+        # if user clicks `Undo` button, undo last click event on canvas
+        if event == ('-UNDO-'):
+            lineCoords.pop()
             
-            # Clear the plot and redraw the image
+            # Clear the plot and redraw the points
             ax.clear()
-            ax.imshow(img)
+            ax.imshow(img, aspect='auto')
             plt.grid()
+            for point in lineCoords:
+                # Unpack the tuple into x and y coordinates
+                x, y = point
+                # Plot the point using ax.scatter()
+                ax.scatter(x, y, color='r')
             fig.canvas.draw()
-            
+        
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
             break
@@ -737,7 +720,7 @@ def reformatScreen(window, btnClick):
         window['-EXPORT-'].update(visible=False)
         window['-TITLE-'].update("Manual Correction Instructions")
         window['-MANUAL DESCRIPTION-'].update(visible=True)
-        window['-RESTART-'].update(visible=True)
+        window['-UNDO-'].update(visible=True)
         window['-DONE-'].update(visible=True)
     
     # Fixes "correctWindow" display issues
@@ -773,14 +756,12 @@ def reformatScreen(window, btnClick):
         window['-FOLDROW-'].Widget.master.pack()
         window['-TITLE-'].update('Manual Correction Instructions')
 
-        
-        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to restart, click the 'Restart' button and try again."
+        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to undo, click the 'Undo' button."
         manualDescription = textwrap.fill(manualDescription, 52)
         
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
-
 
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
@@ -788,8 +769,8 @@ def reformatScreen(window, btnClick):
         window['-EXPORT-'].update(visible=False)
         window['-DONE-'].Widget.master.pack() 
         window['-DONE-'].update(visible=True)
-        window['-RESTART-'].Widget.master.pack() 
-        window['-RESTART-'].update(visible=True)
+        window['-UNDO-'].Widget.master.pack() 
+        window['-UNDO-'].update(visible=True)
         window['-HELP-'].Widget.master.pack() 
         window['-HELP-'].update(visible=True)
         window['-QUIT-'].Widget.master.pack() 
@@ -801,8 +782,8 @@ def defaultWindow(window):
     window['-TITLE-'].update(visible=False)
     window['-MANUAL DESCRIPTION-'].update(visible=False)
     window['fig_cv'].update(visible=False)
+    window['-UNDO-'].update(visible=False)
     window['-DONE-'].update(visible=False)
-    window['-RESTART-'].update(visible=False)
 
     window['fig_cv'].Widget.master.pack_forget() 
     window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
@@ -810,8 +791,8 @@ def defaultWindow(window):
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget()
     window['-EXPORT-'].Widget.master.pack_forget() 
+    window['-UNDO-'].Widget.master.pack_forget()
     window['-DONE-'].Widget.master.pack_forget() 
-    window['-RESTART-'].Widget.master.pack_forget()
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
 
