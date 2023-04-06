@@ -17,7 +17,7 @@ import textwrap
 import tkinter as tk
 
 from PIL import Image, ImageFilter
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from equirectRotate import EquirectRotate
 
 from auto_fix import auto_correct_process
@@ -50,6 +50,7 @@ def createWindow():
                 [sg.Image(key='-IMAGE-', background_color = 'black', size=(1200, 600))],
                 [sg.Text('Progress: ', font='Arial 10 bold', key='-ProgressText-', visible=False),
                  sg.ProgressBar(100, orientation='h', size=(15, 15), key='-ProgressBar-',  bar_color='#FFFFFF', visible=False)],
+                [sg.Canvas(key='controls_cv')],
                 [sg.Canvas(key='fig_cv', size=(800, 400), visible=False)]
                ]
 
@@ -77,7 +78,7 @@ def createWindow():
     layout = [ firstRow, secondRow ]
 
     # Display the window
-    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 810))
+    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 860))
     
     # bind to config so can check when window size changes
     window.bind('<Configure>', key='-CONFIG-')
@@ -244,6 +245,7 @@ def runEvents(window):
                               
                         if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
                             reformatScreen(window, True)
+
                         elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
                             reformatScreen(window, False)
                                                         
@@ -303,7 +305,7 @@ def runEvents(window):
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
                     cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
                                   
-                    draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig)
+                    draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
                     
                 elif correctEvent == 'Automatic':
                     correctWindow.close()                                        
@@ -429,6 +431,7 @@ def runEvents(window):
             window['-TITLE-'].update("SkyFix360")
             window['-MANUAL DESCRIPTION-'].update(visible=False)
             window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget()  
+            window['controls_cv'].update(visible=True)
             window['fig_cv'].update(visible=True)
             window['-FOLDER-'].update(visible=True)
             window['-FILE LIST-'].update(visible=True)
@@ -490,8 +493,8 @@ def runEvents(window):
         # if user clicks `Undo` button, undo last click event on canvas
         if event == ('-UNDO-'):
             
-            # Make sure we do not try to undo and empty list
-            if (lineCoords != []):
+            # Try/Except in case lineCoords is empty
+            try:
                 lineCoords.pop()
                 
                 # Clear the plot and redraw the points
@@ -504,6 +507,8 @@ def runEvents(window):
                     # Plot the point using ax.scatter()
                     ax.scatter(x, y, color='r')
                 fig.canvas.draw()
+            except:
+                pass
         
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
@@ -555,7 +560,7 @@ def closeAllWindows():
 
 # ------------------------------------------------------------------------------  
 
-def draw_figure_w_toolbar(canvas, fig):
+def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     """ 
         Args:    canvas:         --> tkinter canvas onto which the figure will be drawn
                  fig:            --> matplotlib figure to be drawn
@@ -566,8 +571,13 @@ def draw_figure_w_toolbar(canvas, fig):
     if canvas.children:
         for child in canvas.winfo_children():
             child.destroy()
+    if canvas_toolbar.children:
+        for child in canvas_toolbar.winfo_children():
+            child.destroy()
     figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
     figure_canvas_agg.draw()
+    toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)                  
+    toolbar.update()
     figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
 
 # ------------------------------------------------------------------------------  
@@ -636,6 +646,8 @@ def fixScreen(window, fileName):
                  until the image has been corrected.
     """
      
+    window['controls_cv'].update(visible=False)
+    window['controls_cv'].Widget.master.pack_forget() 
     window['fig_cv'].update(visible=False)
     window['fig_cv'].Widget.master.pack_forget() 
     window['-FOLDROW-'].Widget.master.pack_forget() 
@@ -665,8 +677,8 @@ def fixScreen(window, fileName):
     window["-PAD FOR CORRECTION-"].Widget.master.pack()
     window["-PAD FOR CORRECTION-"].update(visible=True)
 
-    window['-PAD FOR CORRECTION-'].Widget.master.pack()
-    window['-PAD FOR CORRECTION-'].update(visible=True)
+    # window['-PAD FOR CORRECTION-'].Widget.master.pack()
+    # window['-PAD FOR CORRECTION-'].update(visible=True)
 
     window['-ProgressText-'].update(visible=True)
     window['-ProgressBar-'].update(visible=True)
@@ -727,6 +739,7 @@ def reformatScreen(window, btnClick):
         window['-IMAGE-'].Widget.master.pack_forget()
             
         window['fig_cv'].update(visible=True)
+        window['controls_cv'].update(visible=True)
         window['-FOLDER-'].update(visible=False)
         window['-FILE LIST-'].Widget.master.pack_forget() 
         window['-CORRECT-'].update(visible=False)
@@ -741,10 +754,20 @@ def reformatScreen(window, btnClick):
     elif (btnClick == True):
 
         window['-FILETEXT-'].update(visible=False)
+        # window['-FILETEXT-'].Widget.master.pack_forget() 
         window['-FILENAME-'].update(visible=False)
+        # window['-FILENAME-'].Widget.master.pack_forget() 
         window['-SPACE1-'].update(visible=False)
+        # window['-SPACE1-'].Widget.master.pack_forget() 
         window['-SPACE2-'].update(visible=False)
-        
+        # window['-SPACE2-'].Widget.master.pack_forget() 
+
+        # window["-PAD FOR CORRECTION-"].update(visible=False)
+        # window["-PAD FOR CORRECTION-"].Widget.master.pack_forget()
+
+        window['-ProgressText-'].Widget.master.pack_forget()
+        window['-ProgressBar-'].Widget.master.pack_forget()
+         
         window['-IMAGE-'].Widget.master.pack_forget() 
         window['-FOLDROW-'].Widget.master.pack_forget() 
         window['-FILE LIST-'].Widget.master.pack_forget() 
@@ -759,6 +782,8 @@ def reformatScreen(window, btnClick):
         window['-FILENAME-'].update(visible=True)
         window['-SPACE2-'].update(visible=True)
         
+        window['controls_cv'].Widget.master.pack() 
+        window['controls_cv'].update(visible=True)
         window['fig_cv'].Widget.master.pack() 
         window['fig_cv'].update(visible=True)
         window['-FOLDER-'].update(visible=False)
@@ -795,10 +820,12 @@ def defaultWindow(window):
     window['-PREVIOUS BTN-'].update(visible=False)
     window['-TITLE-'].update(visible=False)
     window['-MANUAL DESCRIPTION-'].update(visible=False)
+    window['controls_cv'].update(visible=False)
     window['fig_cv'].update(visible=False)
     window['-UNDO-'].update(visible=False)
     window['-DONE-'].update(visible=False)
 
+    window['controls_cv'].Widget.master.pack_forget() 
     window['fig_cv'].Widget.master.pack_forget() 
     window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
     window['-FOLDROW-'].Widget.master.pack_forget() 
@@ -830,6 +857,15 @@ def defaultWindow(window):
     window['-EXPORT-'].update(visible=True)
     window['-HELP-'].Widget.master.pack()
     window['-QUIT-'].Widget.master.pack()
+
+class Toolbar(NavigationToolbar2Tk):
+    def __init__(self, *args, **kwargs):
+        toolitems = (
+            ('Pan'), (None), ('Zoom'), ('Home'), ('Back'), ('Forward'), ('Subplots'), ('Save')
+        )
+        self.toolitems = [t for t in NavigationToolbar2Tk.toolitems if t[0] not in toolitems]
+        super().__init__(*args, **kwargs)
+        
     
 # ------------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 Task lists:
-- [ ] Show selected (x, y) coordinates points on GUI
+- [x] Show selected (x, y) coordinates points on GUI
 - [ ] Allow corrections made on corrected images
 - [ ] Change success window location(?)
 - [ ] Make a new directory to where the user wants to export correction
@@ -19,3 +19,16 @@ Task lists:
 - [x] When previous button is clicked, `FOLDER` && `BROWSE` are not displaying in original window
 - [x] When user clicks `Correct` then `Manual` (2nd run), manual description is not visible
 - [x] When user clicks `Correct` then `Manual` (2nd run), `Done` && `Restart` get pushed down
+
+
+After Informal Meeting:
+- [] Give user the choice to choose/create directory where the corrected image could be exported
+- [] Button to show details of tasks in progress? Drop down of text showing current stage of program?
+- [] Devise a way for user to "slightly" correct an image 
+- [] Show cooordinates for points when selected
+- [] (Coinsides with above ^^) Bring back toolbar/Experiment with hading parts of the toolbar
+- [] Change "SuccessWindow" to be a pop up under fold row instead? Make text visible rather than window?
+- [] Change "SuccessWindow" to be a message where the progress bar was so users see that immediately when correction finishes.
+
+
+* Ultimate Goal is to make automatio "perfect" and support video files. 
