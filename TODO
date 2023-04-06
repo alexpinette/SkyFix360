@@ -25,8 +25,8 @@ After Informal Meeting:
 - [] Give user the choice to choose/create directory where the corrected image could be exported
 - [] Button to show details of tasks in progress? Drop down of text showing current stage of program?
 - [] Devise a way for user to "slightly" correct an image 
-- [] Show cooordinates for points when selected
-- [] (Coinsides with above ^^) Bring back toolbar/Experiment with hading parts of the toolbar
+- [x] Show cooordinates for points when selected
+- [x] (Coinsides with above ^^) Bring back toolbar/Experiment with hiding parts of the toolbar
 - [] Change "SuccessWindow" to be a pop up under fold row instead? Make text visible rather than window?
 - [] Change "SuccessWindow" to be a message where the progress bar was so users see that immediately when correction finishes.
 

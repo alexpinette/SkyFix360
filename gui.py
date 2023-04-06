@@ -484,11 +484,17 @@ def runEvents(window):
             # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
             # Convert the array from BGR to RGB
             finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
-
-            opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-            cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-            window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
-            print('\nWrote output file: ', opfile)
+            
+            
+            savePath = handleExport()
+            
+            # We only want to try saving and greying out the button if the user did save the image!
+            if (savePath != "void"):
+                # Save the file to the path specified
+                cv2.imwrite(savePath, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
+                
+                
         
         # if user clicks `Undo` button, undo last click event on canvas
         if event == ('-UNDO-'):
@@ -514,6 +520,57 @@ def runEvents(window):
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
             break
         
+        
+        
+ # ------------------------------------------------------------------------------  
+     
+def handleExport():
+    """ 
+        Args:       
+        Returns: 
+        Summary: 
+    """
+    
+
+    # Create a custom "Save As" dialog with a custom "Save" button text
+    save_layout = [
+            [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!\nIf you wish to export it to a different directory, please click "Browse" and select a directory!')],
+            [sg.In (size=(40,1), key="-FILENAME-")],
+            [sg.In (size=(40,1), enable_events=True, key="-DIRECTORY-"),
+                sg.FolderBrowse(key='-BROWSE-', size=(10, 1))],
+            [sg.Button('Save')],
+            ]
+    save_window = sg.Window('Save Your Corrected Image/Movie', save_layout)
+    
+    # Will be used when saving corrected image below
+    sep = os.path.sep
+    save_path = "void" # Placeholder
+
+
+    while True:
+        save_event, save_values = save_window.Read()
+
+        if save_event == sg.WIN_CLOSED:
+            break
+
+        if save_event == 'Save':
+            filename = save_values['-FILENAME-']
+            directory = save_values['-DIRECTORY-']
+
+            # If user chose a separate directory
+            if directory:
+                save_path = directory + sep + filename + '.jpg'
+            
+            # If user did wants local directory (did not choose separate directory)
+            else:
+                save_path = os.getcwd() + sep + filename + '.jpg'
+
+            print("The saved file would be: ", save_path)
+            break
+
+    save_window.Close()
+    
+    return save_path
         
 # ------------------------------------------------------------------------------  
 
