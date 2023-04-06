@@ -276,25 +276,9 @@ def runEvents(window):
 
                             fig.canvas.draw()
 
-                    def onkey(event):
-                        # If the key pressed is 'z' and there are points to remove, remove the last point
-                        if event.key == 'z' and len(lineCoords) > 0:
-                            lineCoords.pop()
-                            
-                            # Clear the plot and redraw the points
-                            ax.clear()
-                            ax.imshow(img, aspect='auto')
-                            plt.grid()
-                            for point in lineCoords:
-                                # Unpack the tuple into x and y coordinates
-                                x, y = point
-                                # Plot the point using ax.scatter()
-                                ax.scatter(x, y, color='r')
-                            fig.canvas.draw()
 
                     # Connect the onclick function to the mouse click event
                     cid = fig.canvas.mpl_connect('button_press_event', onclick)
-                    cid2 = fig.canvas.mpl_connect('key_press_event', onkey)
                                   
                     draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
                     
@@ -398,7 +382,6 @@ def runEvents(window):
 
             # Disconnect from the figure
             fig.canvas.mpl_disconnect(cid)
-            fig.canvas.mpl_disconnect(cid2)
             
             point_with_highest_y = max(lineCoords, key=lambda point:point[1])
             ix = point_with_highest_y[0]
@@ -775,9 +758,10 @@ def reformatScreen(window, btnClick):
         window['controls_cv'].update(visible=True)
         window['fig_cv'].Widget.master.pack() 
         window['fig_cv'].update(visible=True)
-        window['-FOLDER-'].update(visible=False)
-        window['-BROWSE-'].update(visible=False)
+        # window['-FOLDER-'].update(visible=False)
+        # window['-BROWSE-'].update(visible=False)
         
+        #commenting this out is helpful
         window['-FOLDER-'].Widget.master.pack_forget() 
         window['-BROWSE-'].Widget.master.pack_forget() 
     
@@ -790,7 +774,6 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
-
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
         window['-CORRECT-'].update(visible=False)
@@ -825,7 +808,6 @@ def defaultWindow(window):
     window['-DONE-'].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
-
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
     window['-FOLDROW-'].Widget.master.pack()
@@ -833,13 +815,13 @@ def defaultWindow(window):
     window['-FOLDROW-'].Widget.update()
     window['-TITLE-'].update(visible=True)
     window['-TITLE-'].update('SkyFix360')
-    window['-FOLDER-'].Widget.master.pack()
+    window['-FOLDROW-'].Widget.master.pack()
+    window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
     window['-FOLDER-'].update(visible=True)
-    window['-BROWSE-'].Widget.master.pack()
+    window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
     window['-BROWSE-'].update(visible=True)
     window['-FILE LIST-'].Widget.master.pack()
     window['-FILE LIST-'].update(visible=True)
-    window['-FILE LIST-'].Widget.update()
     window['-CORRECT-'].Widget.master.pack()
     window['-CORRECT-'].update(visible=True)
     window['-EXPORT-'].Widget.master.pack()
