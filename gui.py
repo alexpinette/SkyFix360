@@ -449,15 +449,16 @@ def runEvents(window):
             
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
-            # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
-            # Convert the array from BGR to RGB
-            finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
             
-            
-            savePath = handleExport()
+            savePath = getExportPath()
             
             # We only want to try saving and greying out the button if the user did save the image!
             if (savePath != "void"):
+                
+                # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+                # Convert the array from BGR to RGB
+                finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                
                 # Save the file to the path specified
                 cv2.imwrite(savePath, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
                 window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
@@ -492,7 +493,7 @@ def runEvents(window):
         
  # ------------------------------------------------------------------------------  
      
-def handleExport():
+def getExportPath():
     """ 
         Args:       
         Returns: 
