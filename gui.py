@@ -125,24 +125,6 @@ def correctMethodWindow():
                          [sg.Button("Cancel", size=(10, 1), pad=((135), (20, 0)))]]
     return correctionLayout
 
-
-# ------------------------------------------------------------------------------  
-def successWindow():
-    """ 
-        Args:      None
-        Returns:   successLayout --> list: The layout as a list of PySimpleGUI text and button elements.
-        Summary:   This function creates a success window layout using PySimpleGUI, which notifies the 
-                   user that their image or video has been successfully corrected. The function returns
-                   the layout as a list of PySimpleGUI elements.
-    """
-
-    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
-                     [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center', pad=(15, 10))],
-                     [sg.Button("Close", size=(10, 1), pad=(100, 5))]]
-    
-    return successLayout
-
-
 # ------------------------------------------------------------------------------  
 def runEvents(window):
     """ 
