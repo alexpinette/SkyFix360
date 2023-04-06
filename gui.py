@@ -250,9 +250,20 @@ def runEvents(window):
 
                     fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
                     ax = fig.add_subplot(111)
-                    fig.set_size_inches(900/100, 300/100, forward=True)
+                    
+                    # Sets size of the canvas figure
+                    # WINDOWS SYSTEM 
+                    if (os.name == 'nt'):
+                        fig.set_size_inches(1150/100, 575/100, forward=True)
+                    
+                    # MAC/LINUX SYSTEM
+                    else:
+                        fig.set_size_inches(600/100, 300/100, forward=True)
+                        
+                        
+                        
                     img = mpimg.imread(fileName)
-                    imgplot = plt.imshow(img, aspect='auto')
+                    imgplot = plt.imshow(img, aspect="auto")  #DO NOT DELETE ASPECT = AUTO! PREVENTS BAD IMAGE MOVEMENT
                     plt.grid()
 
                     # Define a list to store the coordinates of the line
@@ -478,18 +489,21 @@ def runEvents(window):
         
         # if user clicks `Undo` button, undo last click event on canvas
         if event == ('-UNDO-'):
-            lineCoords.pop()
             
-            # Clear the plot and redraw the points
-            ax.clear()
-            ax.imshow(img, aspect='auto')
-            plt.grid()
-            for point in lineCoords:
-                # Unpack the tuple into x and y coordinates
-                x, y = point
-                # Plot the point using ax.scatter()
-                ax.scatter(x, y, color='r')
-            fig.canvas.draw()
+            # Make sure we do not try to undo and empty list
+            if (lineCoords != []):
+                lineCoords.pop()
+                
+                # Clear the plot and redraw the points
+                ax.clear()
+                ax.imshow(img, aspect='auto')
+                plt.grid()
+                for point in lineCoords:
+                    # Unpack the tuple into x and y coordinates
+                    x, y = point
+                    # Plot the point using ax.scatter()
+                    ax.scatter(x, y, color='r')
+                fig.canvas.draw()
         
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
