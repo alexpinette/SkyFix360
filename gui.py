@@ -503,9 +503,9 @@ def getExportPath():
 
     # Create a custom "Save As" dialog with a custom "Save" button text
     save_layout = [
-            [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!\nIf you wish to export it to a different directory, please click "Browse" and select a directory!')],
-            [sg.In (size=(40,1), key="-FILENAME-")],
-            [sg.In (size=(40,1), enable_events=True, key="-DIRECTORY-"),
+            [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!')],
+            [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here", enable_events=True)],
+            [sg.In (size=(40,1), key="-DIRECTORY-",  default_text="Select Directory (Use Browse -->)", disabled=True),
                 sg.FolderBrowse(key='-BROWSE-', size=(10, 1))],
             [sg.Button('Save')],
             ]
@@ -521,6 +521,14 @@ def getExportPath():
 
         if save_event == sg.WIN_CLOSED:
             break
+        
+        if save_event == "-FILENAME-" or save_event == "-DIRECTORY-":
+            # Remove hint text when user starts typing
+            if "Enter Filename Here" in save_window[save_event].get():
+                save_window[save_event].update("")
+                
+        # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY
+            
 
         if save_event == 'Save':
             filename = save_values['-FILENAME-']
