@@ -514,6 +514,10 @@ def getExportPath():
     # Will be used when saving corrected image below
     sep = os.path.sep
     save_path = "void" # Placeholder
+    
+    erasedHint = False
+    
+    validSavePath = True
 
 
     while True:
@@ -522,28 +526,44 @@ def getExportPath():
         if save_event == sg.WIN_CLOSED:
             break
         
-        if save_event == "-FILENAME-" or save_event == "-DIRECTORY-":
+        if save_event == "-FILENAME-" and erasedHint == False:
             # Remove hint text when user starts typing
-            if "Enter Filename Here" in save_window[save_event].get():
-                save_window[save_event].update("")
+            save_window[save_event].update("")
+            erasedHint = True
                 
-        # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY
+        # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY (does not register first key stroke)
             
 
         if save_event == 'Save':
+                            
             filename = save_values['-FILENAME-']
             directory = save_values['-DIRECTORY-']
-
-            # If user chose a separate directory
-            if directory:
-                save_path = directory + sep + filename + '.jpg'
             
-            # If user did wants local directory (did not choose separate directory)
+            # Checks if user gave a valid file name (at least entered something)
+            if filename == "Enter Filename Here" or filename == "":
+                validSavePath = False
+                
+            # Must change back to true in case user entered falsely beforehand
             else:
-                save_path = os.getcwd() + sep + filename + '.jpg'
+                validSavePath = True
+                
 
-            print("The saved file would be: ", save_path)
-            break
+            # Check directory
+            if directory:
+                
+                # If user wants local directory (did not choose separate directory)
+                if directory == "Select Directory (Use Browse -->)":
+                    save_path = os.getcwd() + sep + filename + '.jpg'
+
+                # If user chose a directory
+                else:
+                    save_path = directory + sep + filename + '.jpg'
+            
+                
+            # Only break out of loop and return save_path if user gave a valid file name
+            if (validSavePath == True):
+                print("The saved file path: ", save_path)
+                break
 
     save_window.Close()
     
