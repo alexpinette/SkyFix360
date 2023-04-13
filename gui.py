@@ -204,14 +204,38 @@ def runEvents(window):
 
                 # display filename in appropriate spot in right column
                 window['-FILENAME-'].update(fileName)
-            
-                # Open the image
-                pilImage = PIL.Image.open(fileName)
                 
+                # get the file extension
+                fileExt = os.path.splitext(fileName)[1].lower()
+
+                # differentiate between .jpg and .mp4 files
+                if fileExt == '.jpg' or fileExt == '.jpeg':
+                    print('Selected file is a .jpg or .jpeg')
+            
+                    # Open the image
+                    pilImage = PIL.Image.open(fileName)
+                    
+                elif fileExt == '.mp4':
+                    print('Selected file is a .mp4')
+                    
+                    # read the .mp4 video file
+                    cap = cv2.VideoCapture(fileName)
+                    
+                    # read the first frame of the video
+                    ret, frame = cap.read()
+
+                    # convert the OpenCV image to a PIL Image
+                    pilImage = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                    
+                    # NOTE TO CLOSE/RELEASE THE VIDEOCAPTURE:
+                    # cap.release()
+                    
                 # Get image data, and then use it to update window["-IMAGE-"]
                 data = imageToData(pilImage, window["-IMAGE-"].get_size())
                 window['-IMAGE-'].update(data=data)
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
+                
+                
         
             except:
                 pass
