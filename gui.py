@@ -153,10 +153,11 @@ def runEvents(window):
     """
 
     fileNames = []
-    prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
-    doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
+    prevButtonClickedOnce = False  # Will help with fixing correction window displaying incorrectly
+    doneButtonClickedOnce = False  # Will help with fixing correction window displaying incorrectly
     automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
     correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
+    fileExt = ""                   # Will help with knowing if user selected an image or video file
         
     while True:
         event, values = window.read()
@@ -210,6 +211,7 @@ def runEvents(window):
 
                 # differentiate between .jpg and .mp4 files
                 if fileExt == '.jpg' or fileExt == '.jpeg':
+                    fileExt = '.jpg'
                     print('Selected file is a .jpg or .jpeg')
             
                     # Open the image
@@ -242,144 +244,154 @@ def runEvents(window):
             
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
-        if event == ('-CORRECT-'):
+        if event == ('-CORRECT-'):    
             
-            correctMWindow = correctMethodWindow()
-            correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
-            while True:
-                correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED:
-                    # Close the help popup
-                    correctWindow.close()
-                    
-                    break
-                elif correctEvent == 'Manual':
-                    correctWindow.close()
+            # User chose a video file.
+            if (fileExt == '.mp4'):
+               handleAutomaticVideoCorrection()
 
-                    ix = 0
-                    iy = 0
-                    
-                    # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
-                    if (automaticCorrectedOnce == True and correctionsCompleted == 1):
-                        reformatScreen(window,True)
+            # User chose an image file
+            else:
+                print('Correcting an image!')
                         
-                        # I know its _forget() here, but the buttons look good
-                        window['-CORRECT-'].Widget.master.pack_forget()
-                        window['-EXPORT-'].Widget.master.pack_forget() 
+                
+                correctMWindow = correctMethodWindow()
+                correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
+                while True:
                     
-                    # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
-                    elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
-                              
-                        if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
-                            reformatScreen(window, True)
-
-                        elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
-                            reformatScreen(window, False)
-                                                        
-                    fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
-                    ax = fig.add_subplot(111)
-
-                    # WINDOWS SYSTEM
-                    if os.name == 'nt':
-                        fig.set_size_inches(1150/100, 575/100, forward=True)
                     
-                    # MAC OR LINUX
-                    else:
-                        fig.set_size_inches(600/100, 300/100, forward=True)
+                    correctEvent, correctVal = correctWindow.read()
+                    if correctEvent == sg.WIN_CLOSED:
+                        # Close the help popup
+                        correctWindow.close()
+                        
+                        break
+                    elif correctEvent == 'Manual':
+                        correctWindow.close()
 
-                    img = mpimg.imread(fileName)
-                    imgplot = plt.imshow(img, aspect="auto")
-                    plt.grid()
+                        ix = 0
+                        iy = 0
+                        
+                        # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
+                        if (automaticCorrectedOnce == True and correctionsCompleted == 1):
+                            reformatScreen(window,True)
+                            
+                            # I know its _forget() here, but the buttons look good
+                            window['-CORRECT-'].Widget.master.pack_forget()
+                            window['-EXPORT-'].Widget.master.pack_forget() 
+                        
+                        # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
+                        elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
+                                
+                            if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
+                                reformatScreen(window, True)
 
-                    # Define a list to store the coordinates of the line
-                    lineCoords = []
+                            elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
+                                reformatScreen(window, False)
+                                                            
+                        fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
+                        ax = fig.add_subplot(111)
 
-                    # Define a function to handle mouse clicks
-                    def onclick(event):
-                        # Append the coordinates of the click to the list
-                        if event.xdata != None and event.ydata != None:
-                            lineCoords.append((event.xdata, event.ydata))
+                        # WINDOWS SYSTEM
+                        if os.name == 'nt':
+                            fig.set_size_inches(1150/100, 575/100, forward=True)
+                        
+                        # MAC OR LINUX
+                        else:
+                            fig.set_size_inches(600/100, 300/100, forward=True)
 
-                            ax.scatter(event.xdata, event.ydata, color='r')
+                        img = mpimg.imread(fileName)
+                        imgplot = plt.imshow(img, aspect="auto")
+                        plt.grid()
 
+                        # Define a list to store the coordinates of the line
+                        lineCoords = []
 
-                            print (f'x = {event.xdata}, y = {event.ydata}')
+                        # Define a function to handle mouse clicks
+                        def onclick(event):
+                            # Append the coordinates of the click to the list
+                            if event.xdata != None and event.ydata != None:
+                                lineCoords.append((event.xdata, event.ydata))
 
-
-                            fig.canvas.draw()
-
-                    # Connect the onclick function to the mouse click event
-                    cid = fig.canvas.mpl_connect('button_press_event', onclick)
-                    
-                    draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
-                    
-                elif correctEvent == 'Automatic':
-                    correctWindow.close()                                        
-
-                    predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
-                    
-                    predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
-                    for i in range(len(predicted_points_list)):
-                        if predicted_points_list[i] < 0:
-                            predicted_points_list[i] = 1.00
-
-                    # Split the array into two separate arrays for x and y coordinates
-                    x_coords = predicted_points_list[::2]
-                    y_coords = predicted_points_list[1::2]
-                    
-                    lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
-
-
-                    
-                    # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
-                    point_with_highest_y = max(lineCoords, key=lambda point:point[1])
-                    ix = point_with_highest_y[0]
-                    iy = -point_with_highest_y[1]
+                                ax.scatter(event.xdata, event.ydata, color='r')
 
 
-                    # Fix the screen to prepare for image processing
-                    fixScreen(window, fileName)
+                                print (f'x = {event.xdata}, y = {event.ydata}')
 
-                    # Correct the image (long process)
-                    finalImg = correctImageMan(fileName, ix, iy, window)
-                    
-                    correctWindow.close()
 
-                    window['-FOLDER-'].update(visible=True)
-                    window['-FILE LIST-'].update(visible=True)
-                    window['-CORRECT-'].update(visible=True)
-                    window['-BROWSE-'].update(visible=True)
-                    
-                    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
-                    # Convert the array from BGR to RGB
-                    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                                fig.canvas.draw()
 
-                    # Create a PIL Image object from the numpy array
-                    pilImg = PIL.Image.fromarray(finalImg)
+                        # Connect the onclick function to the mouse click event
+                        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+                        
+                        draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+                        
+                    elif correctEvent == 'Automatic':                                     
 
-                    # Resize the image to fit the window
-                    data = imageToData(pilImg, window["-IMAGE-"].get_size())
-                    window['-IMAGE-'].update(data=data)
-                    updateProgressBar(95,101, window)
+                        predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
+                        
+                        predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+                        for i in range(len(predicted_points_list)):
+                            if predicted_points_list[i] < 0:
+                                predicted_points_list[i] = 1.00
 
-                    window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
-                    window['-ProgressText-'].update(visible=False)
-                    window['-ProgressBar-'].update(visible=False)
-                    
-                    window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
-                    window['-PAD FOR CORRECTION-'].update(visible=False)
-                    
-                    defaultWindow(window, True)
+                        # Split the array into two separate arrays for x and y coordinates
+                        x_coords = predicted_points_list[::2]
+                        y_coords = predicted_points_list[1::2]
+                        
+                        lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
 
-                    # Reset progress bar to zero
-                    updateProgressBar(0,1,window)
-                    
-                    automaticCorrectedOnce = True
-                    correctionsCompleted += 1
 
-                elif correctEvent == 'Cancel':
-                    correctWindow.close()
-                    break
+                        
+                        # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+                        point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+                        ix = point_with_highest_y[0]
+                        iy = -point_with_highest_y[1]
+
+
+                        # Fix the screen to prepare for image processing
+                        fixScreen(window, fileName)
+
+                        # Correct the image (long process)
+                        finalImg = correctImageMan(fileName, ix, iy, window)
+                        
+                        correctWindow.close()
+
+                        window['-FOLDER-'].update(visible=True)
+                        window['-FILE LIST-'].update(visible=True)
+                        window['-CORRECT-'].update(visible=True)
+                        window['-BROWSE-'].update(visible=True)
+                        
+                        # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+                        # Convert the array from BGR to RGB
+                        finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+                        # Create a PIL Image object from the numpy array
+                        pilImg = PIL.Image.fromarray(finalImg)
+
+                        # Resize the image to fit the window
+                        data = imageToData(pilImg, window["-IMAGE-"].get_size())
+                        window['-IMAGE-'].update(data=data)
+                        updateProgressBar(95,101, window)
+
+                        window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+                        window['-ProgressText-'].update(visible=False)
+                        window['-ProgressBar-'].update(visible=False)
+                        
+                        window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
+                        window['-PAD FOR CORRECTION-'].update(visible=False)
+                        
+                        defaultWindow(window, True)
+
+                        # Reset progress bar to zero
+                        updateProgressBar(0,1,window)
+                        
+                        automaticCorrectedOnce = True
+                        correctionsCompleted += 1
+
+                    elif correctEvent == 'Cancel':
+                        correctWindow.close()
+                        break
 
 
         # If user clicks the previous button, return to main window
@@ -713,6 +725,19 @@ def correctImageMan(fileName, ix, iy, window):
     return finalImg
 
 # ------------------------------------------------------------------------------  
+
+def handleAutomaticVideoCorrection():
+    print("Correcting a video file!")
+    
+    
+    
+# ------------------------------------------------------------------------------  
+
+
+
+
+
+
 
 def fixScreen(window, fileName):
     """ 
