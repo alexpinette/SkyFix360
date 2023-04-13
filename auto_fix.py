@@ -93,7 +93,7 @@ def auto_correct_process(fileName, folder):
   currentDir = os.getcwd()
   sep = os.path.sep
   modelDir = currentDir + sep + "horizon_line_model.h5"
-  print(modelDir)
+  # print(modelDir)
 
   model = tf.keras.models.load_model(modelDir)
 
@@ -101,7 +101,7 @@ def auto_correct_process(fileName, folder):
   # Preprocess the input image and predict the horizon line
   input_image = np.expand_dims(preprocessed_image, axis=0)
   predicted_points = model.predict(input_image)
-  print(predicted_points.shape)
+  # print(predicted_points.shape)
 
   visualize_predicted_points(fileName, predicted_points, output_path="visualized_image.png")
 
