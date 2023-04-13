@@ -2,7 +2,7 @@ Task lists:
 - [x] Show selected (x, y) coordinates points on GUI
 - [ ] Window size (y) is getting cut off by mac doc (cathy)
 - [ ] Allow corrections made on corrected images
-- [ ] Make a new directory to where the user wants to export correction
+- [x] Make a new directory to where the user wants to export correction
 - [ ] Make Window resizeable (`-CONFIG-`)
 - [ ] When user clicks `Help` button, `Quit` button does not work anymore
 - [ ] Display text on screen when no image/video selected
@@ -25,13 +25,18 @@ Task lists:
 
 
 After Informal Meeting:
-- [] Give user the choice to choose/create directory where the corrected image could be exported
+- [x] Give user the choice to choose/create directory where the corrected image could be exported
 - [] Button to show details of tasks in progress? Drop down of text showing current stage of program?
 - [] Devise a way for user to "slightly" correct an image 
 - [x] Show cooordinates for points when selected
 - [x] (Coinsides with above ^^) Bring back toolbar/Experiment with hiding parts of the toolbar
-- [] Change "SuccessWindow" to be a pop up under fold row instead? Make text visible rather than window?
-- [] Change "SuccessWindow" to be a message where the progress bar was so users see that immediately when correction finishes.
+- [x] Change "SuccessWindow" to be a pop up under fold row instead? Make text visible rather than window?
+- [x] Change "SuccessWindow" to be a message where the progress bar was so users see that immediately when correction finishes.
 
 
-* Ultimate Goal is to make automatio "perfect" and support video files. 
+
+- [x] Begun adding support for video files
+- []  Automatically correct one frame of a .mp4 file
+- []  Correct a whole .mp4 file automatically
+
+* Ultimate Goal is to make automatic "perfect" and support video files. 
