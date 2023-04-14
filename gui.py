@@ -65,7 +65,8 @@ def createWindow():
 
          #third col
          sg.Column([
-         [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
+         [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1)),
+          sg.Button('Modify', key='-MODIFY-', visible=False, size=(10, 1)) ],
          [sg.Button('Export', key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
          [sg.Button('Undo', key='-UNDO-', visible=False, size=(10, 1))],
          [sg.Button('Done', key='-DONE-', visible=False, size=(10, 1))],
@@ -139,7 +140,8 @@ def runEvents(window):
     doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
     automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
     correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
-        
+    modifyClicked = False       # To keep track of temporary saved corrected image    
+    
     while True:
         event, values = window.read()
                 
@@ -200,7 +202,20 @@ def runEvents(window):
             
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
-        if event == ('-CORRECT-'):
+        if event == ('-CORRECT-') or event == ('-MODIFY-'):
+            if event == ('-MODIFY-'):
+                modifyClicked = True
+                finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                opfile = os.path.splitext(fileName)[0]+'_f.jpg'
+
+                success = cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                if success:
+                    fileName = opfile
+                    print('Image saved successfully.')
+                else:
+                    print('Failed to save image.')
+                    
+
             
             correctMWindow = correctMethodWindow()
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
@@ -223,14 +238,13 @@ def runEvents(window):
                         
                         # I know its _forget() here, but the buttons look good
                         window['-CORRECT-'].Widget.master.pack_forget()
+                        window['-MODIFY-'].Widget.master.pack_forget()
                         window['-EXPORT-'].Widget.master.pack_forget() 
                     
                     # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
                     elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
-                              
                         if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
                             reformatScreen(window, True)
-
                         elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
                             reformatScreen(window, False)
                                                         
@@ -257,13 +271,7 @@ def runEvents(window):
                         # Append the coordinates of the click to the list
                         if event.xdata != None and event.ydata != None:
                             lineCoords.append((event.xdata, event.ydata))
-
                             ax.scatter(event.xdata, event.ydata, color='r')
-
-
-                            print (f'x = {event.xdata}, y = {event.ydata}')
-
-
                             fig.canvas.draw()
 
                     # Connect the onclick function to the mouse click event
@@ -287,13 +295,10 @@ def runEvents(window):
                     
                     lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
 
-
-                    
                     # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
                     point_with_highest_y = max(lineCoords, key=lambda point:point[1])
                     ix = point_with_highest_y[0]
                     iy = -point_with_highest_y[1]
-
 
                     # Fix the screen to prepare for image processing
                     fixScreen(window, fileName)
@@ -306,6 +311,7 @@ def runEvents(window):
                     window['-FOLDER-'].update(visible=True)
                     window['-FILE LIST-'].update(visible=True)
                     window['-CORRECT-'].update(visible=True)
+                    if modifyClicked: window['-MODIFY-'].update(visible=True)
                     window['-BROWSE-'].update(visible=True)
                     
                     # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
@@ -335,10 +341,11 @@ def runEvents(window):
                     automaticCorrectedOnce = True
                     correctionsCompleted += 1
 
+                    if modifyClicked: os.remove(opfile)
+
                 elif correctEvent == 'Cancel':
                     correctWindow.close()
                     break
-
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
@@ -389,7 +396,10 @@ def runEvents(window):
             window['-FOLDER-'].update(visible=True)
             window['-FILE LIST-'].update(visible=True)
             window['-CORRECT-'].update(visible=True)
+            if modifyClicked: window['-MODIFY-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
+
+            if modifyClicked: finalImg = cv2.flip(finalImg, 0)
             
             # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
             # Convert the array from BGR to RGB
@@ -415,6 +425,7 @@ def runEvents(window):
             window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-FILE LIST-'].Widget.master.pack()
             window['-CORRECT-'].Widget.master.pack()
+            if modifyClicked: window['-MODIFY-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
             window['-QUIT-'].Widget.master.pack()
@@ -427,6 +438,8 @@ def runEvents(window):
 
             if(automaticCorrectedOnce):
                 defaultWindow(window, True)
+            
+            if modifyClicked: os.remove(opfile)
             
             
         # If user clicks export, export the fixed final image to the current working directory
@@ -470,7 +483,8 @@ def runEvents(window):
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
             break
-        
+
+    if modifyClicked: os.remove(opfile)
         
         
  # ------------------------------------------------------------------------------  
@@ -485,9 +499,9 @@ def getExportPath():
 
     # Create a custom "Save As" dialog with a custom "Save" button text
     save_layout = [
-            [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!\nIf you wish to export it to a different directory, please click "Browse" and select a directory!')],
-            [sg.In (size=(40,1), key="-FILENAME-")],
-            [sg.In (size=(40,1), enable_events=True, key="-DIRECTORY-"),
+            [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!')],
+            [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here", enable_events=True)],
+            [sg.In (size=(40,1), key="-DIRECTORY-",  default_text="Select Directory (Use Browse -->)", disabled=True),
                 sg.FolderBrowse(key='-BROWSE-', size=(10, 1))],
             [sg.Button('Save')],
             ]
@@ -503,6 +517,14 @@ def getExportPath():
 
         if save_event == sg.WIN_CLOSED:
             break
+        
+        if save_event == "-FILENAME-" or save_event == "-DIRECTORY-":
+            # Remove hint text when user starts typing
+            if "Enter Filename Here" in save_window[save_event].get():
+                save_window[save_event].update("")
+                
+        # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY
+            
 
         if save_event == 'Save':
             filename = save_values['-FILENAME-']
@@ -659,7 +681,8 @@ def fixScreen(window, fileName):
     window['fig_cv'].Widget.master.pack_forget() 
     window['-FOLDROW-'].Widget.master.pack_forget() 
     window['-FILE LIST-'].Widget.master.pack_forget() 
-    window['-CORRECT-'].Widget.master.pack_forget() 
+    window['-CORRECT-'].Widget.master.pack_forget()
+    window['-MODIFY-'].Widget.master.pack_forget()
     window['-EXPORT-'].Widget.master.pack_forget() 
     window['-ProgressText-'].Widget.master.pack_forget() 
     window['-ProgressBar-'].Widget.master.pack_forget() 
@@ -727,6 +750,7 @@ def reformatScreen(window, btnClick):
         window['-FOLDER-'].update(visible=False)
         window['-FILE LIST-'].Widget.master.pack_forget() 
         window['-CORRECT-'].update(visible=False)
+        window['-MODIFY-'].update(visible=False)
         window['-BROWSE-'].update(visible=False)
         window['-EXPORT-'].update(visible=False)
         window['-TITLE-'].update('Manual Correction Instructions')
@@ -752,6 +776,7 @@ def reformatScreen(window, btnClick):
         window['-FOLDROW-'].Widget.master.pack_forget() 
         window['-FILE LIST-'].Widget.master.pack_forget() 
         window['-CORRECT-'].Widget.master.pack_forget()
+        window['-MODIFY-'].Widget.master.pack_forget()
         window['-EXPORT-'].Widget.master.pack_forget() 
         window['-HELP-'].Widget.master.pack_forget() 
         window['-QUIT-'].Widget.master.pack_forget() 
@@ -809,6 +834,7 @@ def defaultWindow(window, correctedStatus):
     window['-FOLDROW-'].Widget.master.pack_forget() 
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget()
+    window['-MODIFY-'].Widget.master.pack_forget()
     window['-EXPORT-'].Widget.master.pack_forget() 
     window['-UNDO-'].Widget.master.pack_forget()
     window['-DONE-'].Widget.master.pack_forget() 
@@ -835,6 +861,11 @@ def defaultWindow(window, correctedStatus):
     window['-FILE LIST-'].update(visible=True)
     window['-CORRECT-'].Widget.master.pack()
     window['-CORRECT-'].update(visible=True)
+
+    if correctedStatus:
+        window['-MODIFY-'].Widget.master.pack()
+        window['-MODIFY-'].update(visible=True)
+
     window['-EXPORT-'].Widget.master.pack()
     window['-EXPORT-'].update(visible=True)
     window['-HELP-'].Widget.master.pack()
