@@ -19,6 +19,7 @@ import tkinter as tk
 from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from equirectRotate import EquirectRotate
+from moviepy.editor import *
 
 from auto_fix import auto_correct_process
 
@@ -227,7 +228,7 @@ def runEvents(window):
         if event == ('-CORRECT-'):
             # User chose a video file.
             if (fileExt == '.mp4'):
-               handleAutomaticVideoCorrection()
+               handleAutomaticVideoCorrection(fileName)
 
             else:
                 correctMWindow = correctMethodWindow()
@@ -672,9 +673,75 @@ def correctImageMan(fileName, ix, iy, window):
 
 # ------------------------------------------------------------------------------ 
 
-def handleAutomaticVideoCorrection():
+def handleAutomaticVideoCorrection(fileName):
     print("Correcting a video file!")
-    
+    # Load the video file
+    print(fileName)
+    clip = VideoFileClip(fileName)
+
+    # Extract audio
+    audio = clip.audio
+
+    # # Extract metadata
+    # duration = clip.duration
+    fps = clip.fps
+    # size = clip.size
+
+    # # Create a dictionary of metadata
+    # metadata = {
+    #     "filename": fileName,
+    #     "duration": duration,
+    #     "fps": fps,
+    #     "size": size
+    # }
+
+    # Get the frames from the video
+    frames = clip.iter_frames()
+
+    output_dir = "frames"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Convert each frame to an image and store it in a list
+    images = []
+    for frame in frames:
+        images.append(frame)
+
+    # # Write each frame to the output directory
+    for i, frame in enumerate(images):
+        filename = os.path.join(output_dir, f"frame_{i}.jpg")
+        try:
+            clip.save_frame(filename, t=i/clip.fps)
+        except Exception as e:
+            print(f"Error saving frame {i}: {e}")
+
+    print("IMAGE SAVED")
+
+    # Close the clip
+    clip.close()
+
+    # Load the frames from the output directory
+    image_files = sorted(os.listdir(output_dir))
+    image_files = [os.path.join(output_dir, f) for f in image_files]
+
+    # Create an image sequence clip from the frames
+    image_clip = ImageSequenceClip(image_files, fps=fps)
+
+    # Write the image sequence clip to a video file
+    output_path = "output.mp4"
+    image_clip.write_videofile(output_path, codec="libx264", audio=True)
+
+
+
+    # Close the image sequence clip
+    image_clip.close()
+
+    # clips = []
+    # for filename in output_dir:
+    #     if filename.endswith(".jpg"):
+    #         clips.append(ImageClip(filename).set_duration(1))
+
+    # video = concatenate(clips, method="compose")
+    # video.write_videofile('test1.mp4', fps=fps)
     
     
 # ------------------------------------------------------------------------------   
