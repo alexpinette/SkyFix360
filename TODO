@@ -1,10 +1,10 @@
 Task lists:
-- [ ] Allow corrections made on corrected images
 - [ ] Window size (y) is getting cut off by mac doc (cathy)
-- [ ] Make a new directory to where the user wants to export correction
 - [ ] Make Window resizeable (`-CONFIG-`)
 - [ ] When user clicks `Help` button, `Quit` button does not work anymore
 - [ ] Display text on screen when no image/video selected
+- [x] Make a new directory to where the user wants to export correction
+- [x] Allow corrections made on corrected images
 - [x] When user selects another photo, disable `Export` and update title to only `SkyFix360`
 - [x] Change success window location(?)
 - [x] After first manual image corrected, second try with manual misses folder & browse

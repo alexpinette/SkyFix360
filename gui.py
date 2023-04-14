@@ -186,6 +186,8 @@ def runEvents(window):
                 window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
                 window['-TITLE-'].update('SkyFix360')
 
+                modifyClicked = False
+
                 # display filename in appropriate spot in right column
                 window['-FILENAME-'].update(fileName)
             
@@ -207,15 +209,7 @@ def runEvents(window):
                 modifyClicked = True
                 finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
                 opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-
-                success = cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-                if success:
-                    fileName = opfile
-                    print('Image saved successfully.')
-                else:
-                    print('Failed to save image.')
-                    
-
+                cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             
             correctMWindow = correctMethodWindow()
             correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
@@ -238,7 +232,7 @@ def runEvents(window):
                         
                         # I know its _forget() here, but the buttons look good
                         window['-CORRECT-'].Widget.master.pack_forget()
-                        window['-MODIFY-'].Widget.master.pack_forget()
+                        if modifyClicked: window['-MODIFY-'].Widget.master.pack_forget()
                         window['-EXPORT-'].Widget.master.pack_forget() 
                     
                     # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
@@ -349,6 +343,8 @@ def runEvents(window):
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
+            if modifyClicked: os.remove(opfile)
+            finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
             defaultWindow(window, False)
             prevButtonClickedOnce = True
 
@@ -483,10 +479,7 @@ def runEvents(window):
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
             break
-
-    if modifyClicked: os.remove(opfile)
-        
-        
+                
  # ------------------------------------------------------------------------------  
      
 def getExportPath():
@@ -762,11 +755,8 @@ def reformatScreen(window, btnClick):
     elif (btnClick == True):
 
         window['-FILETEXT-'].update(visible=False)
-        # window['-FILETEXT-'].Widget.master.pack_forget() 
         window['-FILENAME-'].update(visible=False)
-        # window['-FILENAME-'].Widget.master.pack_forget() 
         window['-SPACE1-'].update(visible=False)
-        # window['-SPACE1-'].Widget.master.pack_forget() 
         window['-SPACE2-'].update(visible=False)
         
         window['-ProgressText-'].Widget.master.pack_forget()
