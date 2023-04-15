@@ -679,6 +679,8 @@ def handleAutomaticVideoCorrection(fileName):
     print(fileName)
     clip = VideoFileClip(fileName)
 
+    clip.audio.write_audiofile("outputA.mp3")
+
     # Extract audio
     audioClip = clip.audio
 
@@ -724,25 +726,16 @@ def handleAutomaticVideoCorrection(fileName):
     # Create an image sequence clip from the frames
     image_clip = ImageSequenceClip(listOfFrames, fps=fps, load_images=True)
 
+    # Set the audio of the image clip
+    audio = AudioFileClip("outputA.mp3")
+    image_clip = image_clip.set_audio(audio)
+
+    # Write the image sequence clip to a video file
     output_path = "output.mp4"
     image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
 
-    # Set the audio of the image clip
-    # image_clip = image_clip.set_audio(audioClip)
-    # image_clip.audio = audioClip
-
-    # Create a composite video clip with the image sequence
-    # video_clip = CompositeVideoClip([image_clip])
-
-    # Set the audio for the composite video clip
-    # video_clip = video_clip.set_audio(audioClip)
-    # Write the image sequence clip to a video file
-    # output_path = "output.mp4"
-    # video_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
-
     # Close the image sequence clip
     image_clip.close()
-    # video_clip.close()
     
     
 # ------------------------------------------------------------------------------   
