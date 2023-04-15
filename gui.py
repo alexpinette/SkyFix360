@@ -680,10 +680,10 @@ def handleAutomaticVideoCorrection(fileName):
     clip = VideoFileClip(fileName)
 
     # Extract audio
-    audio = clip.audio
+    audioClip = clip.audio
 
     # # Extract metadata
-    # duration = clip.duration
+    duration = clip.duration
     fps = clip.fps
     # size = clip.size
 
@@ -706,11 +706,13 @@ def handleAutomaticVideoCorrection(fileName):
     for frame in frames:
         images.append(frame)
 
+    listOfFrames = []
     # # Write each frame to the output directory
     for i, frame in enumerate(images):
         filename = os.path.join(output_dir, f"frame_{i}.jpg")
+        listOfFrames.append(filename)
         try:
-            clip.save_frame(filename, t=i/clip.fps)
+            clip.save_frame(filename, t=i/fps)
         except Exception as e:
             print(f"Error saving frame {i}: {e}")
 
@@ -719,29 +721,28 @@ def handleAutomaticVideoCorrection(fileName):
     # Close the clip
     clip.close()
 
-    # Load the frames from the output directory
-    image_files = sorted(os.listdir(output_dir))
-    image_files = [os.path.join(output_dir, f) for f in image_files]
-
     # Create an image sequence clip from the frames
-    image_clip = ImageSequenceClip(image_files, fps=fps)
+    image_clip = ImageSequenceClip(listOfFrames, fps=fps, load_images=True)
 
-    # Write the image sequence clip to a video file
     output_path = "output.mp4"
-    image_clip.write_videofile(output_path, codec="libx264", audio=True)
+    image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
 
+    # Set the audio of the image clip
+    # image_clip = image_clip.set_audio(audioClip)
+    # image_clip.audio = audioClip
 
+    # Create a composite video clip with the image sequence
+    # video_clip = CompositeVideoClip([image_clip])
+
+    # Set the audio for the composite video clip
+    # video_clip = video_clip.set_audio(audioClip)
+    # Write the image sequence clip to a video file
+    # output_path = "output.mp4"
+    # video_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
 
     # Close the image sequence clip
     image_clip.close()
-
-    # clips = []
-    # for filename in output_dir:
-    #     if filename.endswith(".jpg"):
-    #         clips.append(ImageClip(filename).set_duration(1))
-
-    # video = concatenate(clips, method="compose")
-    # video.write_videofile('test1.mp4', fps=fps)
+    # video_clip.close()
     
     
 # ------------------------------------------------------------------------------   
