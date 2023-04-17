@@ -230,7 +230,11 @@ def runEvents(window):
         if event == ('-CORRECT-'):
             # User chose a video file.
             if (fileExt == '.mp4'):
-               handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
+                handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
+                automaticCorrectedOnce = True
+                correctionsCompleted += 1
+                # Reset progress bar to zero
+                updateProgressBar(0,1,window)
 
             else:
                 correctMWindow = correctMethodWindow()
@@ -750,21 +754,17 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
 def fixVideo(listOfFrames, window):  
     output_dir = "framesC"
     os.makedirs(output_dir, exist_ok=True)    
-    listOfCorrectedFrames = []
+    listOfCorrectedFrames = []        
     for j in range(len(listOfFrames)):                                
         predicted_points = auto_correct_process(listOfFrames[j])
-        
         predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
         for i in range(len(predicted_points_list)):
             if predicted_points_list[i] < 0:
                 predicted_points_list[i] = 1.00
-
         # Split the array into two separate arrays for x and y coordinates
         x_coords = predicted_points_list[::2]
         y_coords = predicted_points_list[1::2]
-        
         lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
-
         # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
         point_with_highest_y = max(lineCoords, key=lambda point:point[1])
         ix = point_with_highest_y[0]
