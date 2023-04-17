@@ -71,7 +71,7 @@ def visualize_predicted_points(image_path, predicted_points, output_path="visual
   cv2.imwrite(output_path, img)
 
 
-def auto_correct_process(fileName, folder):
+def auto_correct_process(fileName):
   """
       Args:     fileName --> Str  path to the image file.
                 folder   --> Str: path to the folder where the model is stored

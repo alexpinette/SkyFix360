@@ -19,6 +19,7 @@ import tkinter as tk
 from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from equirectRotate import EquirectRotate
+from moviepy.editor import *
 
 from auto_fix import auto_correct_process
 
@@ -66,7 +67,7 @@ def createWindow():
          #third col
          sg.Column([
          [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1)),
-          sg.Button('Modify', key='-MODIFY-', visible=False, size=(10, 1)) ],
+           sg.Button('Modify', key='-MODIFY-', visible=False, size=(10, 1)) ],
          [sg.Button('Export', key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
          [sg.Button('Undo', key='-UNDO-', visible=False, size=(10, 1))],
          [sg.Button('Done', key='-DONE-', visible=False, size=(10, 1))],
@@ -124,7 +125,8 @@ def correctMethodWindow():
                          [sg.Button('Manual', size=(10,1)), sg.Text('This method allows for custom specification \nof the horizon by a drawing from the user.\n')], 
                          [sg.Button('Automatic', size=(10,1)), sg.Text('This method automaticaaly finds the horizon \nline and corrects the image/video.')], 
                          [sg.Button("Cancel", size=(10, 1), pad=((135), (20, 0)))]]
-    return correctionLayout
+    return correctionLayout 
+
 
 # ------------------------------------------------------------------------------  
 def runEvents(window):
@@ -136,12 +138,13 @@ def runEvents(window):
     """
 
     fileNames = []
-    prevButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
-    doneButtonClickedOnce = False # Will help with fixing correction window displaying incorrectly
+    prevButtonClickedOnce = False  # Will help with fixing correction window displaying incorrectly
+    doneButtonClickedOnce = False  # Will help with fixing correction window displaying incorrectly
     automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
     correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
-    modifyClicked = False       # To keep track of temporary saved corrected image    
-    
+    fileExt = ""               
+    modifyClicked = False          # To keep track of temporary saved corrected image  
+        
     while True:
         event, values = window.read()
                 
@@ -177,7 +180,7 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update(fileNames)
 
-        # User chose file from File List
+# User chose file from File List
         if event == "-FILE LIST-":   
             try:
                 fileName = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
@@ -190,15 +193,39 @@ def runEvents(window):
 
                 # display filename in appropriate spot in right column
                 window['-FILENAME-'].update(fileName)
-            
-                # Open the image
-                pilImage = PIL.Image.open(fileName)
                 
+                # get the file extension
+                fileExt = os.path.splitext(fileName)[1].lower()
+
+                # differentiate between .jpg and .mp4 files
+                if fileExt == '.jpg' or fileExt == '.jpeg':
+                    fileExt = '.jpg'
+                    print('Selected file is a .jpg or .jpeg')
+            
+                    # Open the image
+                    pilImage = PIL.Image.open(fileName)
+                    
+                elif fileExt == '.mp4':
+                    print('Selected file is a .mp4')
+                    
+                    # read the .mp4 video file
+                    cap = cv2.VideoCapture(fileName)
+                    
+                    # read the first frame of the video
+                    ret, frame = cap.read()
+
+                    # convert the OpenCV image to a PIL Image
+                    pilImage = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                    pilImage.save("vidImage.jpg")
+                    
+                    # NOTE TO CLOSE/RELEASE THE VIDEOCAPTURE:
+                    # cap.release()
+                    
                 # Get image data, and then use it to update window["-IMAGE-"]
                 data = imageToData(pilImage, window["-IMAGE-"].get_size())
                 window['-IMAGE-'].update(data=data)
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
-        
+                
             except:
                 pass
             
@@ -206,147 +233,167 @@ def runEvents(window):
         # if 'Correct' button is not disabled & clicked, display appropriate window
         if event == ('-CORRECT-') or event == ('-MODIFY-'):
             if event == ('-MODIFY-'):
-                modifyClicked = True
+                if (fileExt == '.jpg' or fileExt == '.jpeg'):
+                    modifyClicked = True
+
                 finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
                 opfile = os.path.splitext(fileName)[0]+'_f.jpg'
                 cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-            
-            correctMWindow = correctMethodWindow()
-            correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
-            while True:
-                correctEvent, correctVal = correctWindow.read()
-                if correctEvent == sg.WIN_CLOSED:
-                    # Close the help popup
-                    correctWindow.close()
-                    
-                    break
-                elif correctEvent == 'Manual':
-                    correctWindow.close()
 
-                    ix = 0
-                    iy = 0
-                    
-                    # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
-                    if (automaticCorrectedOnce == True and correctionsCompleted == 1):
-                        reformatScreen(window,True)
+
+            # User chose a video file.
+            if (fileExt == '.mp4'):
+                handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
+                automaticCorrectedOnce = True
+                modifyClicked = False
+
+                correctionsCompleted += 1
+                # Reset progress bar to zero
+                updateProgressBar(0,1,window)
+
+            else:
+                correctMWindow = correctMethodWindow()
+                correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
+                while True:
+                    correctEvent, correctVal = correctWindow.read()
+                    if correctEvent == sg.WIN_CLOSED:
+                        # Close the help popup
+                        correctWindow.close()
                         
-                        # I know its _forget() here, but the buttons look good
-                        window['-CORRECT-'].Widget.master.pack_forget()
-                        if modifyClicked: window['-MODIFY-'].Widget.master.pack_forget()
-                        window['-EXPORT-'].Widget.master.pack_forget() 
-                    
-                    # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
-                    elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
-                        if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
-                            reformatScreen(window, True)
-                        elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
-                            reformatScreen(window, False)
-                                                        
-                    fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
-                    ax = fig.add_subplot(111)
+                        break
+                    elif correctEvent == 'Manual':
+                        correctWindow.close()
 
-                    # WINDOWS SYSTEM
-                    if os.name == 'nt':
-                        fig.set_size_inches(1150/100, 575/100, forward=True)
-                    
-                    # MAC OR LINUX
-                    else:
-                        fig.set_size_inches(600/100, 300/100, forward=True)
+                        ix = 0
+                        iy = 0
+                        
+                        # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
+                        if (automaticCorrectedOnce == True and correctionsCompleted == 1):
+                            reformatScreen(window,True)
+                            
+                            # I know its _forget() here, but the buttons look good
+                            window['-CORRECT-'].Widget.master.pack_forget()
+                            if modifyClicked: window['-MODIFY-'].Widget.master.pack_forget()
+                            window['-EXPORT-'].Widget.master.pack_forget() 
+                        
+                        # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
+                        elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
 
-                    img = mpimg.imread(fileName)
-                    imgplot = plt.imshow(img, aspect="auto")
-                    plt.grid()
+                            if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
+                                reformatScreen(window, True)
+                            elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
+                                reformatScreen(window, False)
+                                                            
+                        fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
+                        ax = fig.add_subplot(111)
 
-                    # Define a list to store the coordinates of the line
-                    lineCoords = []
+                        # WINDOWS SYSTEM
+                        if os.name == 'nt':
+                            fig.set_size_inches(1150/100, 575/100, forward=True)
+                        
+                        # MAC OR LINUX
+                        else:
+                            fig.set_size_inches(600/100, 300/100, forward=True)
 
-                    # Define a function to handle mouse clicks
-                    def onclick(event):
-                        # Append the coordinates of the click to the list
-                        if event.xdata != None and event.ydata != None:
-                            lineCoords.append((event.xdata, event.ydata))
-                            ax.scatter(event.xdata, event.ydata, color='r')
-                            fig.canvas.draw()
+                        img = mpimg.imread(fileName)
+                        imgplot = plt.imshow(img, aspect="auto")
+                        plt.grid()
 
-                    # Connect the onclick function to the mouse click event
-                    cid = fig.canvas.mpl_connect('button_press_event', onclick)
-                    
-                    draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
-                    
-                elif correctEvent == 'Automatic':
-                    correctWindow.close()                                        
+                        # Define a list to store the coordinates of the line
+                        lineCoords = []
 
-                    predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
-                    
-                    predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
-                    for i in range(len(predicted_points_list)):
-                        if predicted_points_list[i] < 0:
-                            predicted_points_list[i] = 1.00
+                        # Define a function to handle mouse clicks
+                        def onclick(event):
+                            # Append the coordinates of the click to the list
+                            if event.xdata != None and event.ydata != None:
+                                lineCoords.append((event.xdata, event.ydata))
+                                ax.scatter(event.xdata, event.ydata, color='r')
+                                fig.canvas.draw()
 
-                    # Split the array into two separate arrays for x and y coordinates
-                    x_coords = predicted_points_list[::2]
-                    y_coords = predicted_points_list[1::2]
-                    
-                    lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
+                        # Connect the onclick function to the mouse click event
+                        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+                        
+                        draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+                        
+                    elif correctEvent == 'Automatic':
+                        correctWindow.close()                                        
 
-                    # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
-                    point_with_highest_y = max(lineCoords, key=lambda point:point[1])
-                    ix = point_with_highest_y[0]
-                    iy = -point_with_highest_y[1]
+                        predicted_points = auto_correct_process(fileName)
+                        
+                        predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+                        for i in range(len(predicted_points_list)):
+                            if predicted_points_list[i] < 0:
+                                predicted_points_list[i] = 1.00
 
-                    # Fix the screen to prepare for image processing
-                    fixScreen(window, fileName)
+                        # Split the array into two separate arrays for x and y coordinates
+                        x_coords = predicted_points_list[::2]
+                        y_coords = predicted_points_list[1::2]
+                        
+                        lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
 
-                    # Correct the image (long process)
-                    finalImg = correctImageMan(fileName, ix, iy, window)
-                    
-                    correctWindow.close()
 
-                    window['-FOLDER-'].update(visible=True)
-                    window['-FILE LIST-'].update(visible=True)
-                    window['-CORRECT-'].update(visible=True)
-                    if modifyClicked: window['-MODIFY-'].update(visible=True)
-                    window['-BROWSE-'].update(visible=True)
-                    
-                    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
-                    # Convert the array from BGR to RGB
-                    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                        # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+                        point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+                        ix = point_with_highest_y[0]
+                        iy = -point_with_highest_y[1]
 
-                    # Create a PIL Image object from the numpy array
-                    pilImg = PIL.Image.fromarray(finalImg)
 
-                    # Resize the image to fit the window
-                    data = imageToData(pilImg, window["-IMAGE-"].get_size())
-                    window['-IMAGE-'].update(data=data)
-                    updateProgressBar(95,101, window)
+                        # Fix the screen to prepare for image processing
+                        fixScreen(window, fileName)
 
-                    window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
-                    window['-ProgressText-'].update(visible=False)
-                    window['-ProgressBar-'].update(visible=False)
-                    
-                    window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
-                    window['-PAD FOR CORRECTION-'].update(visible=False)
-                    
-                    defaultWindow(window, True)
+                        # Correct the image (long process)
+                        finalImg = correctImageMan(fileName, ix, iy, window, "img")
+                        
+                        correctWindow.close()
 
-                    # Reset progress bar to zero
-                    updateProgressBar(0,1,window)
-                    
-                    automaticCorrectedOnce = True
-                    correctionsCompleted += 1
+                        window['-FOLDER-'].update(visible=True)
+                        window['-FILE LIST-'].update(visible=True)
+                        window['-CORRECT-'].update(visible=True)
+                        if modifyClicked: window['-MODIFY-'].update(visible=True)
+                        window['-BROWSE-'].update(visible=True)
+                        
+                        # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+                        # Convert the array from BGR to RGB
+                        finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
 
-                    if modifyClicked: os.remove(opfile)
+                        # Create a PIL Image object from the numpy array
+                        pilImg = PIL.Image.fromarray(finalImg)
 
-                elif correctEvent == 'Cancel':
-                    correctWindow.close()
-                    break
+                        # Resize the image to fit the window
+                        data = imageToData(pilImg, window["-IMAGE-"].get_size())
+                        window['-IMAGE-'].update(data=data)
+                        updateProgressBar(95,101, window)
+
+                        window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+                        window['-ProgressText-'].update(visible=False)
+                        window['-ProgressBar-'].update(visible=False)
+                        
+                        window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
+                        window['-PAD FOR CORRECTION-'].update(visible=False)
+                        
+                        defaultWindow(window, True, True)
+
+                        # Reset progress bar to zero
+                        updateProgressBar(0,1,window)
+                        
+                        automaticCorrectedOnce = True
+                        correctionsCompleted += 1
+
+                        if modifyClicked: os.remove(opfile)
+
+                    elif correctEvent == 'Cancel':
+                        correctWindow.close()
+                        break
+
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
             if modifyClicked: os.remove(opfile)
             finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
-            defaultWindow(window, False)
+            
+            defaultWindow(window, False, False)
             prevButtonClickedOnce = True
+
 
         if event == ('-DONE-') and lineCoords != []:
             if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
@@ -380,7 +427,7 @@ def runEvents(window):
             fixScreen(window, fileName)
 
             # Correct the image (long process)
-            finalImg = correctImageMan(fileName, ix, iy, window)
+            finalImg = correctImageMan(fileName, ix, iy, window, "img")
             
             correctWindow.close()
 
@@ -421,7 +468,6 @@ def runEvents(window):
             window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-FILE LIST-'].Widget.master.pack()
             window['-CORRECT-'].Widget.master.pack()
-            if modifyClicked: window['-MODIFY-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
             window['-QUIT-'].Widget.master.pack()
@@ -433,7 +479,7 @@ def runEvents(window):
             correctionsCompleted += 1
 
             if(automaticCorrectedOnce):
-                defaultWindow(window, True)
+                defaultWindow(window, True, True)
             
             if modifyClicked: os.remove(opfile)
             
@@ -479,7 +525,9 @@ def runEvents(window):
         # if user selects '-QUIT-' button or default exit button, close window
         if event == ('-QUIT-') or event == sg.WIN_CLOSED:
             break
-                
+        
+        
+        
  # ------------------------------------------------------------------------------  
      
 def getExportPath():
@@ -492,11 +540,11 @@ def getExportPath():
 
     # Create a custom "Save As" dialog with a custom "Save" button text
     save_layout = [
-            [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!')],
-            [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here", enable_events=True)],
-            [sg.In (size=(40,1), key="-DIRECTORY-",  default_text="Select Directory (Use Browse -->)", disabled=True),
-                sg.FolderBrowse(key='-BROWSE-', size=(10, 1))],
-            [sg.Button('Save')],
+             [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!')],
+             [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here", enable_events=True)],
+             [sg.In (size=(40,1), key="-DIRECTORY-",  default_text="Select Directory (Use Browse -->)", disabled=True),
+                 sg.FolderBrowse(key='-BROWSE-', size=(10, 1))],
+             [sg.Button('Save')],
             ]
     save_window = sg.Window('Save Your Corrected Image/Movie', save_layout)
     
@@ -504,35 +552,51 @@ def getExportPath():
     sep = os.path.sep
     save_path = "void" # Placeholder
 
+    erasedHint = False
+    validSavePath = True
+
 
     while True:
         save_event, save_values = save_window.Read()
 
         if save_event == sg.WIN_CLOSED:
             break
-        
-        if save_event == "-FILENAME-" or save_event == "-DIRECTORY-":
+
+        if save_event == "-FILENAME-" and erasedHint == False:
             # Remove hint text when user starts typing
-            if "Enter Filename Here" in save_window[save_event].get():
-                save_window[save_event].update("")
-                
-        # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY
-            
+            save_window[save_event].update("")
+            erasedHint = True
+        
+        # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY (does not register first key stroke)
 
         if save_event == 'Save':
             filename = save_values['-FILENAME-']
             directory = save_values['-DIRECTORY-']
 
-            # If user chose a separate directory
-            if directory:
-                save_path = directory + sep + filename + '.jpg'
-            
-            # If user did wants local directory (did not choose separate directory)
-            else:
-                save_path = os.getcwd() + sep + filename + '.jpg'
+            # Checks if user gave a valid file name (at least entered something)
+            if filename == "Enter Filename Here" or filename == "":
+                validSavePath = False
 
-            print("The saved file would be: ", save_path)
-            break
+            # Must change back to true in case user entered falsely beforehand
+            else:
+                validSavePath = True
+            
+             # Check directory
+            if directory:
+
+                # If user wants local directory (did not choose separate directory)
+                if directory == "Select Directory (Use Browse -->)":
+                    save_path = os.getcwd() + sep + filename + '.jpg'
+
+                # If user chose a directory
+                else:
+                    save_path = directory + sep + filename + '.jpg'
+
+
+            # Only break out of loop and return save_path if user gave a valid file name
+            if (validSavePath == True):
+                print("The saved file path: ", save_path)
+                break
 
     save_window.Close()
     
@@ -605,7 +669,7 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
 
 # ------------------------------------------------------------------------------  
 
-def correctImageMan(fileName, ix, iy, window):
+def correctImageMan(fileName, ix, iy, window, vidImg):
     """ 
         Args:    fileName --> Str: Name of the file to be corrected
                  ix       --> Int: The x-position (column) of the point on the horizon that needs to be aligned with the center column of the corrected image
@@ -617,18 +681,16 @@ def correctImageMan(fileName, ix, iy, window):
 
     """
 
-    print('\n Now rotating the image to straighten the horizon.')
     src_image = cv2.imread(fileName)
-
     h, w, c = src_image.shape
-    print("\n Input file's height, width, colors =", h, w, c)
 
     # Do a 'yaw' rotation such that ix position earth-sky horizon is at the
     # middle column of the image. Fortunately for an equirectangular image, a yaw
     # is simply sliding the image horizontally, and is done very fast by np.roll
     shiftx=int(w/2 - ix)
     src_image = np.roll(src_image, shiftx, axis=1) 
-    updateProgressBar(0,11, window)
+    if vidImg == "img":
+        updateProgressBar(0,11, window)
 
     # If iy>0 then the user selected the lowest point of the horizon. After the
     # above 'yaw', the true horizon at the middle of the image is still
@@ -647,17 +709,148 @@ def correctImageMan(fileName, ix, iy, window):
     print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
     # rotate (yaw, pitch, roll)
 
-    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window)
+    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window, vidImg)
 
     rotated_image = equirectRot.rotate(src_image, window)
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
-    updateProgressBar(85,96, window)
+    if vidImg == "img":
+        updateProgressBar(85,96, window)
     print('Done.')
 
     return finalImg
 
-# ------------------------------------------------------------------------------  
+# ------------------------------------------------------------------------------ 
+
+def handleAutomaticVideoCorrection(fileName, window, vidImage):
+    print("Correcting a video file!")
+    # Load the video file
+    clip = VideoFileClip(fileName)
+
+    clip.audio.write_audiofile("outputA.mp3")
+
+    # Extract audio
+    audioClip = clip.audio
+
+    # # Extract metadata
+    duration = clip.duration
+    fps = clip.fps
+    # size = clip.size
+
+    # # Create a dictionary of metadata
+    # metadata = {
+    #     "filename": fileName,
+    #     "duration": duration,
+    #     "fps": fps,
+    #     "size": size
+    # }
+
+    # Get the frames from the video
+    frames = clip.iter_frames()
+
+    output_dir = "frames"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Convert each frame to an image and store it in a list
+    images = []
+    for frame in frames:
+        images.append(frame)
+
+    listOfFrames = []
+    # # Write each frame to the output directory
+    for i, frame in enumerate(images):
+        filename = os.path.join(output_dir, f"frame_{i}.jpg")
+        listOfFrames.append(filename)
+        try:
+            clip.save_frame(filename, t=i/fps)
+        except Exception as e:
+            print(f"Error saving frame {i}: {e}")
+
+    print("IMAGE SAVED")
+
+    # Close the clip
+    clip.close()
+
+    # Fix the screen to prepare for video processing
+    fixScreen(window, vidImage)
+
+    listOfCorrectedFrames = fixVideo(listOfFrames, window)
+
+    # Create an image sequence clip from the frames
+    image_clip = ImageSequenceClip(listOfCorrectedFrames, fps=fps, load_images=True)
+
+    # Set the audio of the image clip
+    audio = AudioFileClip("outputA.mp3")
+    image_clip = image_clip.set_audio(audio)
+
+    # Write the image sequence clip to a video file
+    output_path = "output.mp4"
+    image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
+
+    # Close the image sequence clip
+    image_clip.close()
+    
+    
+# ------------------------------------------------------------------------------   
+
+def fixVideo(listOfFrames, window):  
+    output_dir = "framesC"
+    os.makedirs(output_dir, exist_ok=True)    
+    listOfCorrectedFrames = []       
+    prev = 1
+    for j in range(len(listOfFrames)):                                
+        predicted_points = auto_correct_process(listOfFrames[j])
+        predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+        for i in range(len(predicted_points_list)):
+            if predicted_points_list[i] < 0:
+                predicted_points_list[i] = 1.00
+        # Split the array into two separate arrays for x and y coordinates
+        x_coords = predicted_points_list[::2]
+        y_coords = predicted_points_list[1::2]
+        lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
+        # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+        point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+        ix = point_with_highest_y[0]
+        iy = -point_with_highest_y[1]
+
+        # Correct the image (long process)
+        finalImg = correctImageMan(listOfFrames[j], ix, iy, window, "vid")
+        
+        # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+        # Convert the array from BGR to RGB
+        finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+        # Create a PIL Image object from the numpy array
+        pilImg = PIL.Image.fromarray(finalImg)
+
+        filename = os.path.join(output_dir, f"frame_{j}.jpg")
+
+        pilImg.save(filename)
+
+        listOfCorrectedFrames.append(filename)
+        updateProgressBar(prev, int(100/(3*len(listOfFrames))*i), window)  
+        prev = int(100/(3*len(listOfFrames))*i)
+
+    updateProgressBar(80, 90, window)  
+    window['-FOLDER-'].update(visible=True)
+    window['-FILE LIST-'].update(visible=True)
+    window['-CORRECT-'].update(visible=True)
+    window['-BROWSE-'].update(visible=True)
+    # Resize the image to fit the window
+    data = imageToData(pilImg, window["-IMAGE-"].get_size())
+    window['-IMAGE-'].update(data=data)
+    updateProgressBar(90, 101, window)  
+
+    window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+    window['-ProgressText-'].update(visible=False)
+    window['-ProgressBar-'].update(visible=False)
+    
+    window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
+    window['-PAD FOR CORRECTION-'].update(visible=False)
+    
+    defaultWindow(window, True, False)
+
+    return listOfCorrectedFrames
 
 def fixScreen(window, fileName):
     """ 
@@ -708,7 +901,7 @@ def fixScreen(window, fileName):
 def updateProgressBar(start,end, window):
     """ 
         Args:    start   --> integer signifying where to start the updating
-                 end     --> integer signifying where to start the updating
+                 end     --> integer signifying where to end the updating
                  window  --> the data of the window that is displayed to user
         Returns: N/A
         Summary: This function updates the progress bar with the window based
@@ -794,7 +987,6 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
-
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
         window['-CORRECT-'].update(visible=False)
@@ -809,7 +1001,7 @@ def reformatScreen(window, btnClick):
         window['-QUIT-'].update(visible=True)
 
 
-def defaultWindow(window, correctedStatus):
+def defaultWindow(window, correctedStatus, selectedImage):
     window['-PREVIOUS BTN-'].update(visible=False)
     window['-TITLE-'].update(visible=False)
     window['-MANUAL DESCRIPTION-'].update(visible=False)
@@ -830,7 +1022,6 @@ def defaultWindow(window, correctedStatus):
     window['-DONE-'].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
-
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
     window['-FOLDROW-'].Widget.master.pack()
@@ -849,10 +1040,11 @@ def defaultWindow(window, correctedStatus):
     window['-BROWSE-'].update(visible=True)
     window['-FILE LIST-'].Widget.master.pack()
     window['-FILE LIST-'].update(visible=True)
+    window['-FILE LIST-'].Widget.update()
     window['-CORRECT-'].Widget.master.pack()
     window['-CORRECT-'].update(visible=True)
 
-    if correctedStatus:
+    if selectedImage:
         window['-MODIFY-'].Widget.master.pack()
         window['-MODIFY-'].update(visible=True)
 
