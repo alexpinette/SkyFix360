@@ -115,9 +115,7 @@ class EquirectRotate:
     # re-generate coordinate pairing
     self.R = np.transpose(self.R)
     Rt = np.transpose(self.R)  # we should fill out the output image, so use R^t.
-    for i in range(self.height):
-      for j in range(self.width):
-        self.src_xyz[i][j] = self.out_xyz[i][j] @ Rt
+    self.src_xyz = np.einsum('ijb,kl->ijl', self.out_xyz, Rt)
 
     # mapping xyz(sphere) coordinate into LatLon coordinate system
     self.src_LonLat = Sphere2LatLon(self.src_xyz)  # (H, W, 2)
