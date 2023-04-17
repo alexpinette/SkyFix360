@@ -334,7 +334,7 @@ def runEvents(window):
                         fixScreen(window, fileName)
 
                         # Correct the image (long process)
-                        finalImg = correctImageMan(fileName, ix, iy, window)
+                        finalImg = correctImageMan(fileName, ix, iy, window, "img")
                         
                         correctWindow.close()
 
@@ -412,7 +412,7 @@ def runEvents(window):
             fixScreen(window, fileName)
 
             # Correct the image (long process)
-            finalImg = correctImageMan(fileName, ix, iy, window)
+            finalImg = correctImageMan(fileName, ix, iy, window, "img")
             
             correctWindow.close()
 
@@ -625,7 +625,7 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
 
 # ------------------------------------------------------------------------------  
 
-def correctImageMan(fileName, ix, iy, window):
+def correctImageMan(fileName, ix, iy, window, vidImg):
     """ 
         Args:    fileName --> Str: Name of the file to be corrected
                  ix       --> Int: The x-position (column) of the point on the horizon that needs to be aligned with the center column of the corrected image
@@ -648,7 +648,8 @@ def correctImageMan(fileName, ix, iy, window):
     # is simply sliding the image horizontally, and is done very fast by np.roll
     shiftx=int(w/2 - ix)
     src_image = np.roll(src_image, shiftx, axis=1) 
-    updateProgressBar(0,11, window)
+    if vidImg == "img":
+        updateProgressBar(0,11, window)
 
     # If iy>0 then the user selected the lowest point of the horizon. After the
     # above 'yaw', the true horizon at the middle of the image is still
@@ -667,12 +668,13 @@ def correctImageMan(fileName, ix, iy, window):
     print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
     # rotate (yaw, pitch, roll)
 
-    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window)
+    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window, vidImg)
 
     rotated_image = equirectRot.rotate(src_image, window)
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
-    updateProgressBar(85,96, window)
+    if vidImg == "img":
+        updateProgressBar(85,96, window)
     print('Done.')
 
     return finalImg
@@ -754,7 +756,8 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
 def fixVideo(listOfFrames, window):  
     output_dir = "framesC"
     os.makedirs(output_dir, exist_ok=True)    
-    listOfCorrectedFrames = []        
+    listOfCorrectedFrames = []       
+    prev = 1
     for j in range(len(listOfFrames)):                                
         predicted_points = auto_correct_process(listOfFrames[j])
         predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
@@ -771,7 +774,7 @@ def fixVideo(listOfFrames, window):
         iy = -point_with_highest_y[1]
 
         # Correct the image (long process)
-        finalImg = correctImageMan(listOfFrames[j], ix, iy, window)
+        finalImg = correctImageMan(listOfFrames[j], ix, iy, window, "vid")
         
         # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
         # Convert the array from BGR to RGB
@@ -785,7 +788,10 @@ def fixVideo(listOfFrames, window):
         pilImg.save(filename)
 
         listOfCorrectedFrames.append(filename)
+        updateProgressBar(prev, int(100/(3*len(listOfFrames))*i), window)  
+        prev = int(100/(3*len(listOfFrames))*i)
 
+    updateProgressBar(80, 90, window)  
     window['-FOLDER-'].update(visible=True)
     window['-FILE LIST-'].update(visible=True)
     window['-CORRECT-'].update(visible=True)
@@ -793,7 +799,7 @@ def fixVideo(listOfFrames, window):
     # Resize the image to fit the window
     data = imageToData(pilImg, window["-IMAGE-"].get_size())
     window['-IMAGE-'].update(data=data)
-    updateProgressBar(95,101, window)
+    updateProgressBar(90, 101, window)  
 
     window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
     window['-ProgressText-'].update(visible=False)
