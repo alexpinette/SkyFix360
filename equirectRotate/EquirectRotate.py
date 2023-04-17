@@ -10,7 +10,7 @@ class EquirectRotate:
   """
 
   def __init__(self, height: int, width: int, rotation: tuple, window: sg):
-    assert height * 2 == width
+    # assert height * 2 == width
     self.height = height
     self.width = width
     self.window = window  #THE GUI WINDOW (WILL BE USED FOR PROGRESS BAR UPDATES)

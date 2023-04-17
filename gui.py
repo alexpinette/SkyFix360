@@ -211,6 +211,8 @@ def runEvents(window):
 
                     # convert the OpenCV image to a PIL Image
                     pilImage = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+                    pilImage.save("vidImage.jpg")
                     
                     # NOTE TO CLOSE/RELEASE THE VIDEOCAPTURE:
                     # cap.release()
@@ -228,7 +230,7 @@ def runEvents(window):
         if event == ('-CORRECT-'):
             # User chose a video file.
             if (fileExt == '.mp4'):
-               handleAutomaticVideoCorrection(fileName)
+               handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
 
             else:
                 correctMWindow = correctMethodWindow()
@@ -303,7 +305,7 @@ def runEvents(window):
                     elif correctEvent == 'Automatic':
                         correctWindow.close()                                        
 
-                        predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
+                        predicted_points = auto_correct_process(fileName)
                         
                         predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
                         for i in range(len(predicted_points_list)):
@@ -673,7 +675,7 @@ def correctImageMan(fileName, ix, iy, window):
 
 # ------------------------------------------------------------------------------ 
 
-def handleAutomaticVideoCorrection(fileName):
+def handleAutomaticVideoCorrection(fileName, window, vidImage):
     print("Correcting a video file!")
     # Load the video file
     print(fileName)
@@ -723,8 +725,13 @@ def handleAutomaticVideoCorrection(fileName):
     # Close the clip
     clip.close()
 
+    # Fix the screen to prepare for video processing
+    fixScreen(window, vidImage)
+
+    listOfCorrectedFrames = fixVideo(listOfFrames, window)
+
     # Create an image sequence clip from the frames
-    image_clip = ImageSequenceClip(listOfFrames, fps=fps, load_images=True)
+    image_clip = ImageSequenceClip(listOfCorrectedFrames, fps=fps, load_images=True)
 
     # Set the audio of the image clip
     audio = AudioFileClip("outputA.mp3")
@@ -739,6 +746,65 @@ def handleAutomaticVideoCorrection(fileName):
     
     
 # ------------------------------------------------------------------------------   
+
+def fixVideo(listOfFrames, window):  
+    output_dir = "framesC"
+    os.makedirs(output_dir, exist_ok=True)    
+    listOfCorrectedFrames = []
+    for j in range(len(listOfFrames)):                                
+        predicted_points = auto_correct_process(listOfFrames[j])
+        
+        predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+        for i in range(len(predicted_points_list)):
+            if predicted_points_list[i] < 0:
+                predicted_points_list[i] = 1.00
+
+        # Split the array into two separate arrays for x and y coordinates
+        x_coords = predicted_points_list[::2]
+        y_coords = predicted_points_list[1::2]
+        
+        lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
+
+        # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+        point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+        ix = point_with_highest_y[0]
+        iy = -point_with_highest_y[1]
+
+        # Correct the image (long process)
+        finalImg = correctImageMan(listOfFrames[j], ix, iy, window)
+        
+        # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+        # Convert the array from BGR to RGB
+        finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+        # Create a PIL Image object from the numpy array
+        pilImg = PIL.Image.fromarray(finalImg)
+
+        filename = os.path.join(output_dir, f"frame_{j}.jpg")
+
+        pilImg.save(filename)
+
+        listOfCorrectedFrames.append(filename)
+
+    window['-FOLDER-'].update(visible=True)
+    window['-FILE LIST-'].update(visible=True)
+    window['-CORRECT-'].update(visible=True)
+    window['-BROWSE-'].update(visible=True)
+    # Resize the image to fit the window
+    data = imageToData(pilImg, window["-IMAGE-"].get_size())
+    window['-IMAGE-'].update(data=data)
+    updateProgressBar(95,101, window)
+
+    window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+    window['-ProgressText-'].update(visible=False)
+    window['-ProgressBar-'].update(visible=False)
+    
+    window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
+    window['-PAD FOR CORRECTION-'].update(visible=False)
+    
+    defaultWindow(window, True)
+
+    return listOfCorrectedFrames
 
 def fixScreen(window, fileName):
     """ 
@@ -788,7 +854,7 @@ def fixScreen(window, fileName):
 def updateProgressBar(start,end, window):
     """ 
         Args:    start   --> integer signifying where to start the updating
-                 end     --> integer signifying where to start the updating
+                 end     --> integer signifying where to end the updating
                  window  --> the data of the window that is displayed to user
         Returns: N/A
         Summary: This function updates the progress bar with the window based
