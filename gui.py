@@ -791,16 +791,31 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
 # ------------------------------------------------------------------------------   
 
 def fixVideo(listOfFrames, window):  
+    print("Num of frames is ", len(listOfFrames))
+
     output_dir = "framesC"
     os.makedirs(output_dir, exist_ok=True)    
     listOfCorrectedFrames = []       
-    prev = 1
+    prev = 0
+    # incrementValue = 80 // len(listOfFrames)
+
+    # Too many frames to updateProgressBar by a single digit (expression returns < 1)
+
+    if ( (80//len(listOfFrames)) <1):
+        modToIncrement = (len(listOfFrames)//80)+1
+
+    # Small enough amount of frames to increment by 1
+    else:
+        modToIncrement = 1
+
     for j in range(len(listOfFrames)):                                
         predicted_points = auto_correct_process(listOfFrames[j])
         predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
         for i in range(len(predicted_points_list)):
             if predicted_points_list[i] < 0:
                 predicted_points_list[i] = 1.00
+                
+                
         # Split the array into two separate arrays for x and y coordinates
         x_coords = predicted_points_list[::2]
         y_coords = predicted_points_list[1::2]
@@ -825,10 +840,18 @@ def fixVideo(listOfFrames, window):
         pilImg.save(filename)
 
         listOfCorrectedFrames.append(filename)
-        updateProgressBar(prev, int(100/(3*len(listOfFrames))*i), window)  
-        prev = int(100/(3*len(listOfFrames))*i)
+        
+        # Increment progressBar while looping at precalculated modulus value
+        if (j % modToIncrement == 0):
+            updateProgressBar(prev, prev+1, window)
+            prev = prev+1
+        
+        print("Prev Value -- > ", prev)
+        
+        # updateProgressBar(prev, int(100/(10*len(listOfFrames))*i), window)  
+        # prev = int(100/(10*len(listOfFrames))*i)
 
-    updateProgressBar(80, 90, window)  
+    updateProgressBar(prev, 90, window)  
     window['-FOLDER-'].update(visible=True)
     window['-FILE LIST-'].update(visible=True)
     window['-CORRECT-'].update(visible=True)
