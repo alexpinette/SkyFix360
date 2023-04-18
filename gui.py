@@ -245,6 +245,10 @@ def runEvents(window):
                 if event == ('-MODIFY-'):
                     modifyClicked = True
                     finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                    
+                    # must flip image when modifying a corrected image
+                    finalImg = cv2.flip(finalImg, 0)
+                    
                     opfile = os.path.splitext(fileName)[0]+'_f.jpg'
                     fileName = opfile
                     cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
@@ -453,9 +457,6 @@ def runEvents(window):
             window['-CORRECT-'].update(visible=True, disabled=True, button_color=('grey', sg.theme_button_color_background()))
             window['-MODIFY-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
-
-            # must flip image when modifying a corrected image
-            if modifyClicked: finalImg = cv2.flip(finalImg, 0)
             
             # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
             # Convert the array from BGR to RGB
