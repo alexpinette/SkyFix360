@@ -810,16 +810,21 @@ def fixVideo(listOfFrames, window):
     os.makedirs(output_dir, exist_ok=True)    
     listOfCorrectedFrames = []       
     prev = 0
+    valToIncrementBy = 0
     # incrementValue = 80 // len(listOfFrames)
 
     # Too many frames to updateProgressBar by a single digit (expression returns < 1)
-
-    if ( (80//len(listOfFrames)) <1):
+    # Get a modulus to update at that value while looping through frames
+    if (len(listOfFrames) > 80):
         modToIncrement = (len(listOfFrames)//80)+1
 
-    # Small enough amount of frames to increment by 1
-    else:
+    # Small enough amount of frames to increment every iteration of j
+    elif len(listOfFrames) <= 80:
         modToIncrement = 1
+        valToIncrementBy = 80//len(listOfFrames)
+        
+    
+
 
     for j in range(len(listOfFrames)):                                
         predicted_points = auto_correct_process(listOfFrames[j])
@@ -854,10 +859,15 @@ def fixVideo(listOfFrames, window):
 
         listOfCorrectedFrames.append(filename)
         
-        # Increment progressBar while looping at precalculated modulus value
-        if (j % modToIncrement == 0):
+        # Increment progressBar while looping at precalculated modulus value (total frames > 80)
+        if (j % modToIncrement == 0 and modToIncrement != 1):
             updateProgressBar(prev, prev+1, window)
             prev = prev+1
+           
+        # Update progress bar everytime because total frames <= 80
+        elif (modToIncrement == 1):
+            updateProgressBar(prev, prev+valToIncrementBy, window)
+            prev = prev+valToIncrementBy
         
         print("Prev Value -- > ", prev)
         

@@ -36,14 +36,7 @@ After Informal Meeting:
 
 
 - [x] Begun adding support for video files
-<<<<<<< HEAD
-- []  Automatically correct one frame of a .mp4 file
-- []  Correct a whole .mp4 file automatically
-
-* Ultimate Goal is to make automatic "perfect" and support video files. 
-=======
 - [x]  Automatically correct one frame of a .mp4 file
 - [x]  Correct a whole .mp4 file automatically
 
 * Ultimate Goal is to make automatic "perfect" and support video files. 
->>>>>>> bcff77e2a78cbea9441f73cc2d989eebca25d8af
