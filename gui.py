@@ -4,17 +4,11 @@
     Senior Seminar 2023
 '''
 
-import PIL
-import os
-import io
+import os, io, sys
 import numpy as np
-import PySimpleGUI as sg
+import PySimpleGUI as sg, PIL, cv2, textwrap
 import matplotlib.pyplot as plt
-import sys
-import cv2
 import matplotlib.image as mpimg
-import textwrap
-import tkinter as tk
 
 from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -23,8 +17,7 @@ from moviepy.editor import *
 
 from auto_fix import auto_correct_process
 
-
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 global prevButtonClickedOnce
 global doneButtonClickedOnce
 
@@ -37,7 +30,7 @@ def createWindow():
     """
     sg.theme ("DarkGrey1")
 
-    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to undo, click the 'Undo'."
+    manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, click the `Undo` button. Once you are done, click 'Done'."
     newManualDescription = textwrap.fill(manualDescription, 52)
 
 
@@ -137,12 +130,12 @@ def runEvents(window):
                    It listens for events triggered by the user and responds accordingly.
     """
 
-    fileNames = []
+    fileNames = []                 # set fileNames to an empty list that will represent legal input
     prevButtonClickedOnce = False  # Will help with fixing correction window displaying incorrectly
     doneButtonClickedOnce = False  # Will help with fixing correction window displaying incorrectly
     automaticCorrectedOnce = False # Will help with fixing correction window displaying incorrectly
     correctionsCompleted = 0       # Will help with fixing correction window displaying incorrectly
-    fileExt = ""               
+    fileExt = ""                   # Track file extension user selected to correct
     modifyClicked = False          # To keep track of temporary saved corrected image  
         
     while True:
@@ -180,15 +173,18 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update(fileNames)
 
-# User chose file from File List
+        # User chose file from File List
         if event == "-FILE LIST-":   
             try:
+                # file name to process correction method on
                 fileName = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
                 
                 # disable `Export` button since new image was selected
                 window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
                 window['-TITLE-'].update('SkyFix360')
+                window['-MODIFY-'].update(visible=False)
 
+                # when the user changes the filename, reset modifyClicked to false
                 modifyClicked = False
 
                 # display filename in appropriate spot in right column
@@ -232,14 +228,6 @@ def runEvents(window):
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
         if event == ('-CORRECT-') or event == ('-MODIFY-'):
-            if event == ('-MODIFY-'):
-                if (fileExt == '.jpg' or fileExt == '.jpeg'):
-                    modifyClicked = True
-
-                finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
-                opfile = os.path.splitext(fileName)[0]+'_f.jpg'
-                cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-
 
             # User chose a video file.
             if (fileExt == '.mp4'):
@@ -251,7 +239,15 @@ def runEvents(window):
                 # Reset progress bar to zero
                 updateProgressBar(0,1,window)
 
-            else:
+            elif (fileExt == '.jpg' or fileExt == '.jpeg') or  event == ('-MODIFY-'):
+                 # if user clicked `modify` button, temporarily save image to recorrect it
+                if event == ('-MODIFY-'):
+                    modifyClicked = True
+                    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                    opfile = os.path.splitext(fileName)[0]+'_f.jpg'
+                    fileName = opfile
+                    cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+
                 correctMWindow = correctMethodWindow()
                 correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
                 while True:
@@ -269,7 +265,7 @@ def runEvents(window):
                         
                         # Covers the case where correctWinow messes up if automatic was used FIRST, then manual
                         if (automaticCorrectedOnce == True and correctionsCompleted == 1):
-                            reformatScreen(window,True)
+                            reformatScreen(window, True)
                             
                             # I know its _forget() here, but the buttons look good
                             window['-CORRECT-'].Widget.master.pack_forget()
@@ -348,8 +344,8 @@ def runEvents(window):
 
                         window['-FOLDER-'].update(visible=True)
                         window['-FILE LIST-'].update(visible=True)
-                        window['-CORRECT-'].update(visible=True)
-                        if modifyClicked: window['-MODIFY-'].update(visible=True)
+                        window['-CORRECT-'].update(visible=True, disabled=True, button_color=('grey', sg.theme_button_color_background()))
+                        window['-MODIFY-'].update(visible=True)
                         window['-BROWSE-'].update(visible=True)
                         
                         # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
@@ -391,7 +387,7 @@ def runEvents(window):
             if modifyClicked: os.remove(opfile)
             finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
             
-            defaultWindow(window, False, False)
+            defaultWindow(window, False, modifyClicked)
             prevButtonClickedOnce = True
 
 
@@ -438,8 +434,8 @@ def runEvents(window):
             window['fig_cv'].update(visible=True)
             window['-FOLDER-'].update(visible=True)
             window['-FILE LIST-'].update(visible=True)
-            window['-CORRECT-'].update(visible=True)
-            if modifyClicked: window['-MODIFY-'].update(visible=True)
+            window['-CORRECT-'].update(visible=True, disabled=True, button_color=('grey', sg.theme_button_color_background()))
+            window['-MODIFY-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
 
             if modifyClicked: finalImg = cv2.flip(finalImg, 0)
@@ -468,6 +464,7 @@ def runEvents(window):
             window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-FILE LIST-'].Widget.master.pack()
             window['-CORRECT-'].Widget.master.pack()
+            window['-MODIFY-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
             window['-HELP-'].Widget.master.pack()
             window['-QUIT-'].Widget.master.pack()
@@ -981,15 +978,17 @@ def reformatScreen(window, btnClick):
         window['-FOLDROW-'].Widget.master.pack()
         window['-TITLE-'].update('Manual Correction Instructions')
 
-        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, press 'z'. Once you are done, click the 'Done' button. If you wish to undo, click the 'Undo' button."
+        manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, click the `Undo` button. Once you are done, click 'Done'."
         manualDescription = textwrap.fill(manualDescription, 52)
         
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
         window['-CORRECT-'].Widget.master.pack()
+        window['-MODIFY-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
         window['-CORRECT-'].update(visible=False)
+        window['-MODIFY-'].update(visible=False)
         window['-EXPORT-'].update(visible=False)
         window['-DONE-'].Widget.master.pack() 
         window['-DONE-'].update(visible=True)
@@ -1047,11 +1046,15 @@ def defaultWindow(window, correctedStatus, selectedImage):
     if selectedImage:
         window['-MODIFY-'].Widget.master.pack()
         window['-MODIFY-'].update(visible=True)
+        window['-CORRECT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
 
     window['-EXPORT-'].Widget.master.pack()
     window['-EXPORT-'].update(visible=True)
     window['-HELP-'].Widget.master.pack()
     window['-QUIT-'].Widget.master.pack()
+
+
+# ------------------------------------------------------------------------------
 
 class Toolbar(NavigationToolbar2Tk):
     def __init__(self, *args, **kwargs):
