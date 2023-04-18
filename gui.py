@@ -19,6 +19,7 @@ import tkinter as tk
 from PIL import Image, ImageFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from equirectRotate import EquirectRotate
+from moviepy.editor import *
 
 from auto_fix import auto_correct_process
 
@@ -123,24 +124,7 @@ def correctMethodWindow():
                          [sg.Button('Manual', size=(10,1)), sg.Text('This method allows for custom specification \nof the horizon by a drawing from the user.\n')], 
                          [sg.Button('Automatic', size=(10,1)), sg.Text('This method automaticaaly finds the horizon \nline and corrects the image/video.')], 
                          [sg.Button("Cancel", size=(10, 1), pad=((135), (20, 0)))]]
-    return correctionLayout
-
-
-# ------------------------------------------------------------------------------  
-def successWindow():
-    """ 
-        Args:      None
-        Returns:   successLayout --> list: The layout as a list of PySimpleGUI text and button elements.
-        Summary:   This function creates a success window layout using PySimpleGUI, which notifies the 
-                   user that their image or video has been successfully corrected. The function returns
-                   the layout as a list of PySimpleGUI elements.
-    """
-
-    successLayout = [[sg.Text('Your image/video has been successfully corrected.', font=("Arial", 18), size=(25, None), auto_size_text=True, justification='center')],
-                     [sg.Text('Close this window and click the "Export" button to save your photo/video to your device.', size=(40, None), auto_size_text=True, justification='center', pad=(15, 10))],
-                     [sg.Button("Close", size=(10, 1), pad=(100, 5))]]
-    
-    return successLayout
+    return correctionLayout 
 
 
 # ------------------------------------------------------------------------------  
@@ -194,7 +178,7 @@ def runEvents(window):
             # add the filenames to the image file list in first column
             window["-FILE LIST-"].update(fileNames)
 
-        # User chose file from File List
+# User chose file from File List
         if event == "-FILE LIST-":   
             try:
                 fileName = os.path.join(values["-FOLDER-"], values["-FILE LIST-"][0])
@@ -228,6 +212,8 @@ def runEvents(window):
 
                     # convert the OpenCV image to a PIL Image
                     pilImage = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+                    pilImage.save("vidimage.jpg")
                     
                     # NOTE TO CLOSE/RELEASE THE VIDEOCAPTURE:
                     # cap.release()
@@ -237,29 +223,24 @@ def runEvents(window):
                 window['-IMAGE-'].update(data=data)
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
                 
-                
-        
             except:
                 pass
             
 
         # if 'Correct' button is not disabled & clicked, display appropriate window
-        if event == ('-CORRECT-'):    
-            
+        if event == ('-CORRECT-'):
             # User chose a video file.
             if (fileExt == '.mp4'):
-               handleAutomaticVideoCorrection()
+                handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
+                automaticCorrectedOnce = True
+                correctionsCompleted += 1
+                # Reset progress bar to zero
+                updateProgressBar(0,1,window)
 
-            # User chose an image file
             else:
-                print('Correcting an image!')
-                        
-                
                 correctMWindow = correctMethodWindow()
                 correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
                 while True:
-                    
-                    
                     correctEvent, correctVal = correctWindow.read()
                     if correctEvent == sg.WIN_CLOSED:
                         # Close the help popup
@@ -326,9 +307,10 @@ def runEvents(window):
                         
                         draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
                         
-                    elif correctEvent == 'Automatic':                                     
+                    elif correctEvent == 'Automatic':
+                        correctWindow.close()                                        
 
-                        predicted_points = auto_correct_process(fileName, values["-FOLDER-"])
+                        predicted_points = auto_correct_process(fileName)
                         
                         predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
                         for i in range(len(predicted_points_list)):
@@ -353,7 +335,7 @@ def runEvents(window):
                         fixScreen(window, fileName)
 
                         # Correct the image (long process)
-                        finalImg = correctImageMan(fileName, ix, iy, window)
+                        finalImg = correctImageMan(fileName, ix, iy, window, "img")
                         
                         correctWindow.close()
 
@@ -431,7 +413,7 @@ def runEvents(window):
             fixScreen(window, fileName)
 
             # Correct the image (long process)
-            finalImg = correctImageMan(fileName, ix, iy, window)
+            finalImg = correctImageMan(fileName, ix, iy, window, "img")
             
             correctWindow.close()
 
@@ -672,7 +654,7 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
 
 # ------------------------------------------------------------------------------  
 
-def correctImageMan(fileName, ix, iy, window):
+def correctImageMan(fileName, ix, iy, window, vidImg):
     """ 
         Args:    fileName --> Str: Name of the file to be corrected
                  ix       --> Int: The x-position (column) of the point on the horizon that needs to be aligned with the center column of the corrected image
@@ -695,7 +677,8 @@ def correctImageMan(fileName, ix, iy, window):
     # is simply sliding the image horizontally, and is done very fast by np.roll
     shiftx=int(w/2 - ix)
     src_image = np.roll(src_image, shiftx, axis=1) 
-    updateProgressBar(0,11, window)
+    if vidImg == "img":
+        updateProgressBar(0,11, window)
 
     # If iy>0 then the user selected the lowest point of the horizon. After the
     # above 'yaw', the true horizon at the middle of the image is still
@@ -714,20 +697,150 @@ def correctImageMan(fileName, ix, iy, window):
     print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
     # rotate (yaw, pitch, roll)
 
-    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window)
+    equirectRot = EquirectRotate(h, w, (myY, myP, myR), window, vidImg)
 
     rotated_image = equirectRot.rotate(src_image, window)
 
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
-    updateProgressBar(85,96, window)
+    if vidImg == "img":
+        updateProgressBar(85,96, window)
     print('Done.')
 
     return finalImg
 
-# ------------------------------------------------------------------------------  
+# ------------------------------------------------------------------------------ 
 
-def handleAutomaticVideoCorrection():
+def handleAutomaticVideoCorrection(fileName, window, vidImage):
     print("Correcting a video file!")
+    # Load the video file
+    print(fileName)
+    clip = VideoFileClip(fileName)
+
+    clip.audio.write_audiofile("outputA.mp3")
+
+    # Extract audio
+    audioClip = clip.audio
+
+    # # Extract metadata
+    duration = clip.duration
+    fps = clip.fps
+    # size = clip.size
+
+    # # Create a dictionary of metadata
+    # metadata = {
+    #     "filename": fileName,
+    #     "duration": duration,
+    #     "fps": fps,
+    #     "size": size
+    # }
+
+    # Get the frames from the video
+    frames = clip.iter_frames()
+
+    output_dir = "frames"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Convert each frame to an image and store it in a list
+    images = []
+    for frame in frames:
+        images.append(frame)
+
+    listOfFrames = []
+    # # Write each frame to the output directory
+    for i, frame in enumerate(images):
+        filename = os.path.join(output_dir, f"frame_{i}.jpg")
+        listOfFrames.append(filename)
+        try:
+            clip.save_frame(filename, t=i/fps)
+        except Exception as e:
+            print(f"Error saving frame {i}: {e}")
+
+    print("IMAGE SAVED")
+
+    # Close the clip
+    clip.close()
+
+    # Fix the screen to prepare for video processing
+    fixScreen(window, vidImage)
+
+    listOfCorrectedFrames = fixVideo(listOfFrames, window)
+
+    # Create an image sequence clip from the frames
+    image_clip = ImageSequenceClip(listOfCorrectedFrames, fps=fps, load_images=True)
+
+    # Set the audio of the image clip
+    audio = AudioFileClip("outputA.mp3")
+    image_clip = image_clip.set_audio(audio)
+
+    # Write the image sequence clip to a video file
+    output_path = "output.mp4"
+    image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
+
+    # Close the image sequence clip
+    image_clip.close()
+    
+    
+# ------------------------------------------------------------------------------   
+
+def fixVideo(listOfFrames, window):  
+    output_dir = "framesC"
+    os.makedirs(output_dir, exist_ok=True)    
+    listOfCorrectedFrames = []       
+    prev = 1
+    for j in range(len(listOfFrames)):                                
+        predicted_points = auto_correct_process(listOfFrames[j])
+        predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
+        for i in range(len(predicted_points_list)):
+            if predicted_points_list[i] < 0:
+                predicted_points_list[i] = 1.00
+        # Split the array into two separate arrays for x and y coordinates
+        x_coords = predicted_points_list[::2]
+        y_coords = predicted_points_list[1::2]
+        lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
+        # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+        point_with_highest_y = max(lineCoords, key=lambda point:point[1])
+        ix = point_with_highest_y[0]
+        iy = -point_with_highest_y[1]
+
+        # Correct the image (long process)
+        finalImg = correctImageMan(listOfFrames[j], ix, iy, window, "vid")
+        
+        # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+        # Convert the array from BGR to RGB
+        finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+
+        # Create a PIL Image object from the numpy array
+        pilImg = PIL.Image.fromarray(finalImg)
+
+        filename = os.path.join(output_dir, f"frame_{j}.jpg")
+
+        pilImg.save(filename)
+
+        listOfCorrectedFrames.append(filename)
+        updateProgressBar(prev, int(100/(3*len(listOfFrames))*i), window)  
+        prev = int(100/(3*len(listOfFrames))*i)
+
+    updateProgressBar(80, 90, window)  
+    window['-FOLDER-'].update(visible=True)
+    window['-FILE LIST-'].update(visible=True)
+    window['-CORRECT-'].update(visible=True)
+    window['-BROWSE-'].update(visible=True)
+    # Resize the image to fit the window
+    data = imageToData(pilImg, window["-IMAGE-"].get_size())
+    window['-IMAGE-'].update(data=data)
+    updateProgressBar(90, 101, window)  
+
+    window['-EXPORT-'].update(visible=True, disabled=False, button_color=('#FFFFFF', '#004F00'))
+    window['-ProgressText-'].update(visible=False)
+    window['-ProgressBar-'].update(visible=False)
+    
+    window['-PAD FOR CORRECTION-'].Widget.master.pack_forget()
+    window['-PAD FOR CORRECTION-'].update(visible=False)
+    
+    defaultWindow(window, True)
+
+    return listOfCorrectedFrames
+
     
     
     
@@ -787,7 +900,7 @@ def fixScreen(window, fileName):
 def updateProgressBar(start,end, window):
     """ 
         Args:    start   --> integer signifying where to start the updating
-                 end     --> integer signifying where to start the updating
+                 end     --> integer signifying where to end the updating
                  window  --> the data of the window that is displayed to user
         Returns: N/A
         Summary: This function updates the progress bar with the window based
@@ -874,7 +987,6 @@ def reformatScreen(window, btnClick):
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(visible=True)
         window['-MANUAL DESCRIPTION-'].update(manualDescription)
-
         window['-CORRECT-'].Widget.master.pack()
         window['-EXPORT-'].Widget.master.pack() 
         window['-CORRECT-'].update(visible=False)
@@ -909,7 +1021,6 @@ def defaultWindow(window, correctedStatus):
     window['-DONE-'].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
-
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
     window['-FOLDROW-'].Widget.master.pack()
@@ -928,6 +1039,7 @@ def defaultWindow(window, correctedStatus):
     window['-BROWSE-'].update(visible=True)
     window['-FILE LIST-'].Widget.master.pack()
     window['-FILE LIST-'].update(visible=True)
+    window['-FILE LIST-'].Widget.update()
     window['-CORRECT-'].Widget.master.pack()
     window['-CORRECT-'].update(visible=True)
     window['-EXPORT-'].Widget.master.pack()
