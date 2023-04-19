@@ -6,6 +6,7 @@
 
 import os, io, sys
 import numpy as np
+import tkinter as tk 
 import PySimpleGUI as sg, PIL, cv2, textwrap
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -92,17 +93,35 @@ def helpWindow():
                   use the photo/video correction application. The function returns the layout as a list of PySimpleGUI elements.
     """
     
-    helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, None), justification='center')],
-              [sg.Text("   1.   Click the 'Browse' button to select a folder containing any\n         images or videos.", font=("Arial", 12))],
-              [sg.Text("   2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n         white space to the right.", font=("Arial", 12))],
-              [sg.Text("   3.   Select an image/video from this panel. It will then be\n        shown on the preview screen above.", font=("Arial", 12))],
-              [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12))],
-              [sg.Text("   5.   Select 'Export' to save your corrected photo/video to\n         your device.", font=("Arial", 12))],
-              [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12))],
-              [sg.Button("Close",font=("Arial", 12), size=(40, 1), pad=((135), (20, 0)))]
+    # get the screen resolution
+    root = tk.Tk()
+    width = root.winfo_screenwidth()
+    height = root.winfo_screenheight()
+    root.destroy()
+    
+    # Defaults that worked for MAC (2880x1800 resolution)
+    windowWidth = 405
+    windowHeight = 330
+    
+    # If smaller screen size, make window bigger
+    if width == 1920 and height == 1080:
+        windowWidth = 500
+        windowHeight = 400
+        
+    
+
+    
+    helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
+              [sg.Text("   1.   Click the 'Browse' button to select a folder containing any\n         images or videos.", font=("Arial", 12), justification='left')],
+              [sg.Text("   2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n         white space to the right.", font=("Arial", 12), justification='left')],
+              [sg.Text("   3.   Select an image/video from this panel. It will then be shown\n         on the preview screen above.", font=("Arial", 12), justification='left')],
+              [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12), justification='left')],
+              [sg.Text("   5.   Select 'Export' to save your corrected photo/video to your\n         device.", font=("Arial", 12), justification='left')],
+              [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12), justification='left')],
+              [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
              ]
 
-    return helpLayout
+    return helpLayout, windowWidth, windowHeight
 
 
 # ------------------------------------------------------------------------------  
@@ -143,8 +162,9 @@ def runEvents(window):
                 
         # if user selects 'Help' button, display help window with instructions
         if event == ('-HELP-'):
-            helplayout = helpWindow()
-            help = sg.Window('Help', helplayout, size=(500, 400), margins=(15, 15))
+            helplayout, width, height = helpWindow()
+            help = sg.Window('Help', helplayout, size=(width, height), margins=(15, 15))
+            
             while True:
                 helpEvent, helpValues = help.read()
                 if helpEvent == sg.WIN_CLOSED or helpEvent == ('Close'):
