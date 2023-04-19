@@ -402,11 +402,12 @@ def runEvents(window):
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
             # delete saved image if user modifed a corrected image
-            if modifyClicked: os.remove(opfile)
+            if modifyClicked:
+                os.remove(opfile)
 
-            # convert BGR color space to the RGB color space
-            finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
-            
+                # convert BGR color space to the RGB color space
+                finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                
             defaultWindow(window, False, modifyClicked)
             prevButtonClickedOnce = True
 
