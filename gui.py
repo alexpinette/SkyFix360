@@ -99,7 +99,7 @@ def helpWindow():
               [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12))],
               [sg.Text("   5.   Select 'Export' to save your corrected photo/video to\n         your device.", font=("Arial", 12))],
               [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12))],
-              [sg.Button("Close",font=("Arial", 12), size=(10, 1), pad=((135), (20, 0)))]
+              [sg.Button("Close",font=("Arial", 12), size=(40, 1), pad=((135), (20, 0)))]
              ]
 
     return helpLayout
@@ -144,7 +144,7 @@ def runEvents(window):
         # if user selects 'Help' button, display help window with instructions
         if event == ('-HELP-'):
             helplayout = helpWindow()
-            help = sg.Window('Help', helplayout, size=(405, 330), margins=(15, 15))
+            help = sg.Window('Help', helplayout, size=(500, 400), margins=(15, 15))
             while True:
                 helpEvent, helpValues = help.read()
                 if helpEvent == sg.WIN_CLOSED or helpEvent == ('Close'):
