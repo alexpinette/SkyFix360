@@ -239,24 +239,30 @@ def runEvents(window):
                 # Reset progress bar to zero
                 updateProgressBar(0,1,window)
 
+            # modify only works & is displayed when jpg/jpeg format selected
             elif (fileExt == '.jpg' or fileExt == '.jpeg') or  event == ('-MODIFY-'):
                  # if user clicked `modify` button, temporarily save image to recorrect it
                 if event == ('-MODIFY-'):
                     modifyClicked = True
                     finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                    
+                    # must flip image when modifying a corrected image
+                    finalImg = cv2.flip(finalImg, 0)
+                    
                     opfile = os.path.splitext(fileName)[0]+'_f.jpg'
                     fileName = opfile
                     cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
+                # pop up correction window that allows the user to select manual or automatic correction method
                 correctMWindow = correctMethodWindow()
                 correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
                 while True:
                     correctEvent, correctVal = correctWindow.read()
                     if correctEvent == sg.WIN_CLOSED:
-                        # Close the help popup
+                        # Close the correction window popup
                         correctWindow.close()
-                        
                         break
+                    
                     elif correctEvent == 'Manual':
                         correctWindow.close()
 
@@ -279,8 +285,13 @@ def runEvents(window):
                                 reformatScreen(window, True)
                             elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
                                 reformatScreen(window, False)
-                                                            
+
+                        # Create a new Figure object with a size of 8 inches by 4 inches and a dpi of 100, 
+                        # and enable automatic adjustment of subplots to fit in the figure area               
                         fig = plt.figure(figsize=(8, 4), dpi=100, constrained_layout = True)
+
+                        # Create a new Axes object in the Figure object, with a grid of 1 row and 1 column of subplots, 
+                        # and select the first subplot
                         ax = fig.add_subplot(111)
 
                         # WINDOWS SYSTEM
@@ -291,8 +302,13 @@ def runEvents(window):
                         else:
                             fig.set_size_inches(600/100, 300/100, forward=True)
 
+                        # Read the image file into a NumPy array
                         img = mpimg.imread(fileName)
+
+                        # Create a new plot and display the image on it
                         imgplot = plt.imshow(img, aspect="auto")
+
+                        # Add a grid to the plot
                         plt.grid()
 
                         # Define a list to store the coordinates of the line
@@ -300,7 +316,7 @@ def runEvents(window):
 
                         # Define a function to handle mouse clicks
                         def onclick(event):
-                            # Append the coordinates of the click to the list
+                            # Append the coordinates of the click to the list and display it on the plot
                             if event.xdata != None and event.ydata != None:
                                 lineCoords.append((event.xdata, event.ydata))
                                 ax.scatter(event.xdata, event.ydata, color='r')
@@ -375,6 +391,7 @@ def runEvents(window):
                         automaticCorrectedOnce = True
                         correctionsCompleted += 1
 
+                        # delete saved image if user modifed a corrected image
                         if modifyClicked: os.remove(opfile)
 
                     elif correctEvent == 'Cancel':
@@ -384,13 +401,17 @@ def runEvents(window):
 
         # If user clicks the previous button, return to main window
         if event == '-PREVIOUS BTN-':
-            if modifyClicked: os.remove(opfile)
-            finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
-            
+            # delete saved image if user modifed a corrected image
+            if modifyClicked:
+                os.remove(opfile)
+
+                # convert BGR color space to the RGB color space
+                finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                
             defaultWindow(window, False, modifyClicked)
             prevButtonClickedOnce = True
 
-
+        # continue if user is done plotting the 2 points on the canvas and clicks done
         if event == ('-DONE-') and lineCoords != []:
             if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
                 reformatScreen(window, True)
@@ -437,8 +458,6 @@ def runEvents(window):
             window['-CORRECT-'].update(visible=True, disabled=True, button_color=('grey', sg.theme_button_color_background()))
             window['-MODIFY-'].update(visible=True)
             window['-BROWSE-'].update(visible=True)
-
-            if modifyClicked: finalImg = cv2.flip(finalImg, 0)
             
             # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
             # Convert the array from BGR to RGB
@@ -478,6 +497,7 @@ def runEvents(window):
             if(automaticCorrectedOnce):
                 defaultWindow(window, True, True)
             
+            # delete saved image if user modifed a corrected image
             if modifyClicked: os.remove(opfile)
             
             
@@ -526,12 +546,15 @@ def runEvents(window):
         
         
  # ------------------------------------------------------------------------------  
-     
+
 def getExportPath():
     """ 
-        Args:       
-        Returns: 
-        Summary: 
+        Args:       None
+        Returns:    save_path: A string representing the full path and name of the file where the image will be saved.
+        Summary:    Creates a "Save As" dialog to get the path and name for a corrected image file. It prompts the
+                    user to enter a filename and select a directory. The function then checks if the filename is
+                    valid, and if a directory was selected or not. It then returns the full path and name of the file
+                    where the image will be saved.
     """
     
 
@@ -571,13 +594,13 @@ def getExportPath():
         # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY (does not register first key stroke)
             
 
+        # FIXME: DOESNT ERASE TEXTBOX IMMEDIATELY (does not register first key stroke)
         if save_event == "-FILENAME-" and erasedHint == False:
             # Remove hint text when user starts typing
             save_window[save_event].update("")
-            erasedHint = True
-        
-        # STILL NEEDS WORK ^^^ DOESNT ERASE TEXTBOX IMMEDIATELY (does not register first key stroke)
+            erasedHint = True    
 
+        # Handle the "Save" button click event
         if save_event == 'Save':
                             
             filename = save_values['-FILENAME-']
@@ -623,7 +646,6 @@ def imageToData(pilImage, resize, blur=False):
         Summary: Converts a PIL Image to bytes and returns said bytes for display in a PySimpleGUI window.
     """
 
-    
     # store current image and its width and height
     img = pilImage.copy()
 
@@ -651,7 +673,7 @@ def closeAllWindows():
     """ 
         Args:    None
         Returns: None
-        Summary: Close all opened windows
+        Summary:  exits the program, which automatically closes all windows.
     """
     sys.exit()
 
@@ -665,14 +687,22 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
         Returns: None
         Summary: 
     """
+    
+    # Clear any existing children in the canvas
     if canvas.children:
         for child in canvas.winfo_children():
             child.destroy()
+    
+    # Clear any existing children in the toolbar canvas
     if canvas_toolbar.children:
         for child in canvas_toolbar.winfo_children():
             child.destroy()
+    
+    # Draw the figure on the canvas using FigureCanvasTkAgg
     figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
     figure_canvas_agg.draw()
+
+    # Create & pack the toolbar (only displays the coordinates)
     toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)                  
     toolbar.update()
     figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
@@ -685,12 +715,13 @@ def correctImageMan(fileName, ix, iy, window, vidImg):
                  ix       --> Int: The x-position (column) of the point on the horizon that needs to be aligned with the center column of the corrected image
                  iy       --> Int: The y-position (row) of the point on the horizon that needs to be aligned with the horizontal center of the corrected image
                  window   --> PySimplueGui Object: The main window running the program
+                 vidImg   --> Str: Flag indicating whether the function is being called for an image or video ('img' or 'vid')
         Returns: finalImg --> Image: The corrected image as a NumPy array
         Summary: Corrects an equirectangular image by rotating it such that the horizon becomes straight. This is accomplished by creating an EquirectRotate
                  object. Return the fixed image.
-
     """
 
+    # Read image from file and get shape
     src_image = cv2.imread(fileName)
     h, w, c = src_image.shape
 
@@ -717,15 +748,18 @@ def correctImageMan(fileName, ix, iy, window, vidImg):
         myP = -(h/2 - np.abs(iy))*180/h
 
     print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
-    # rotate (yaw, pitch, roll)
 
+    # Create an EquirectRotate object and apply pitch and yaw rotations
     equirectRot = EquirectRotate(h, w, (myY, myP, myR), window, vidImg)
-
     rotated_image = equirectRot.rotate(src_image, window)
-
+    
+    # Rotate the image 180 degrees to get the final corrected image
     finalImg = cv2.rotate(rotated_image, cv2.ROTATE_180)
+
+    # Update progress bar if working with an image
     if vidImg == "img":
         updateProgressBar(85,96, window)
+
     print('Done.')
 
     return finalImg
@@ -733,10 +767,18 @@ def correctImageMan(fileName, ix, iy, window, vidImg):
 # ------------------------------------------------------------------------------ 
 
 def handleAutomaticVideoCorrection(fileName, window, vidImage):
-    print("Correcting a video file!")
+    """ 
+        Args:    fileName --> Str: Name of the file to be corrected
+                 window   --> PySimplueGui Object: The main window running the program
+                 vidImg   --> Str: "img" if processing an image, "vid" if processing a video
+        Returns: None
+        Summary: Corrects the distortion in a video or image file using the fixVideo function and saves the corrected file.
+    """
+
     # Load the video file
     clip = VideoFileClip(fileName)
 
+    # Extract audio from the video file
     clip.audio.write_audiofile("outputA.mp3")
 
     # Extract audio
@@ -758,6 +800,7 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
     # Get the frames from the video
     frames = clip.iter_frames()
 
+    # Create a directory for output frames
     output_dir = "frames"
     os.makedirs(output_dir, exist_ok=True)
 
@@ -767,7 +810,7 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
         images.append(frame)
 
     listOfFrames = []
-    # # Write each frame to the output directory
+    # Write each frame to the output directory
     for i, frame in enumerate(images):
         filename = os.path.join(output_dir, f"frame_{i}.jpg")
         listOfFrames.append(filename)
@@ -784,6 +827,7 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
     # Fix the screen to prepare for video processing
     fixScreen(window, vidImage)
 
+    # Fix each frame in the list of frames
     listOfCorrectedFrames = fixVideo(listOfFrames, window)
 
     # Create an image sequence clip from the frames
@@ -804,16 +848,28 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
 # ------------------------------------------------------------------------------   
 
 def fixVideo(listOfFrames, window):  
+    """ 
+        Args:    listOfFrames --> list of numpy arrays representing frames of a video
+                 window      --> PySimplueGui Object: The main window running the program
+        Returns: None
+        Summary: Corrects each frame of the video using the "auto_correct_process" and
+                "correctImageMan" functions, saves each corrected frame to a new
+                directory, and updates the GUI window to show the corrected video frames.
+    """
+
     print("Num of frames is ", len(listOfFrames))
 
+    # Create a directory to save the corrected frames
     output_dir = "framesC"
     os.makedirs(output_dir, exist_ok=True)    
-    listOfCorrectedFrames = []       
-    prev = 0
+
+    # Initialize an empty list to store the filenames of the corrected frames
+    listOfCorrectedFrames = []      
+    prev = 0 
     valToIncrementBy = 0
-    # incrementValue = 80 // len(listOfFrames)
 
     # Too many frames to updateProgressBar by a single digit (expression returns < 1)
+
     # Get a modulus to update at that value while looping through frames
     if (len(listOfFrames) > 80):
         modToIncrement = (len(listOfFrames)//80)+1
@@ -822,12 +878,13 @@ def fixVideo(listOfFrames, window):
     elif len(listOfFrames) <= 80:
         modToIncrement = 1
         valToIncrementBy = 80//len(listOfFrames)
-        
-    
 
-
-    for j in range(len(listOfFrames)):                                
+    # Loop through each frame of the video
+    for j in range(len(listOfFrames)):         
+        # Use the "auto_correct_process" function to get predicted points for the frame                       
         predicted_points = auto_correct_process(listOfFrames[j])
+
+        # Convert the predicted points to a list and correct any negative values
         predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
         for i in range(len(predicted_points_list)):
             if predicted_points_list[i] < 0:
@@ -838,7 +895,8 @@ def fixVideo(listOfFrames, window):
         x_coords = predicted_points_list[::2]
         y_coords = predicted_points_list[1::2]
         lineCoords = [(abs(x),y) for x,y in zip(x_coords,y_coords)]
-        # DONT ACTUALLY NEED MAX COORDS, CAN DELETE MAX STUFF
+        
+        # Get the point with the highest y-coordinate and use its x and y values to correct the image
         point_with_highest_y = max(lineCoords, key=lambda point:point[1])
         ix = point_with_highest_y[0]
         iy = -point_with_highest_y[1]
@@ -853,13 +911,14 @@ def fixVideo(listOfFrames, window):
         # Create a PIL Image object from the numpy array
         pilImg = PIL.Image.fromarray(finalImg)
 
+        # Save the corrected image to the output directory
         filename = os.path.join(output_dir, f"frame_{j}.jpg")
-
         pilImg.save(filename)
 
+        # Add the filename of the corrected image to the list of corrected frames
         listOfCorrectedFrames.append(filename)
         
-        # Increment progressBar while looping at precalculated modulus value (total frames > 80)
+       # Increment progressBar while looping at precalculated modulus value (total frames > 80)
         if (j % modToIncrement == 0 and modToIncrement != 1):
             updateProgressBar(prev, prev+1, window)
             prev = prev+1
@@ -869,11 +928,12 @@ def fixVideo(listOfFrames, window):
             updateProgressBar(prev, prev+valToIncrementBy, window)
             prev = prev+valToIncrementBy
         
-        print("Prev Value -- > ", prev)
-        
-        # updateProgressBar(prev, int(100/(10*len(listOfFrames))*i), window)  
-        # prev = int(100/(10*len(listOfFrames))*i)
-
+        # Update progress bar everytime because total frames <= 80
+        elif (modToIncrement == 1):
+            updateProgressBar(prev, prev+valToIncrementBy, window)
+            prev = prev+valToIncrementBy
+    
+    # Update the GUI window to show the corrected video frames
     updateProgressBar(prev, 90, window)  
     window['-FOLDER-'].update(visible=True)
     window['-FILE LIST-'].update(visible=True)
@@ -894,6 +954,8 @@ def fixVideo(listOfFrames, window):
     defaultWindow(window, True, False)
 
     return listOfCorrectedFrames
+
+# ------------------------------------------------------------------------------   
 
 def fixScreen(window, fileName):
     """ 
@@ -946,7 +1008,7 @@ def updateProgressBar(start,end, window):
         Args:    start   --> integer signifying where to start the updating
                  end     --> integer signifying where to end the updating
                  window  --> the data of the window that is displayed to user
-        Returns: N/A
+        Returns: None
         Summary: This function updates the progress bar with the window based
                  on the passed in values of start/end.
     """
@@ -957,6 +1019,16 @@ def updateProgressBar(start,end, window):
 # ------------------------------------------------------------------------------  
 
 def reformatScreen(window, btnClick):
+    """ 
+        Args:    window   --> PySimpleGui Window: The main window running the application
+                 btnClick --> boolean: keep track of how to redisplay window smoothly
+        Returns: None
+        Summary: Update the display of the PySimpleGUI Window based on the value of
+        btnClick. If btnClick is False, the function hides some elements and displays
+        others, while if btnClick is True, the function hides a different set of
+        elements and displays yet another set.
+    """
+        
     # Normal
     if (btnClick == False):
 
@@ -1046,7 +1118,18 @@ def reformatScreen(window, btnClick):
         window['-QUIT-'].update(visible=True)
 
 
+# ------------------------------------------------------------------------------  
+
 def defaultWindow(window, correctedStatus, selectedImage):
+    """ 
+        Args:    window          --> PySimpleGui Window: The main window running the application
+                 correctedStatus --> bool: if image is corrected, title text gets updated, else is default title
+                 selectedImage   --> bool: if a new image was corrected, display modify button and disable correct
+        Returns: None
+        Summary: This function modifies the layout of the PySimpleGui window to show/hide elements
+                 based on the passed in values of correctedStatus and selectedImage.
+    """
+
     window['-PREVIOUS BTN-'].update(visible=False)
     window['-TITLE-'].update(visible=False)
     window['-MANUAL DESCRIPTION-'].update(visible=False)
@@ -1073,6 +1156,7 @@ def defaultWindow(window, correctedStatus, selectedImage):
     window['-FOLDROW-'].update(visible=True)
     window['-FOLDROW-'].Widget.update()
 
+    # if image/video was corrected, update title to alert user that the correction was completed
     if correctedStatus:
         window['-TITLE-'].update('SkyFix360 - COMPLETED', visible=True)
     else:
@@ -1089,6 +1173,7 @@ def defaultWindow(window, correctedStatus, selectedImage):
     window['-CORRECT-'].Widget.master.pack()
     window['-CORRECT-'].update(visible=True)
 
+    # if image was corrected, display modify button and disable correct on window
     if selectedImage:
         window['-MODIFY-'].Widget.master.pack()
         window['-MODIFY-'].update(visible=True)
@@ -1104,23 +1189,22 @@ def defaultWindow(window, correctedStatus, selectedImage):
 
 class Toolbar(NavigationToolbar2Tk):
     def __init__(self, *args, **kwargs):
+        """ 
+            Args:     *args    --> Variable length argument list.
+                      **kwargs --> Arbitrary keyword arguments.
+            Returns: None
+            Summary: Defines a custom toolbar with a subset of the items from the default toolbar.
+        """
+
+        # tuple of toolbar items to be excluded from the default toolbar.
         toolitems = (
             ('Pan'), (None), ('Zoom'), ('Home'), ('Back'), ('Forward'), ('Subplots'), ('Save')
         )
+
+        # list comprehension that sets the toolitems attribute of the instance of the Toolbar class
         self.toolitems = [t for t in NavigationToolbar2Tk.toolitems if t[0] not in toolitems]
         super().__init__(*args, **kwargs)
         
-    
-# ------------------------------------------------------------------------------
-
-class Toolbar(NavigationToolbar2Tk):
-     def __init__(self, *args, **kwargs):
-         toolitems = (
-             ('Pan'), (None), ('Zoom'), ('Home'), ('Back'), ('Forward'), ('Subplots'), ('Save')
-         )
-         self.toolitems = [t for t in NavigationToolbar2Tk.toolitems if t[0] not in toolitems]
-         super().__init__(*args, **kwargs)
-
 # ------------------------------------------------------------------------------
 
 def main():
