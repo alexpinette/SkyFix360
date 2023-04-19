@@ -108,6 +108,8 @@ def helpWindow():
         windowWidth = 500
         windowHeight = 400
         
+        
+    # NOTE IF NEEDED, CREATE DIFFERENT HELPLAYOUTS (BELOW) BASED ON SCREEN RESOLUTION. The current below works for WINDOWs
     
 
     
