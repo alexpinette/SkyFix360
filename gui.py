@@ -103,14 +103,11 @@ def helpWindow():
     windowWidth = 405
     windowHeight = 330
     
-    # If smaller screen size, make window bigger
+    # If smaller screen resolution, make window bigger
     if width == 1920 and height == 1080:
         windowWidth = 500
         windowHeight = 400
-        
-        
-    # NOTE IF NEEDED, CREATE DIFFERENT HELPLAYOUTS (BELOW) BASED ON SCREEN RESOLUTION. The current below works for WINDOWs
-    
+            
 
     
     helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
@@ -135,11 +132,30 @@ def correctMethodWindow():
                   the user to choose between manual and automatic correction methods. The function returns 
                   the layout as a list of PySimpleGUI elements.
     """
+    
+    # get the screen resolution
+    root = tk.Tk()
+    width = root.winfo_screenwidth()
+    height = root.winfo_screenheight()
+    root.destroy()
+    
+    # Defaults that worked for MAC (2880x1800 resolution)
+    windowWidth = 355
+    windowHeight = 195
+    
+    # If smaller screen resolution, make window bigger 
+    if width == 1920 and height == 1080:
+        windowWidth = 410
+        windowHeight = 230
+        
     correctionLayout = [ [sg.Text('Choose a Correction Method', font=("Arial", 16, "bold"), size=(40, None), auto_size_text=True, justification='center', pad=(0, 5))],      
                          [sg.Button('Manual', size=(10,1)), sg.Text('This method allows for custom specification \nof the horizon by a drawing from the user.\n')], 
-                         [sg.Button('Automatic', size=(10,1)), sg.Text('This method automaticaaly finds the horizon \nline and corrects the image/video.')], 
+                         [sg.Button('Automatic', size=(10,1)), sg.Text('This method automatically finds the horizon \nline and corrects the image/video.')], 
                          [sg.Button("Cancel", size=(10, 1), pad=((135), (20, 0)))]]
-    return correctionLayout 
+    
+    return correctionLayout, windowWidth, windowHeight
+
+
 
 
 # ------------------------------------------------------------------------------  
@@ -276,8 +292,8 @@ def runEvents(window):
                     cv2.imwrite(opfile, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
                 # pop up correction window that allows the user to select manual or automatic correction method
-                correctMWindow = correctMethodWindow()
-                correctWindow = sg.Window('Correction Method', correctMWindow, size=(355,195), margins=(20, 20))
+                correctMWindow, width, height = correctMethodWindow()
+                correctWindow = sg.Window('Correction Method', correctMWindow, size=(width,height), margins=(20, 20))
                 while True:
                     correctEvent, correctVal = correctWindow.read()
                     if correctEvent == sg.WIN_CLOSED:
