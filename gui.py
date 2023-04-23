@@ -129,13 +129,18 @@ def helpWindow():
 
 
 # ------------------------------------------------------------------------------  
-def correctMethodWindow():
+def correctMethodWindow(modifyClicked=False):
     """ 
-        Args:     None
-        Returns:  correctionLayout --> list: The layout as a list of PySimpleGUI text and button elements
-        Summary:  This function creates a correction method window layout using PySimpleGUI, which allows
-                  the user to choose between manual and automatic correction methods. The function returns 
-                  the layout as a list of PySimpleGUI elements.
+        Args:     
+            modifyClicked --> bool: True if the Modify button was clicked in the main window
+        Returns:  
+            correctionLayout --> list: The layout as a list of PySimpleGUI text and button elements
+            windowWidth --> int: The width of the correction window
+            windowHeight --> int: The height of the correction window
+        Summary:  
+            This function creates a correction method window layout using PySimpleGUI, which allows
+            the user to choose between manual and automatic correction methods. The function returns 
+            the layout as a list of PySimpleGUI elements.
     """
     
     # get the screen resolution
@@ -152,15 +157,19 @@ def correctMethodWindow():
     if width == 1920 and height == 1080:
         windowWidth = 410
         windowHeight = 230
+    
+    buttonColor = None
+    if modifyClicked:
+        buttonColor = ('grey', sg.theme_button_color_background())
+    else:
+        buttonColor = ('#FFFFFF', '#004F00')
         
     correctionLayout = [ [sg.Text('Choose a Correction Method', font=("Arial", 16, "bold"), size=(40, None), auto_size_text=True, justification='center', pad=(0, 5))],      
                          [sg.Button('Manual', size=(10,1)), sg.Text('This method allows for custom specification \nof the horizon by a drawing from the user.\n')], 
-                         [sg.Button('Automatic', size=(10,1)), sg.Text('This method automatically finds the horizon \nline and corrects the image/video.')], 
+                         [sg.Button('Automatic', size=(10,1), disabled=modifyClicked, button_color=buttonColor), sg.Text('This method automatically finds the horizon \nline and corrects the image/video.')], 
                          [sg.Button("Cancel", size=(10, 1), pad=((135), (20, 0)))]]
-    
+
     return correctionLayout, windowWidth, windowHeight
-
-
 
 
 # ------------------------------------------------------------------------------  
@@ -182,6 +191,7 @@ def runEvents(window):
     pointOneUpdated = False
     pointTwoUpdated = False
     lastUpdate = None
+    lastCorrectionMethod = None   # Keep track of latest correction method used for modification purposes
         
     while True:
         event, values = window.read()
@@ -290,10 +300,11 @@ def runEvents(window):
                  # if user clicked `modify` button, temporarily save image to recorrect it
                 if event == ('-MODIFY-'):
                     modifyClicked = True
-
+     
                 # pop up correction window that allows the user to select manual or automatic correction method
-                correctMWindow, width, height = correctMethodWindow()
+                correctMWindow, width, height = correctMethodWindow(modifyClicked)
                 correctWindow = sg.Window('Correction Method', correctMWindow, size=(width,height), margins=(20, 20))
+
                 while True:
                     correctEvent, correctVal = correctWindow.read()
                     if correctEvent == sg.WIN_CLOSED:
@@ -318,7 +329,6 @@ def runEvents(window):
                         
                         # If manual was chosen FIRST instead, reformat the screen based on other boolean situations
                         elif (automaticCorrectedOnce == False or correctionsCompleted != 1):
-
                             if (prevButtonClickedOnce == True or doneButtonClickedOnce == True):
                                 reformatScreen(window, True, modifyClicked)
                             elif (prevButtonClickedOnce == False and doneButtonClickedOnce == False):
@@ -351,6 +361,25 @@ def runEvents(window):
 
                         
                         if modifyClicked:
+                            tempCoords = []
+                            # get highest and lowest points from the predicted points from the automatic process
+                            if lastCorrectionMethod == 'Automatic':
+                                point_with_highest_y = max(lineCoords, key=lambda point: point[1])
+                                highest_y = point_with_highest_y[1]
+                                
+                                # Get the point with the lowest y value
+                                point_with_lowest_y = min(lineCoords, key=lambda point: point[1])
+                                lowest_y = point_with_lowest_y[1]
+                                
+                                # Add the two points to finalCoords in the original order
+                                for x, y in lineCoords:
+                                    if y == lowest_y:
+                                        tempCoords.append((x, y))
+                                    elif y == highest_y:
+                                        tempCoords.append((x, y))
+
+                                lineCoords = tempCoords
+
                             window['-SLIDER1-'].update(visible=True, range=(lineCoords[0][1]-30, lineCoords[0][1]+30), value=lineCoords[0][1])
                             window['-SLIDER2-'].update(visible=True, range=(lineCoords[1][1]-30, lineCoords[1][1]+30), value=lineCoords[1][1])
 
@@ -376,12 +405,12 @@ def runEvents(window):
 
                             # Connect the onclick function to the mouse click event
                             cid = fig.canvas.mpl_connect('button_press_event', onclick)
-                            
+                                
                         draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
                         
                     elif correctEvent == 'Automatic':
-                        correctWindow.close()                                        
-
+                        lastCorrectionMethod = 'Automatic'
+                        correctWindow.close()          
                         predicted_points = auto_correct_process(fileName)
                         
                         predicted_points_list = [item for sublist in predicted_points.tolist() for item in sublist]
@@ -401,7 +430,6 @@ def runEvents(window):
                         ix = point_with_highest_y[0]
                         iy = -point_with_highest_y[1]
 
-
                         # Fix the screen to prepare for image processing
                         fixScreen(window, fileName)
 
@@ -412,6 +440,7 @@ def runEvents(window):
 
                         window['-FOLDER-'].update(visible=True)
                         window['-FILE LIST-'].update(visible=True)
+                        window['-FILE LIST-'].Widget.master.pack()
                         window['-CORRECT-'].update(visible=True, disabled=True, button_color=('grey', sg.theme_button_color_background()))
                         window['-MODIFY-'].update(visible=True)
                         window['-BROWSE-'].update(visible=True)
@@ -498,8 +527,16 @@ def runEvents(window):
 
         # continue if user is done plotting the 2 points on the canvas and clicks done
         if event == ('-DONE-') and lineCoords != []:
-            if pointOneUpdated or pointTwoUpdated:
+            lastCorrectionMethod = 'Manual'
+            window['-HELP-'].update(visible=False)
+            window['-QUIT-'].update(visible=False)
+            window['-SLIDER1-'].update(visible=False)
+            window['-SLIDER2-'].update(visible=False)
+
+            if pointOneUpdated:
                 lineCoords[0] = firstPoint
+
+            if pointTwoUpdated:
                 lineCoords[1] = secondPoint
 
             pointOneUpdated = False
@@ -518,7 +555,8 @@ def runEvents(window):
             fig.canvas.draw()
 
             # Disconnect from the figure
-            fig.canvas.mpl_disconnect(cid)
+            if lastCorrectionMethod == 'Manual' and not modifyClicked:
+                fig.canvas.mpl_disconnect(cid)
             
             point_with_highest_y = max(lineCoords, key=lambda point:point[1])
             ix = point_with_highest_y[0]
@@ -528,12 +566,7 @@ def runEvents(window):
             window['-PREVIOUS BTN-'].update(visible=False)
             window['-UNDO-'].update(visible=False)
             window['-DONE-'].update(visible=False)
-            window['-SLIDER1-'].update(visible=False)
-            window['-SLIDER2-'].update(visible=False)
-
             window['-UNDO-'].Widget.master.pack_forget()
-            window['-SLIDER1-'].Widget.master.pack_forget() 
-            window['-SLIDER2-'].Widget.master.pack_forget() 
             window['-DONE-'].Widget.master.pack_forget() 
             
             # Fix the screen to prepare for image processing
@@ -544,16 +577,12 @@ def runEvents(window):
             
             correctWindow.close()
 
-            window['-TITLE-'].update('SkyFix360 - COMPLETED')
-            window['-MANUAL DESCRIPTION-'].update(visible=False)
-            window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget()  
-            window['controls_cv'].update(visible=True)
-            window['fig_cv'].update(visible=True)
-            window['-FOLDER-'].update(visible=True)
-            window['-FILE LIST-'].update(visible=True)
-            window['-CORRECT-'].update(visible=True, disabled=True, button_color=('grey', sg.theme_button_color_background()))
-            window['-MODIFY-'].update(visible=True)
-            window['-BROWSE-'].update(visible=True)
+            window['-SLIDER1-'].Widget.master.pack_forget() 
+            window['-SLIDER2-'].Widget.master.pack_forget() 
+            window['-HELP-'].update(visible=True)
+            window['-QUIT-'].update(visible=True)
+
+            defaultWindow(window, True, True)
             
             # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
             # Convert the array from BGR to RGB
@@ -577,7 +606,10 @@ def runEvents(window):
             window['-FOLDROW-'].Widget.master.pack()
             window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+            window['-SLIDER1-'].Widget.master.pack_forget() 
+            window['-SLIDER2-'].Widget.master.pack_forget() 
             window['-FILE LIST-'].Widget.master.pack()
+            window['-FILE LIST-'].update(visible=True)
             window['-CORRECT-'].Widget.master.pack()
             window['-MODIFY-'].Widget.master.pack()
             window['-EXPORT-'].Widget.master.pack()
@@ -1074,6 +1106,7 @@ def fixVideo(listOfFrames, window):
     updateProgressBar(prev, 90, window)  
     window['-FOLDER-'].update(visible=True)
     window['-FILE LIST-'].update(visible=True)
+    window['-FILE LIST-'].Widget.master.pack()
     window['-CORRECT-'].update(visible=True)
     window['-BROWSE-'].update(visible=True)
     # Resize the image to fit the window
@@ -1157,8 +1190,9 @@ def updateProgressBar(start,end, window):
 
 def reformatScreen(window, btnClick, modifyStatus):
     """ 
-        Args:    window   --> PySimpleGui Window: The main window running the application
-                 btnClick --> boolean: keep track of how to redisplay window smoothly
+        Args:    window       --> PySimpleGui Window: The main window running the application
+                 btnClick     --> boolean: keep track of how to redisplay window smoothly
+                 modifyStatus --> boolean: keep track of whether modify was clicked or not
         Returns: None
         Summary: Update the display of the PySimpleGUI Window based on the value of
         btnClick. If btnClick is False, the function hides some elements and displays
@@ -1186,7 +1220,7 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['fig_cv'].update(visible=True)
         window['controls_cv'].update(visible=True)
         window['-FOLDER-'].update(visible=False)
-        window['-FILE LIST-'].Widget.master.pack_forget() 
+        window['-FILE LIST-'].update(visible=False)
         window['-CORRECT-'].update(visible=False)
         window['-MODIFY-'].update(visible=False)
         window['-BROWSE-'].update(visible=False)
@@ -1256,8 +1290,6 @@ def reformatScreen(window, btnClick, modifyStatus):
             
             window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
             window['-MANUAL DESCRIPTION-'].update(manualDescription, visible=True)
-
-
 
         window['-CORRECT-'].Widget.master.pack()
         window['-MODIFY-'].Widget.master.pack()
