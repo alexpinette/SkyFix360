@@ -359,7 +359,7 @@ def runEvents(window):
                         # Add a grid to the plot
                         plt.grid()
 
-                        
+                        # if modify clicked, restore previous highest & lowest coordinates and display on canvas
                         if modifyClicked:
                             tempCoords = []
                             # get highest and lowest points from the predicted points from the automatic process
@@ -380,6 +380,7 @@ def runEvents(window):
 
                                 lineCoords = tempCoords
 
+                            # display sliders to the user to modify the coordinates on the canvas
                             window['-SLIDER1-'].update(visible=True, range=(lineCoords[0][1]-30, lineCoords[0][1]+30), value=lineCoords[0][1])
                             window['-SLIDER2-'].update(visible=True, range=(lineCoords[1][1]-30, lineCoords[1][1]+30), value=lineCoords[1][1])
 
@@ -476,38 +477,46 @@ def runEvents(window):
                         correctWindow.close()
                         break
         
-
+        # executes when the user releases the first slider on the GUI
         if event == '-SLIDER1- Release':
             pointOneUpdated = True
             lastUpdate = '1'
+            # Update the first point with the new coordinates
             firstPoint = (lineCoords[0][0], values['-SLIDER1-'])
-                
+            
             # Clear the plot and redraw the points
             ax.clear()
             ax.imshow(img, aspect='auto')
             plt.grid()
+
+            # Draw blue points for all the line coordinates
             for point in lineCoords:
                 # Unpack the tuple into x and y coordinates
                 x, y = point
                 # Plot the point using ax.scatter()
                 ax.scatter(x, y, color='b')
             
+            # Draw a red point for the first point
             ax.scatter(firstPoint[0], firstPoint[1], color='r')
+            # Draw a red point for the second point if it has been updated
             if pointTwoUpdated:
                 ax.scatter(secondPoint[0], secondPoint[1], color='r')
 
             fig.canvas.draw()
         
-
+        # executes when the user releases the second slider on the GUI.
         if event == '-SLIDER2- Release':
             pointTwoUpdated = True
             lastUpdate = '2'
+            # Update the second point with the new coordinates
             secondPoint = (lineCoords[1][0], values['-SLIDER2-'])
                 
             # Clear the plot and redraw the points
             ax.clear()
             ax.imshow(img, aspect='auto')
             plt.grid()
+
+            # Draw blue points for all the line coordinates
             for point in lineCoords:
                 # Unpack the tuple into x and y coordinates
                 x, y = point
@@ -520,7 +529,7 @@ def runEvents(window):
             ax.scatter(secondPoint[0], secondPoint[1], color='r')
             fig.canvas.draw()
 
-
+        # if previous button clicked, return to default window
         if event == '-PREVIOUS BTN-':     
             defaultWindow(window, False, modifyClicked)
             prevButtonClickedOnce = True
@@ -533,9 +542,11 @@ def runEvents(window):
             window['-SLIDER1-'].update(visible=False)
             window['-SLIDER2-'].update(visible=False)
 
+            # update lineCoords if user modified the first coordinate on the canvas 
             if pointOneUpdated:
                 lineCoords[0] = firstPoint
 
+            # update lineCoords if user modified the second coordinate on the canvas 
             if pointTwoUpdated:
                 lineCoords[1] = secondPoint
 
@@ -645,18 +656,22 @@ def runEvents(window):
         
         # if user clicks `Undo` button, undo last click event on canvas
         if event == ('-UNDO-'):
+            # if modify clicked, only undo modified changes (not original coordinates)
             if modifyClicked:
                 if lastUpdate == '1':        # slider 1 changes
                     lastUpdate = '2'
                     firstPoint = lineCoords[0]
                     pointOneUpdated = False
 
+                    # revert changes of slider to default value
                     window['-SLIDER1-'].update(value=lineCoords[0][1])
                    
                     # Clear the plot and redraw the points
                     ax.clear()
                     ax.imshow(img, aspect='auto')
                     plt.grid()
+
+                    # Draw blue points for all the line coordinates
                     for point in lineCoords:
                         # Unpack the tuple into x and y coordinates
                         x, y = point
@@ -672,7 +687,8 @@ def runEvents(window):
                     lastUpdate = '1'
                     firstPoint = lineCoords[1]
                     pointTwoUpdated = False
-
+                    
+                    # revert changes of slider to default value
                     window['-SLIDER2-'].update(value=lineCoords[1][1])
                         
                     # Clear the plot and redraw the points
@@ -742,9 +758,7 @@ def getExportPath():
     save_path = "void" # Placeholder
     
     erasedHint = False
-    
     validSavePath = True
-
     erasedHint = False
     validSavePath = True
 

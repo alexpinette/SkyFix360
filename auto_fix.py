@@ -1,9 +1,7 @@
-import cv2
+import cv2, os
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-import os
-
 
 # ------------------------------------------------------------------------------  
 
@@ -52,10 +50,17 @@ def correct_horizon_line(image_path, predicted_points):
 
     return corrected_img
 
-
-
+# ------------------------------------------------------------------------------  
 
 def visualize_predicted_points(image_path, predicted_points, output_path="visualized_image.png"):
+  """ 
+      Args:    image_path --> Str: The path to the input image file.
+               predicted_points --> NumPy Array: The predicted horizon line points.
+               output_path --> Str: The path to save the visualized image.
+      Returns: None
+      Summary: This function loads an image from file, visualizes the predicted horizon line by drawing red circles on the predicted points, and saves the visualized image to the output_path.
+    """
+      
   # Load the image
   img = cv2.imread(image_path)
 
@@ -70,18 +75,16 @@ def visualize_predicted_points(image_path, predicted_points, output_path="visual
   # Save the visualized image
   cv2.imwrite(output_path, img)
 
+# ------------------------------------------------------------------------------  
+
 
 def auto_correct_process(fileName):
   """
       Args:     fileName --> Str  path to the image file.
-                folder   --> Str: path to the folder where the model is stored
-                
       Returns:  predicted_points --> NumPy Array: of shape (1,2), the predicted horizon line.
-
       Summary:  Preprocesses the input image, loads the horizon line detection model from the given folder,
                 predicts the horizon line and returns the predicted points.
     """
-  
   
   # Read the image from file and resize it
   preprocessed_image = preprocess_image(fileName)
@@ -96,7 +99,6 @@ def auto_correct_process(fileName):
   # print(modelDir)
 
   model = tf.keras.models.load_model(modelDir)
-
 
   # Preprocess the input image and predict the horizon line
   input_image = np.expand_dims(preprocessed_image, axis=0)
