@@ -55,11 +55,11 @@ def createWindow():
                     [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"),
                      sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
     
-        # second col
-         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-"),
-                     sg.Slider(key='-SLIDER1-', visible=False, range=(0, 0), default_value=0, size=(20, 10), orientation='h'),
-                     sg.Slider( key='-SLIDER2-', visible=False, range=(0, 0), default_value=0, size=(20, 10), orientation='h')]], size=(300, 85)),
-
+         sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")],
+                    [sg.Slider(key='-X1-', visible=False, range=(0, 0), default_value=0, size=(20, 10), orientation='h'),
+                     sg.Slider(key='-Y1-', visible=False, range=(0, 0), default_value=0, size=(20, 10), orientation='h')],
+                    [sg.Slider(key='-X2-', visible=False, range=(0, 0), default_value=0, size=(20, 10), orientation='h'),
+                     sg.Slider(key='-Y2-', visible=False, range=(0, 0), default_value=0, size=(20, 10), orientation='h')]]),
 
          #third col
          sg.Column([
@@ -81,8 +81,10 @@ def createWindow():
     
     # bind to config so can check when window size changes
     window.bind('<Configure>', key='-CONFIG-')
-    window['-SLIDER1-'].bind('<ButtonRelease-1>', ' Release')
-    window['-SLIDER2-'].bind('<ButtonRelease-1>', ' Release')
+    window['-X1-'].bind('<ButtonRelease-1>', ' Release')
+    window['-Y1-'].bind('<ButtonRelease-1>', ' Release')
+    window['-X2-'].bind('<ButtonRelease-1>', ' Release')
+    window['-Y2-'].bind('<ButtonRelease-1>', ' Release')
     
     # bind the closeAllWindows function to the WM_DELETE_WINDOW event of the main window
     window.TKroot.protocol("WM_DELETE_WINDOW", closeAllWindows)
@@ -381,8 +383,10 @@ def runEvents(window):
                                 lineCoords = tempCoords
 
                             # display sliders to the user to modify the coordinates on the canvas
-                            window['-SLIDER1-'].update(visible=True, range=(lineCoords[0][1]-30, lineCoords[0][1]+30), value=lineCoords[0][1])
-                            window['-SLIDER2-'].update(visible=True, range=(lineCoords[1][1]-30, lineCoords[1][1]+30), value=lineCoords[1][1])
+                            window['-X1-'].update(visible=True, range=(lineCoords[0][0]-30, lineCoords[0][0]+30), value=lineCoords[0][0])
+                            window['-Y1-'].update(visible=True, range=(lineCoords[0][1]-30, lineCoords[0][1]+30), value=lineCoords[0][1])
+                            window['-X2-'].update(visible=True, range=(lineCoords[1][0]-30, lineCoords[1][0]+30), value=lineCoords[1][0])
+                            window['-Y2-'].update(visible=True, range=(lineCoords[1][1]-30, lineCoords[1][1]+30), value=lineCoords[1][1])
 
                             # Display the image with the line coordinates in red
                             for coord in lineCoords:
@@ -476,14 +480,24 @@ def runEvents(window):
                     elif correctEvent == 'Cancel':
                         correctWindow.close()
                         break
-        
-        # executes when the user releases the first slider on the GUI
-        if event == '-SLIDER1- Release':
-            pointOneUpdated = True
-            lastUpdate = '1'
-            # Update the first point with the new coordinates
-            firstPoint = (lineCoords[0][0], values['-SLIDER1-'])
-            
+
+
+        # Executes when any slider on the GUI is released
+        if 'Release' in event:
+            lastUpdate = event.split('-')[1]  # Get the axis that was updated
+
+            # Update the appropriate point with the new coordinates
+            if lastUpdate == 'X1':
+                firstPoint = (values['-X1-'], lineCoords[0][1])
+            elif lastUpdate == 'Y1':
+                firstPoint = (lineCoords[0][0], values['-Y1-'])
+            elif lastUpdate == 'X2':
+                pointTwoUpdated = True
+                secondPoint = (values['-X2-'], lineCoords[1][1])
+            elif lastUpdate == 'Y2':
+                pointTwoUpdated = True
+                secondPoint = (lineCoords[1][0], values['-Y2-'])
+
             # Clear the plot and redraw the points
             ax.clear()
             ax.imshow(img, aspect='auto')
@@ -495,40 +509,17 @@ def runEvents(window):
                 x, y = point
                 # Plot the point using ax.scatter()
                 ax.scatter(x, y, color='b')
-            
+
             # Draw a red point for the first point
             ax.scatter(firstPoint[0], firstPoint[1], color='r')
+
             # Draw a red point for the second point if it has been updated
             if pointTwoUpdated:
                 ax.scatter(secondPoint[0], secondPoint[1], color='r')
 
             fig.canvas.draw()
         
-        # executes when the user releases the second slider on the GUI.
-        if event == '-SLIDER2- Release':
-            pointTwoUpdated = True
-            lastUpdate = '2'
-            # Update the second point with the new coordinates
-            secondPoint = (lineCoords[1][0], values['-SLIDER2-'])
-                
-            # Clear the plot and redraw the points
-            ax.clear()
-            ax.imshow(img, aspect='auto')
-            plt.grid()
-
-            # Draw blue points for all the line coordinates
-            for point in lineCoords:
-                # Unpack the tuple into x and y coordinates
-                x, y = point
-                # Plot the point using ax.scatter()
-                ax.scatter(x, y, color='b')
-            
-            if pointOneUpdated:
-                ax.scatter(firstPoint[0], firstPoint[1], color='r')
-
-            ax.scatter(secondPoint[0], secondPoint[1], color='r')
-            fig.canvas.draw()
-
+        
         # if previous button clicked, return to default window
         if event == '-PREVIOUS BTN-':     
             defaultWindow(window, False, modifyClicked)
@@ -539,8 +530,10 @@ def runEvents(window):
             lastCorrectionMethod = 'Manual'
             window['-HELP-'].update(visible=False)
             window['-QUIT-'].update(visible=False)
-            window['-SLIDER1-'].update(visible=False)
-            window['-SLIDER2-'].update(visible=False)
+            window['-X1-'].update(visible=False)
+            window['-Y1-'].update(visible=False)
+            window['-X2-'].update(visible=False)
+            window['-Y2-'].update(visible=False)
 
             # update lineCoords if user modified the first coordinate on the canvas 
             if pointOneUpdated:
@@ -588,8 +581,10 @@ def runEvents(window):
             
             correctWindow.close()
 
-            window['-SLIDER1-'].Widget.master.pack_forget() 
-            window['-SLIDER2-'].Widget.master.pack_forget() 
+            window['-X1-'].Widget.master.pack_forget() 
+            window['-Y1-'].Widget.master.pack_forget() 
+            window['-X2-'].Widget.master.pack_forget() 
+            window['-Y2-'].Widget.master.pack_forget() 
             window['-HELP-'].update(visible=True)
             window['-QUIT-'].update(visible=True)
 
@@ -617,8 +612,10 @@ def runEvents(window):
             window['-FOLDROW-'].Widget.master.pack()
             window['-FOLDER-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-BROWSE-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
-            window['-SLIDER1-'].Widget.master.pack_forget() 
-            window['-SLIDER2-'].Widget.master.pack_forget() 
+            window['-X1-'].Widget.master.pack_forget() 
+            window['-Y1-'].Widget.master.pack_forget() 
+            window['-X2-'].Widget.master.pack_forget() 
+            window['-Y2-'].Widget.master.pack_forget() 
             window['-FILE LIST-'].Widget.master.pack()
             window['-FILE LIST-'].update(visible=True)
             window['-CORRECT-'].Widget.master.pack()
@@ -1243,8 +1240,10 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-MANUAL DESCRIPTION-'].update(visible=True)
 
         if modifyStatus:
-            window['-SLIDER1-'].update(visible=True)
-            window['-SLIDER2-'].update(visible=True)
+            window['-X1-'].update(visible=True)
+            window['-Y1-'].update(visible=True)
+            window['-X2-'].update(visible=True)
+            window['-Y2-'].update(visible=True)
 
         window['-UNDO-'].update(visible=True)
         window['-DONE-'].update(visible=True)
@@ -1293,10 +1292,14 @@ def reformatScreen(window, btnClick, modifyStatus):
             window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
             window['-MANUAL DESCRIPTION-'].update(manualDescription, visible=True)
 
-            window['-SLIDER1-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
-            window['-SLIDER2-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
-            window['-SLIDER1-'].update(visible=True)
-            window['-SLIDER2-'].update(visible=True)
+            window['-X1-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
+            window['-Y1-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+            window['-X2-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
+            window['-Y2-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+            window['-X1-'].update(visible=True)
+            window['-Y1-'].update(visible=True)
+            window['-X2-'].update(visible=True)
+            window['-Y2-'].update(visible=True)
 
         else:
             manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, click the `Undo` button. Once you are done, click 'Done'."
@@ -1336,8 +1339,10 @@ def defaultWindow(window, correctedStatus, selectedImage):
     window['-PREVIOUS BTN-'].update(visible=False)
     window['-TITLE-'].update(visible=False)
     window['-MANUAL DESCRIPTION-'].update(visible=False)
-    window['-SLIDER1-'].update(visible=False)
-    window['-SLIDER2-'].update(visible=False)
+    window['-X1-'].update(visible=False)
+    window['-Y1-'].update(visible=False)
+    window['-X2-'].update(visible=False)
+    window['-Y2-'].update(visible=False)
     window['controls_cv'].update(visible=False)
     window['fig_cv'].update(visible=False)
     window['-UNDO-'].update(visible=False)
@@ -1346,8 +1351,10 @@ def defaultWindow(window, correctedStatus, selectedImage):
     window['controls_cv'].Widget.master.pack_forget() 
     window['fig_cv'].Widget.master.pack_forget() 
     window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
-    window['-SLIDER1-'].Widget.master.pack_forget()
-    window['-SLIDER2-'].Widget.master.pack_forget()
+    window['-X1-'].Widget.master.pack_forget()
+    window['-Y1-'].Widget.master.pack_forget()
+    window['-X2-'].Widget.master.pack_forget()
+    window['-Y2-'].Widget.master.pack_forget()
     window['-FOLDROW-'].Widget.master.pack_forget() 
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget()
