@@ -1,11 +1,11 @@
 Task lists:
-- [x] Show selected (x, y) coordinates points on GUI
 - [ ] Window size (y) is getting cut off by mac doc (cathy)
-- [x] Allow corrections made on corrected images
-- [x] Make a new directory to where the user wants to export correction
 - [ ] Make Window resizeable (`-CONFIG-`)
 - [ ] When user clicks `Help` button, `Quit` button does not work anymore
 - [ ] Display text on screen when no image/video selected
+- [X] When done with manual input, `Help` and `Quit` buttons are duplicated on screen before reformatting screen
+- [x] Allow corrections made on corrected images
+- [x] Make a new directory to where the user wants to export correction
 - [x] When user selects another photo, disable `Export` and update title to only `SkyFix360`
 - [x] Change success window location(?)
 - [x] After first manual image corrected, second try with manual misses folder & browse
@@ -13,7 +13,7 @@ Task lists:
 - [x] Make DPI figure work on all OSs
 - [x] Add an undo button instead of ctrl+z
 - [x] Minimize white background on canvas when user is selecting points
-- [ ] Make help & success window bigger (to display appropriately on Windoms & Mac)
+- [x] Make help & success window bigger (to display appropriately on Windoms & Mac)
     - Test on Nick && Alex's laptop
 - [x] Keep window constant size throughtout process (smooth GUI)
 - [x] Padding looks weird on Mac (when correction is taking place, maybe make progress bar wider?)
@@ -33,11 +33,17 @@ After Informal Meeting:
 - [x] Change "SuccessWindow" to be a pop up under fold row instead? Make text visible rather than window?
 - [x] Change "SuccessWindow" to be a message where the progress bar was so users see that immediately when correction finishes.
 
-
-
 - [x] Begun adding support for video files
-- [x]  Automatically correct one frame of a .mp4 file
-- [x]  Correct a whole .mp4 file automatically
+- [x] Automatically correct one frame of a .mp4 file
+- [x] Correct a whole .mp4 file automatically
+
+
+After in class discussion with Professor Gousie 4/19/23:
+- [ ] Create radio buttons for if image is upright or upside down?
+- [ ] After getting automatic video to work, use previous image/frame's information to correct the next frame faster.
+- [x] When modifying, implement sliders for each point so they move by a miniscule pixel amount.
+- [x] Each slider should move left and right 40? pixels. (40 <-------|--------> 40)
+- [x] On linux/windows machine, help windows text and buttons are cut off. Nick should try to get it working on his and see if it works on MAC.
 
 
 After in class discussion with Professor Gousie 4/19/23:
