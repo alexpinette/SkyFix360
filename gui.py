@@ -92,7 +92,7 @@ def createWindow():
     return window
 
 # ------------------------------------------------------------------------------  
-def helpWindow():
+def helpWindow(modifyClicked=False):
     """ 
         Args:     None
         Returns:  helpLayout --> list: The layout as a list of PySimpleGUI text elements to help the user if he/she is confused.
@@ -114,18 +114,35 @@ def helpWindow():
     if width == 1920 and height == 1080:
         windowWidth = 500
         windowHeight = 400
+        
+    if modifyClicked == True:
+        windowHeight = windowHeight - 60
             
 
     
-    helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
-              [sg.Text("   1.   Click the 'Browse' button to select a folder containing any\n         images or videos.", font=("Arial", 12), justification='left')],
-              [sg.Text("   2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n         white space to the right.", font=("Arial", 12), justification='left')],
-              [sg.Text("   3.   Select an image/video from this panel. It will then be shown\n         on the preview screen above.", font=("Arial", 12), justification='left')],
-              [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12), justification='left')],
-              [sg.Text("   5.   Select 'Export' to save your corrected photo/video to your\n         device.", font=("Arial", 12), justification='left')],
-              [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12), justification='left')],
-              [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
+    if modifyClicked == False:
+        
+        helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
+                [sg.Text("   1.   Click the 'Browse' button to select a folder containing any\n         images or videos.", font=("Arial", 12), justification='left')],
+                [sg.Text("   2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n         white space to the right.", font=("Arial", 12), justification='left')],
+                [sg.Text("   3.   Select an image/video from this panel. It will then be shown\n         on the preview screen above.", font=("Arial", 12), justification='left')],
+                [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12), justification='left')],
+                [sg.Text("   5.   Select 'Export' to save your corrected photo/video to your\n         device.", font=("Arial", 12), justification='left')],
+                [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12), justification='left')],
+                [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
              ]
+        
+    elif modifyClicked == True:
+        helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
+                [sg.Text("   1.   Move Point 1's North/South Slider to your desired poistion", font=("Arial", 12), justification='left')],
+                [sg.Text("   2.   Move Point 1's East/West Slider to your desired poistion", font=("Arial", 12), justification='left')],
+                [sg.Text("   3.   Move Point 2's North/South Slider to your desired poistion.", font=("Arial", 12), justification='left')],
+                [sg.Text("   4.   Move Point 2's East/West Slider to your desired poistion", font=("Arial", 12), justification='left')],
+                [sg.Text("   5.   Select 'Done' to start the modification process", font=("Arial", 12), justification='left')],
+                [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12), justification='left')],
+                [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
+             ]
+        
 
     return helpLayout, windowWidth, windowHeight
 
@@ -200,7 +217,9 @@ def runEvents(window):
                 
         # if user selects 'Help' button, display help window with instructions
         if event == ('-HELP-'):
-            helplayout, width, height = helpWindow()
+            
+            # modifyClicked signifies if the user is in the modify window. The helpWindow would be different
+            helplayout, width, height = helpWindow(modifyClicked)
             help = sg.Window('Help', helplayout, size=(width, height), margins=(15, 15))
             
             while True:
@@ -363,6 +382,7 @@ def runEvents(window):
 
                         # if modify clicked, restore previous highest & lowest coordinates and display on canvas
                         if modifyClicked:
+                                                        
                             tempCoords = []
                             # get highest and lowest points from the predicted points from the automatic process
                             if lastCorrectionMethod == 'Automatic':
@@ -487,16 +507,13 @@ def runEvents(window):
             lastUpdate = event.split('-')[1]  # Get the axis that was updated
 
             # Update the appropriate point with the new coordinates
-            if lastUpdate == 'X1':
-                firstPoint = (values['-X1-'], lineCoords[0][1])
-            elif lastUpdate == 'Y1':
-                firstPoint = (lineCoords[0][0], values['-Y1-'])
-            elif lastUpdate == 'X2':
+            if lastUpdate == 'X1' or lastUpdate == 'Y1':
+                firstPoint = (values['-X1-'], values['-Y1-'])
+                
+            elif lastUpdate == 'X2' or lastUpdate == 'Y2':
                 pointTwoUpdated = True
-                secondPoint = (values['-X2-'], lineCoords[1][1])
-            elif lastUpdate == 'Y2':
-                pointTwoUpdated = True
-                secondPoint = (lineCoords[1][0], values['-Y2-'])
+                secondPoint = (values['-X2-'], values['-Y2-'])
+           
 
             # Clear the plot and redraw the points
             ax.clear()
