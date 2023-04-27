@@ -92,9 +92,9 @@ def createWindow():
     return window
 
 # ------------------------------------------------------------------------------  
-def helpWindow():
+def helpWindow(modifyClicked):
     """ 
-        Args:     None
+        Args:     modifyClicked --> bool: condition to adjust help window screen based on instructions displayed
         Returns:  helpLayout --> list: The layout as a list of PySimpleGUI text elements to help the user if he/she is confused.
         Summary:  This function creates a help window layout using PySimpleGUI, which provides a step-by-step guide on how to 
                   use the photo/video correction application. The function returns the layout as a list of PySimpleGUI elements.
@@ -115,17 +115,32 @@ def helpWindow():
         windowWidth = 500
         windowHeight = 400
             
-
+    if modifyClicked == True:
+         windowHeight = windowHeight - 60
     
-    helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
-              [sg.Text("   1.   Click the 'Browse' button to select a folder containing any\n         images or videos.", font=("Arial", 12), justification='left')],
-              [sg.Text("   2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n         white space to the right.", font=("Arial", 12), justification='left')],
-              [sg.Text("   3.   Select an image/video from this panel. It will then be shown\n         on the preview screen above.", font=("Arial", 12), justification='left')],
-              [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12), justification='left')],
-              [sg.Text("   5.   Select 'Export' to save your corrected photo/video to your\n         device.", font=("Arial", 12), justification='left')],
-              [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12), justification='left')],
-              [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
-             ]
+    if modifyClicked == False:
+
+            helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
+                    [sg.Text("   1.   Click the 'Browse' button to select a folder containing any\n         images or videos.", font=("Arial", 12), justification='left')],
+                    [sg.Text("   2.   Files ending with .MP4, .JPEG, and .JPG will appear in the\n         white space to the right.", font=("Arial", 12), justification='left')],
+                    [sg.Text("   3.   Select an image/video from this panel. It will then be shown\n         on the preview screen above.", font=("Arial", 12), justification='left')],
+                    [sg.Text("   4.   Click 'Correct' button to begin the correction process. Follow\n         the steps in the pop-up window.", font=("Arial", 12), justification='left')],
+                    [sg.Text("   5.   Select 'Export' to save your corrected photo/video to your\n         device.", font=("Arial", 12), justification='left')],
+                    [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12), justification='left')],
+                    [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
+                ]
+
+    elif modifyClicked == True:
+            helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
+                    [sg.Text("   1.   Move Point 1's North/South Slider to your desired poistion", font=("Arial", 12), justification='left')],
+                    [sg.Text("   2.   Move Point 1's East/West Slider to your desired poistion", font=("Arial", 12), justification='left')],
+                    [sg.Text("   3.   Move Point 2's North/South Slider to your desired poistion.", font=("Arial", 12), justification='left')],
+                    [sg.Text("   4.   Move Point 2's East/West Slider to your desired poistion", font=("Arial", 12), justification='left')],
+                    [sg.Text("   5.   Select 'Done' to start the modification process", font=("Arial", 12), justification='left')],
+                    [sg.Text("   6.   If you wish to quit at any time, select the 'Quit' button.", font=("Arial", 12), justification='left')],
+                    [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
+                ]
+
 
     return helpLayout, windowWidth, windowHeight
 
@@ -200,7 +215,8 @@ def runEvents(window):
                 
         # if user selects 'Help' button, display help window with instructions
         if event == ('-HELP-'):
-            helplayout, width, height = helpWindow()
+            # modifyClicked signifies if the user is in the modify window. The helpWindow would be different
+            helplayout, width, height = helpWindow(modifyClicked)
             help = sg.Window('Help', helplayout, size=(width, height), margins=(15, 15))
             
             while True:
@@ -362,7 +378,7 @@ def runEvents(window):
                         plt.grid()
 
                         # if modify clicked, restore previous highest & lowest coordinates and display on canvas
-                        if modifyClicked:
+                        if modifyClicked:                        
                             tempCoords = []
                             # get highest and lowest points from the predicted points from the automatic process
                             if lastCorrectionMethod == 'Automatic':
@@ -478,6 +494,8 @@ def runEvents(window):
                         correctionsCompleted += 1
 
                     elif correctEvent == 'Cancel':
+                        if modifyClicked:
+                            modifyClicked = not modifyClicked
                         correctWindow.close()
                         break
 
@@ -487,16 +505,12 @@ def runEvents(window):
             lastUpdate = event.split('-')[1]  # Get the axis that was updated
 
             # Update the appropriate point with the new coordinates
-            if lastUpdate == 'X1':
-                firstPoint = (values['-X1-'], lineCoords[0][1])
-            elif lastUpdate == 'Y1':
-                firstPoint = (lineCoords[0][0], values['-Y1-'])
-            elif lastUpdate == 'X2':
+            if lastUpdate == 'X1' or lastUpdate == 'Y1':
+                pointOneUpdated = True
+                firstPoint = (values['-X1-'], values['-Y1-'])
+            elif lastUpdate == 'X2' or lastUpdate == 'Y2':
                 pointTwoUpdated = True
-                secondPoint = (values['-X2-'], lineCoords[1][1])
-            elif lastUpdate == 'Y2':
-                pointTwoUpdated = True
-                secondPoint = (lineCoords[1][0], values['-Y2-'])
+                secondPoint = (values['-X2-'], values['-Y2-'])
 
             # Clear the plot and redraw the points
             ax.clear()
@@ -510,8 +524,9 @@ def runEvents(window):
                 # Plot the point using ax.scatter()
                 ax.scatter(x, y, color='b')
 
-            # Draw a red point for the first point
-            ax.scatter(firstPoint[0], firstPoint[1], color='r')
+            # raw a red point for the first point if it has been updated
+            if pointOneUpdated:
+                ax.scatter(firstPoint[0], firstPoint[1], color='r')
 
             # Draw a red point for the second point if it has been updated
             if pointTwoUpdated:
@@ -524,6 +539,7 @@ def runEvents(window):
         if event == '-PREVIOUS BTN-':     
             defaultWindow(window, False, modifyClicked)
             prevButtonClickedOnce = True
+            modifyClicked = not modifyClicked
 
         # continue if user is done plotting the 2 points on the canvas and clicks done
         if event == ('-DONE-') and lineCoords != []:
@@ -655,53 +671,44 @@ def runEvents(window):
         if event == ('-UNDO-'):
             # if modify clicked, only undo modified changes (not original coordinates)
             if modifyClicked:
-                if lastUpdate == '1':        # slider 1 changes
-                    lastUpdate = '2'
-                    firstPoint = lineCoords[0]
+                # Executes when any slider on the GUI is released && revert changes of slider to default value
+                if lastUpdate == 'X1' or lastUpdate == 'Y1':
+                    # revert changes of slider to default value
+                    firstPoint = (values['-X1-'], values['-Y1-'])
+                    window['-X1-'].update(value=lineCoords[0][0])
+                    window['-Y1-'].update(value=lineCoords[0][1])
                     pointOneUpdated = False
+                    lastUpdate = 'X2'
 
-                    # revert changes of slider to default value
-                    window['-SLIDER1-'].update(value=lineCoords[0][1])
-                   
-                    # Clear the plot and redraw the points
-                    ax.clear()
-                    ax.imshow(img, aspect='auto')
-                    plt.grid()
-
-                    # Draw blue points for all the line coordinates
-                    for point in lineCoords:
-                        # Unpack the tuple into x and y coordinates
-                        x, y = point
-                        # Plot the point using ax.scatter()
-                        ax.scatter(x, y, color='b')
-                
-                    if pointTwoUpdated:
-                        ax.scatter(secondPoint[0], secondPoint[1], color='r')
-
-                    fig.canvas.draw()
-                
-                if lastUpdate == '2':   # slider 2 changes
-                    lastUpdate = '1'
-                    firstPoint = lineCoords[1]
+                elif lastUpdate == 'X2' or lastUpdate == 'Y2':
+                    secondPoint = (values['-X2-'], values['-Y2-'])
+                    window['-X2-'].update(value=lineCoords[1][0])
+                    window['-Y2-'].update(value=lineCoords[1][1])
                     pointTwoUpdated = False
-                    
-                    # revert changes of slider to default value
-                    window['-SLIDER2-'].update(value=lineCoords[1][1])
-                        
-                    # Clear the plot and redraw the points
-                    ax.clear()
-                    ax.imshow(img, aspect='auto')
-                    plt.grid()
-                    for point in lineCoords:
-                        # Unpack the tuple into x and y coordinates
-                        x, y = point
-                        # Plot the point using ax.scatter()
-                        ax.scatter(x, y, color='b')
-                    
-                    if pointOneUpdated:
-                        ax.scatter(firstPoint[0], firstPoint[1], color='r')
+                    lastUpdate = 'X1'
 
-                    fig.canvas.draw()
+
+                # Clear the plot and redraw the points
+                ax.clear()
+                ax.imshow(img, aspect='auto')
+                plt.grid()
+
+                # Draw blue points for all the line coordinates
+                for point in lineCoords:
+                    # Unpack the tuple into x and y coordinates
+                    x, y = point
+                    # Plot the point using ax.scatter()
+                    ax.scatter(x, y, color='b')
+
+                # raw a red point for the first point if it has been updated
+                if pointOneUpdated:
+                    ax.scatter(firstPoint[0], firstPoint[1], color='r')
+
+                # Draw a red point for the second point if it has been updated
+                if pointTwoUpdated:
+                    ax.scatter(secondPoint[0], secondPoint[1], color='r')
+
+                fig.canvas.draw()
 
             else:            
                 # Try/Except in case lineCoords is empty
@@ -1286,16 +1293,14 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-TITLE-'].update('Manual Correction Instructions')
 
         if modifyStatus:
-            manualDescription = "Adjust the Y coordinates for the two points previously clicked on the image using the sliders."
+            manualDescription = "Adjust the X and Y coordinates for the two points previously clicked on the image using the sliders."
             manualDescription = textwrap.fill(manualDescription, 52)
-            
-            window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
-            window['-MANUAL DESCRIPTION-'].update(manualDescription, visible=True)
 
             window['-X1-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
             window['-Y1-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
             window['-X2-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
             window['-Y2-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0))
+
             window['-X1-'].update(visible=True)
             window['-Y1-'].update(visible=True)
             window['-X2-'].update(visible=True)
@@ -1303,10 +1308,10 @@ def reformatScreen(window, btnClick, modifyStatus):
 
         else:
             manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, click the `Undo` button. Once you are done, click 'Done'."
-            manualDescription = textwrap.fill(manualDescription, 52)
-            
-            window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
-            window['-MANUAL DESCRIPTION-'].update(manualDescription, visible=True)
+        
+        manualDescription = textwrap.fill(manualDescription, 52)    
+        window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
+        window['-MANUAL DESCRIPTION-'].update(manualDescription, visible=True)
 
         window['-CORRECT-'].Widget.master.pack()
         window['-MODIFY-'].Widget.master.pack()
