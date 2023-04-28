@@ -210,6 +210,7 @@ def runEvents(window):
     pointTwoUpdated = False
     lastUpdate = None
     lastCorrectionMethod = None   # Keep track of latest correction method used for modification purposes
+    correctedVideoClip = None     # Placeholder for the corrected video if user choses a .mp4 file
         
     while True:
         event, values = window.read()
@@ -306,7 +307,7 @@ def runEvents(window):
 
             # User chose a video file.
             if (fileExt == '.mp4'):
-                handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
+                correctedVideoClip = handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
                 automaticCorrectedOnce = True
                 modifyClicked = False
 
@@ -653,18 +654,30 @@ def runEvents(window):
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
             
-            savePath = getExportPath()
+            savePath = getExportPath(fileExt)
             
             # We only want to try saving and greying out the button if the user did save the image!
             if (savePath != "void"):
                 
-                # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
-                # Convert the array from BGR to RGB
-                finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                # Saving a corrected image
+                if (fileExt == '.jpg' or fileExt == '.jpeg'):
                 
-                # Save the file to the path specified
-                cv2.imwrite(savePath, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-                window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
+                    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+                    # Convert the array from BGR to RGB
+                    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                    
+                    # Save the file to the path specified
+                    cv2.imwrite(savePath, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                    window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
+                    
+                # Saving a corrected movie file (.mp4)
+                else:
+                    correctedVideoClip.write_videofile(savePath, codec="libx264", audio=True, audio_codec="aac")
+
+                    # Close the image sequence clip
+                    correctedVideoClip.close()
+                    
+                    
                 
                 
         
@@ -737,9 +750,9 @@ def runEvents(window):
         
  # ------------------------------------------------------------------------------  
 
-def getExportPath():
+def getExportPath(fileExtType):
     """ 
-        Args:       None
+        Args:       fileExtType --> String signifying if the export file should be a .jpg or .mp4
         Returns:    save_path: A string representing the full path and name of the file where the image will be saved.
         Summary:    Creates a "Save As" dialog to get the path and name for a corrected image file. It prompts the
                     user to enter a filename and select a directory. The function then checks if the filename is
@@ -751,7 +764,7 @@ def getExportPath():
     # Create a custom "Save As" dialog with a custom "Save" button text
     save_layout = [
              [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!')],
-             [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here", enable_events=True)],
+             [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here (Backspace Me!)", enable_events=True)],
              [sg.In (size=(40,1), key="-DIRECTORY-",  default_text="Select Directory (Use Browse -->)", disabled=True),
                  sg.FolderBrowse(key='-BROWSE-', size=(10, 1))],
              [sg.Button('Save')],
@@ -760,7 +773,7 @@ def getExportPath():
     
     # Will be used when saving corrected image below
     sep = os.path.sep
-    save_path = "void" # Placeholder
+    savePath = "void" # Placeholder
 
     erasedHint = False
     validSavePath = True
@@ -805,21 +818,21 @@ def getExportPath():
 
                 # If user wants local directory (did not choose separate directory)
                 if directory == "Select Directory (Use Browse -->)":
-                    save_path = os.getcwd() + sep + filename + '.jpg'
+                    savePath = os.getcwd() + sep + filename + fileExtType
 
                 # If user chose a directory
                 else:
-                    save_path = directory + sep + filename + '.jpg'
+                    savePath = directory + sep + filename + fileExtType
 
 
             # Only break out of loop and return save_path if user gave a valid file name
             if (validSavePath == True):
-                print("The saved file path: ", save_path)
+                print("The saved file path: ", savePath)
                 break
 
     save_window.Close()
     
-    return save_path
+    return savePath
         
 # ------------------------------------------------------------------------------  
 
@@ -1022,13 +1035,15 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
     # Set the audio of the image clip
     audio = AudioFileClip("outputA.mp3")
     image_clip = image_clip.set_audio(audio)
+    
+    return image_clip
 
     # Write the image sequence clip to a video file
-    output_path = "output.mp4"
-    image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
+    # output_path = "output.mp4"
+    # image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
 
-    # Close the image sequence clip
-    image_clip.close()
+    # # Close the image sequence clip
+    # image_clip.close()
     
     
 # ------------------------------------------------------------------------------   
