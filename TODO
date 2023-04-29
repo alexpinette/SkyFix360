@@ -1,7 +1,7 @@
 Task lists:
 - [ ] Window size (y) is getting cut off by mac doc (cathy)
 - [ ] Make Window resizeable (`-CONFIG-`)
-- [ ] When user clicks `Help` button, `Quit` button does not work anymore
+- [x] When user clicks `Help` button, `Quit` button does not work anymore
 - [ ] Display text on screen when no image/video selected
 - [X] When done with manual input, `Help` and `Quit` buttons are duplicated on screen before reformatting screen
 - [x] Allow corrections made on corrected images
@@ -39,8 +39,7 @@ After Informal Meeting:
 
 
 After in class discussion with Professor Gousie 4/19/23:
-- [ ] Create radio buttons for if image is upright or upside down?
-- [ ] After getting automatic video to work, use previous image/frame's information to correct the next frame faster.
+- [?] After getting automatic video to work, use previous image/frame's information to correct the next frame faster.
 - [x] When modifying, implement sliders for each point so they move by a miniscule pixel amount.
 - [x] Each slider should move left and right 40? pixels. (40 <-------|--------> 40)
 - [x] On linux/windows machine, help windows text and buttons are cut off. Nick should try to get it working on his and see if it works on MAC.
@@ -50,10 +49,9 @@ After in class discussion with Professor Gousie 4/19/23:
 - [] When modifying, implement sliders for each point so they move by a miniscule pixel amount.
 - [] Each slider should move left and right 40? pixels. (40 <-------|--------> 40)
 
-- [] Create radio buttons for if image is upright or upside down?
 - [] When modified, image is currently upright. When modifying, flip the coordinate (y values?) such that it uses the lower point
-- [] On linux/windows machine, help windows text and buttons are cut off. Nick should try to get it working on his and see if it works on MAC.
+- [x] On linux/windows machine, help windows text and buttons are cut off. Nick should try to get it working on his and see if it works on MAC.
 
-- [] After getting automatic video to work, use previous image/frame's information to correct the next frame faster.
+- [?] After getting automatic video to work, use previous image/frame's information to correct the next frame faster.
 
 * Ultimate Goal is to make automatic "perfect" and support video files. 
