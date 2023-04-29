@@ -97,7 +97,7 @@ def auto_correct_process(fileName):
   # print(modelDir)
   currentDir = os.getcwd()
   sep = os.path.sep
-  modelDir = currentDir + sep + "horizon_line_model_new11.h5"
+  modelDir = currentDir + sep + "horizon_line_model_new12.h5"
   # print(modelDir)
 
   # model = tf.keras.models.load_model(modelDir)
