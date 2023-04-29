@@ -50,8 +50,8 @@ def createWindow():
                ]
 
 
-    secondRow = [[sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
-                        [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
+    secondRow = [[sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(300, 1))],
+                        [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(60, 4))],
                         [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"),
                          sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
         
@@ -76,7 +76,7 @@ def createWindow():
     layout = [ firstRow, secondRow ]
 
     # Display the window
-    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 870))
+    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 890))
     
     # bind to config so can check when window size changes
     window.bind('<Configure>', key='-CONFIG-')
@@ -1317,12 +1317,12 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-TITLE-'].update('Manual Correction Instructions')
 
         if modifyStatus:
-            manualDescription = "Adjust the highest and lowest points on the horizon using sliders. Each slider moves its respective point up or down in the north-south direction. Click the help button for more information."
-            manualDescription = textwrap.fill(manualDescription, 50)
+            manualDescription = "Modify horizon points with sliders that control the highest and lowest positions. The sliders move the points in the north-south direction. Click the help button for more information."
+            manualDescription = textwrap.fill(manualDescription, 65)
         else:
             manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, click the `Undo` button. Once you are done, click 'Done'."
         
-        manualDescription = textwrap.fill(manualDescription, 52)    
+        manualDescription = textwrap.fill(manualDescription, 65)    
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(manualDescription, visible=True)
 
