@@ -55,20 +55,20 @@ def createWindow():
                         [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"),
                          sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
         
-            sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")]]),
+            sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")],
+                        [sg.Column([[sg.Text('N', key='-N-'), sg.Slider(key='-Y1-', range=(0, 0), default_value=0, size=(15, 20), orientation='h'), sg.Text('S', key='-S-'),
+                                     sg.Text('N', key='-N2-'), sg.Slider(key='-Y2-', range=(0, 0), default_value=0, size=(15, 20), orientation='h'), sg.Text('S', key='-S2-'),
+                                    ]], key='-SLIDERS-', visible=False)],]),
 
             #third col
             sg.Column([
             [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1)),
-            sg.Button('Modify', key='-MODIFY-', visible=False, size=(10, 1)) ],
+             sg.Button('Modify', key='-MODIFY-', visible=False, size=(10, 1)) ],
             [sg.Button('Export', key='-EXPORT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1))],
             [sg.Button('Undo', key='-UNDO-', visible=False, size=(10, 1))],
             [sg.Button('Done', key='-DONE-', visible=False, size=(10, 1))],
-            ])
-            ],
+            ])],
             [sg.Text("", pad=(0,66), key="-PAD FOR CORRECTION-", visible=False)],
-            [sg.Column([[sg.Text('N', key='-N-', visible=False), sg.Slider(key='-Y1-', visible=False, range=(0, 0), default_value=0, size=(15, 7), orientation='h'), sg.Text('S', key='-S-', visible=False),
-                         sg.Text('N', key='-N2-', visible=False), sg.Slider(key='-Y2-', visible=False, range=(0, 0), default_value=0, size=(15, 7), orientation='h'), sg.Text('S', key='-S2-', visible=False)]])],
             [[sg.Button('Help', key='-HELP-', size=(10, 1)), sg.Button("Quit", key="-QUIT-", size=(10, 1))]]
         ]
 
@@ -132,7 +132,7 @@ def helpWindow(modifyClicked):
             helpLayout = [[sg.Text(' Need Help?', font=("Arial", 16, "bold"), size=(40, 1), justification='center')],
                     [sg.Text(" To adjust the position of the highest and lowest points on the horizon,\n use the two sliders provided. Each slider moves its respective point\n up or down from the original coordinate, allowing for adjustment\n in the north-south direction.", font=("Arial", 12), justification='left')],
                     [sg.Text("   1.   Move the leftmost slider, Point 1 on the canvas, to your\n         desired position.", font=("Arial", 12), justification='left')],
-                    [sg.Text("   2.   Move the rightmose slider, Point 2 on the canvas, to your\n         desired position.", font=("Arial", 12), justification='left')],
+                    [sg.Text("   2.   Move the rightmost slider, Point 2 on the canvas, to your\n         desired position.", font=("Arial", 12), justification='left')],
                     [sg.Text("   3.   Select 'Done' to start the modification process.", font=("Arial", 12), justification='left')],
                     [sg.Text("   4.   If you wish to quit at any time, select the 'Quit' button or\n         click the previous button to return to the main screen.", font=("Arial", 12), justification='left')],
                     [sg.Button("Close",font=("Arial", 16), size=(40, 1), pad=((135), (20, 0)))]
@@ -268,14 +268,11 @@ def runEvents(window):
                 # differentiate between .jpg and .mp4 files
                 if fileExt == '.jpg' or fileExt == '.jpeg':
                     fileExt = '.jpg'
-                    print('Selected file is a .jpg or .jpeg')
             
                     # Open the image
                     pilImage = PIL.Image.open(fileName)
                     
                 elif fileExt == '.mp4':
-                    print('Selected file is a .mp4')
-                    
                     # read the .mp4 video file
                     cap = cv2.VideoCapture(fileName)
                     
@@ -396,14 +393,8 @@ def runEvents(window):
 
                                 lineCoords = tempCoords
 
-                            window['-N-'].update(visible=True)
-                            window['-Y1-'].update(visible=True, range=(lineCoords[0][1]-30, lineCoords[0][1]+30), value=lineCoords[0][1])
-                            window['-S-'].update(visible=True)
-
-                            window['-N2-'].update(visible=True)
-                            window['-Y2-'].update(visible=True, range=(lineCoords[0][1]-30, lineCoords[0][1]+30), value=lineCoords[0][1])
-                            window['-S2-'].update(visible=True)
-                            
+                            window['-Y1-'].update(range=(lineCoords[0][1]-30, lineCoords[0][1]+30), value=lineCoords[0][1])
+                            window['-Y2-'].update(range=(lineCoords[1][1]-30, lineCoords[1][1]+30), value=lineCoords[1][1])
 
                             # Display the image with the line coordinates in red
                             for coord in lineCoords:
@@ -462,7 +453,6 @@ def runEvents(window):
 
                         window['-FOLDER-'].update(visible=True)
                         window['-FILE LIST-'].update(visible=True)
-                        window['-FILE LIST-'].Widget.master.pack()
                         window['-CORRECT-'].update(visible=True, disabled=True, button_color=('grey', sg.theme_button_color_background()))
                         window['-MODIFY-'].update(visible=True)
                         window['-BROWSE-'].update(visible=True)
@@ -537,7 +527,7 @@ def runEvents(window):
         
         
         # if previous button clicked, return to default window
-        if event == '-PREVIOUS BTN-':     
+        if event == '-PREVIOUS BTN-':
             defaultWindow(window, False, modifyClicked)
             prevButtonClickedOnce = True
             modifyClicked = not modifyClicked
@@ -545,21 +535,8 @@ def runEvents(window):
         # continue if user is done plotting the 2 points on the canvas and clicks done
         if event == ('-DONE-') and lineCoords != []:
             lastCorrectionMethod = 'Manual'
-            window['-N-'].update(visible=False)
-            window['-Y1-'].update(visible=False)
-            window['-S-'].update(visible=False)
-
-            window['-N2-'].update(visible=False)
-            window['-Y2-'].update(visible=False)
-            window['-N2-'].update(visible=False)
-
-            window['-N-'].Widget.master.pack_forget() 
-            window['-Y1-'].Widget.master.pack_forget() 
-            window['-S-'].Widget.master.pack_forget() 
-            window['-N2-'].Widget.master.pack_forget() 
-            window['-Y2-'].Widget.master.pack_forget() 
-            window['-S2-'].Widget.master.pack_forget() 
-
+            window['-SLIDERS-'].update(visible=False)
+            window['-SLIDERS-'].Widget.master.pack_forget()
             window['-HELP-'].update(visible=False)
             window['-QUIT-'].update(visible=False)
 
@@ -596,8 +573,10 @@ def runEvents(window):
             
             # Forget these since there's no point in having them while image is processing.
             window['-PREVIOUS BTN-'].update(visible=False)
+            window['-SLIDERS-'].update(visible=False)
             window['-UNDO-'].update(visible=False)
             window['-DONE-'].update(visible=False)
+            window['-SLIDERS-'].Widget.master.pack_forget()
             window['-UNDO-'].Widget.master.pack_forget()
             window['-DONE-'].Widget.master.pack_forget() 
             
@@ -827,7 +806,6 @@ def getExportPath(fileExtType):
 
             # Only break out of loop and return save_path if user gave a valid file name
             if (validSavePath == True):
-                print("The saved file path: ", savePath)
                 break
 
     save_window.Close()
@@ -946,8 +924,6 @@ def correctImageMan(fileName, ix, iy, window, vidImg):
     if iy < 0 :
         myP = -(h/2 - np.abs(iy))*180/h
 
-    print('\n Doing the final rotation (pitch =',str(f'{myP:.2f}'), 'deg). This can take a while ...')
-
     # Create an EquirectRotate object and apply pitch and yaw rotations
     equirectRot = EquirectRotate(h, w, (myY, myP, myR), window, vidImg)
     rotated_image = equirectRot.rotate(src_image, window)
@@ -958,8 +934,6 @@ def correctImageMan(fileName, ix, iy, window, vidImg):
     # Update progress bar if working with an image
     if vidImg == "img":
         updateProgressBar(85,96, window)
-
-    print('Done.')
 
     return finalImg
 
@@ -1018,8 +992,6 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
         except Exception as e:
             print(f"Error saving frame {i}: {e}")
 
-    print("IMAGE SAVED")
-
     # Close the clip
     clip.close()
 
@@ -1057,8 +1029,6 @@ def fixVideo(listOfFrames, window):
                 "correctImageMan" functions, saves each corrected frame to a new
                 directory, and updates the GUI window to show the corrected video frames.
     """
-
-    print("Num of frames is ", len(listOfFrames))
 
     # Create a directory to save the corrected frames
     output_dir = "framesC"
@@ -1260,21 +1230,7 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-MANUAL DESCRIPTION-'].update(visible=True)
 
         if modifyStatus:
-            window['-N-'].Widget.master.pack() 
-            window['-Y1-'].Widget.master.pack()
-            window['-S-'].Widget.master.pack() 
-
-            window['-N2-'].Widget.master.pack() 
-            window['-Y2-'].Widget.master.pack()
-            window['-N2-'].Widget.master.pack() 
-        
-            window['-N-'].update(visible=True)
-            window['-Y1-'].update(visible=True)
-            window['-S-'].update(visible=True)
-
-            window['-N2-'].update(visible=True)
-            window['-Y2-'].update(visible=True)
-            window['-S2-'].update(visible=True)
+            window['-SLIDERS-'].update(visible=True)
 
         window['-UNDO-'].update(visible=True)
         window['-DONE-'].update(visible=True)
@@ -1312,13 +1268,17 @@ def reformatScreen(window, btnClick, modifyStatus):
         
         window['-FOLDER-'].Widget.master.pack_forget() 
         window['-BROWSE-'].Widget.master.pack_forget() 
+        
+        window['-SLIDERS-'].Widget.master.pack_forget() 
+        window['-UNDO-'].Widget.master.pack_forget() 
+        window['-DONE-'].Widget.master.pack_forget() 
     
         window['-FOLDROW-'].Widget.master.pack()
         window['-TITLE-'].update('Manual Correction Instructions')
 
         if modifyStatus:
             manualDescription = "Modify horizon points with sliders that control the highest and lowest positions. The sliders move the points in the north-south direction. Click the help button for more information."
-            manualDescription = textwrap.fill(manualDescription, 65)
+            manualDescription = textwrap.fill(manualDescription, 50)
         else:
             manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, click the `Undo` button. Once you are done, click 'Done'."
         
@@ -1332,28 +1292,15 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-CORRECT-'].update(visible=False)
         window['-MODIFY-'].update(visible=False)
         window['-EXPORT-'].update(visible=False)
+
+        if modifyStatus:
+            window['-SLIDERS-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,30)) 
+            window['-SLIDERS-'].update(visible=True)
+
         window['-UNDO-'].Widget.master.pack() 
         window['-UNDO-'].update(visible=True)
         window['-DONE-'].Widget.master.pack() 
         window['-DONE-'].update(visible=True)
-
-        if modifyStatus:
-            window['-N-'].Widget.master.pack() 
-            window['-Y1-'].Widget.master.pack()
-            window['-S-'].Widget.master.pack() 
-
-            window['-N2-'].Widget.master.pack() 
-            window['-Y2-'].Widget.master.pack()
-            window['-N2-'].Widget.master.pack() 
-
-            window['-N-'].update(visible=True)
-            window['-Y1-'].update(visible=True)
-            window['-S-'].update(visible=True)
-
-            window['-N2-'].update(visible=True)
-            window['-Y2-'].update(visible=True)
-            window['-S2-'].update(visible=True)
-
         window['-HELP-'].Widget.master.pack() 
         window['-HELP-'].update(visible=True)
         window['-QUIT-'].Widget.master.pack() 
@@ -1377,6 +1324,7 @@ def defaultWindow(window, correctedStatus, selectedImage):
     window['-MANUAL DESCRIPTION-'].update(visible=False)
     window['controls_cv'].update(visible=False)
     window['fig_cv'].update(visible=False)
+    window['-SLIDERS-'].update(visible=False)
     window['-UNDO-'].update(visible=False)
     window['-DONE-'].update(visible=False)
 
@@ -1384,28 +1332,17 @@ def defaultWindow(window, correctedStatus, selectedImage):
     window['fig_cv'].Widget.master.pack_forget() 
     window['-MANUAL DESCRIPTION-'].Widget.master.pack_forget() 
 
-    window['-N-'].Widget.master.pack_forget()
-    window['-Y1-'].Widget.master.pack_forget()
-    window['-S-'].Widget.master.pack_forget()
-    window['-N2-'].Widget.master.pack_forget()
-    window['-Y2-'].Widget.master.pack_forget()
-    window['-S2-'].Widget.master.pack_forget()
-    window['-N-'].update(visible=False)
-    window['-Y1-'].update(visible=False)
-    window['-S-'].update(visible=False)
-    window['-N2-'].update(visible=False)
-    window['-Y2-'].update(visible=False)
-    window['-S2-'].update(visible=False)
-
     window['-FOLDROW-'].Widget.master.pack_forget() 
     window['-FILE LIST-'].Widget.master.pack_forget() 
     window['-CORRECT-'].Widget.master.pack_forget()
     window['-MODIFY-'].Widget.master.pack_forget()
     window['-EXPORT-'].Widget.master.pack_forget() 
+    window['-SLIDERS-'].Widget.master.pack_forget()
     window['-UNDO-'].Widget.master.pack_forget()
     window['-DONE-'].Widget.master.pack_forget() 
     window['-HELP-'].Widget.master.pack_forget() 
     window['-QUIT-'].Widget.master.pack_forget() 
+
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
     window['-FOLDROW-'].Widget.master.pack()
