@@ -11,9 +11,10 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ## Installation
 
-To use SkyFix360, you need to install the required dependencies first. You can do this by running the following command:
+To use SkyFix360, you need to install the required dependencies first. You can do this by running the following command in your command prompt:
 `pip install -r requirements.txt`
 
+or you can pip install the following:
 
 ## Usage
 
@@ -30,6 +31,7 @@ This repository contains the following files:
 
 `auto_fix.py`: contains the necessary functions for automatic horizon line correction on images and videos.
 `gui.py`: The main file that runs the PySimpleGUI GUI and emits the events for the corrections for images and videos. The file contains the main code for processing the input image/video and correcting the sky.
+`horizon_line_model_new14.h5`: The Artificial Intelligence model that will assist with the automatic correction processes. 
 `requirements.txt`: The file containing the list of required dependencies.
 `LICENSE`: The file containing the license information for this project.
 `README.md`: The file you are currently reading, which contains information about the project and instructions on how to use it.

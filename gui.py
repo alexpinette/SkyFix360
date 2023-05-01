@@ -1294,7 +1294,7 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-EXPORT-'].update(visible=False)
 
         if modifyStatus:
-            window['-SLIDERS-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,30)) 
+            window['-SLIDERS-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,10)) 
             window['-SLIDERS-'].update(visible=True)
 
         window['-UNDO-'].Widget.master.pack() 
