@@ -90,24 +90,16 @@ def auto_correct_process(fileName):
   
   # Read the image from file and resize it
   preprocessed_image = preprocess_image(fileName)
-  
-  # modelDir = "horizon_line_model.h5"
-  # modelDir = os.path.join(folder, "horizon_line_model.h5")
 
-  # print(modelDir)
   currentDir = os.getcwd()
   sep = os.path.sep
-  modelDir = currentDir + sep + "horizon_line_model_new12.h5"
-  # print(modelDir)
+  modelDir = currentDir + sep + "horizon_line_model_new14.h5"
 
   # model = tf.keras.models.load_model(modelDir)
   model = tf.keras.models.load_model(modelDir, custom_objects={"custom_loss": custom_loss})
 
   # Preprocess the input image and predict the horizon line
   input_image = np.expand_dims(preprocessed_image, axis=0)
-  # predicted_points = model.predict(input_image)
-
-  # print(predicted_points.shape)
 
   # Extract patches for the new image
   new_points = [0.5, 0.5] * 10  # Dummy points, will not affect the result
@@ -146,7 +138,6 @@ def extract_patches(image, points, patch_size=32, num_patches=10):
     for i in range(0, len(points), 2):
         x = int(points[i] * image.shape[1])
         y = int(points[i + 1] * image.shape[0])
-        # print(x,y)
 
         x_min = max(0, x - patch_size // 2)
         x_max = min(image.shape[1], x + patch_size // 2)
@@ -164,8 +155,6 @@ def extract_patches(image, points, patch_size=32, num_patches=10):
                 y_max = y_min + patch_size
             else:
                 y_min = y_max - patch_size
-
-        # print(f"Point index: {i//2}, Coordinates: ({x}, {y}), Patch position: ({x_min}, {y_min}), ({x_max}, {y_max}), Patch size: ({x_max - x_min}, {y_max - y_min})")
 
         patch = image[y_min:y_max, x_min:x_max]
         patches.append(patch)
