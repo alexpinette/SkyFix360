@@ -56,10 +56,10 @@ def createWindow():
                          sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
         
             sg.Column([[sg.Listbox(values=[], enable_events=True, size=(45,5), key="-FILE LIST-")],
-                        [sg.Column([[sg.Text('N', key='-N-'), sg.Slider(key='-Y1-', range=(0, 0), default_value=0, size=(15, 7), orientation='h'), sg.Text('S', key='-S-'),
-                                     sg.Text('N', key='-N2-'), sg.Slider(key='-Y2-', range=(0, 0), default_value=0, size=(15, 7), orientation='h'), sg.Text('S', key='-S2-'),
+                        [sg.Column([[sg.Text('N', key='-N-'), sg.Slider(key='-Y1-', range=(0, 0), default_value=0, size=(15, 20), orientation='h'), sg.Text('S', key='-S-'),
+                                     sg.Text('N', key='-N2-'), sg.Slider(key='-Y2-', range=(0, 0), default_value=0, size=(15, 20), orientation='h'), sg.Text('S', key='-S2-'),
                                     ]], key='-SLIDERS-', visible=False)],]),
-            
+
             #third col
             sg.Column([
             [sg.Button('Correct', key='-CORRECT-', disabled=True, button_color=('grey', sg.theme_button_color_background()), size=(10, 1)),
@@ -1280,7 +1280,7 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-EXPORT-'].update(visible=False)
 
         if modifyStatus:
-            window['-SLIDERS-'].Widget.master.pack() 
+            window['-SLIDERS-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,30)) 
             window['-SLIDERS-'].update(visible=True)
 
         window['-UNDO-'].Widget.master.pack() 
