@@ -13,7 +13,7 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ### MAC
 
-1. Go to the website: [Dropbox Folder](https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0){:target="_blank"}
+1. Go to the website: <a href="https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0" target="_blank">Dropbox Link</a>
 2. Look for a download link called `SkyFix360Mac.zip` for the Mac version of the app.
 3. Click on the download link and a download dialogue box should appear.
 4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it. It is greatly recommended that you keep the default location settings and do not move any of the folders that the program creates.
@@ -26,7 +26,7 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ### Windows
 
-1. Go to the website: [Dropbox Folder](https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0){:target="_blank"}
+1. Go to the website: <a href="https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0" target="_blank">Dropbox Link</a>
 2. Look for a download link called `SkyFix360Windows.zip` for the Windows version of the app.
 3. Click on the download link, and a download dialogue box should appear.
 4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it.
@@ -39,7 +39,7 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ### Linux
 
-1. Go to the website: [Dropbox Folder](https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0){:target="_blank"}
+1. Go to the website: <a href="https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0" target="_blank">Dropbox Link</a>
 2. Look for a download link called `SkyFix360SLinux.zip` for the Linux version of the app.
 3. Click on the download link, and a download dialogue box should appear.
 4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it.
