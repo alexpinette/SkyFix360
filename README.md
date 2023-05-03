@@ -37,7 +37,7 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ### Linux
 
-1. Go to the website:
+1. Go to the website: https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0
 2. Look for a download link called `SkyFix360SLinuxScript.sh` for the Linux version of the app.
 3. Click on the download link, and a download dialogue box should appear.
 4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it.
