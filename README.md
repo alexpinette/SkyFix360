@@ -11,27 +11,54 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ## Installation
 
-To use SkyFix360, you need to install the required dependencies first. You can do this by running the following command in your command prompt:
-`pip install -r requirements.txt`
+### MAC
 
-or you can pip install the following:
+1. Go to the website: https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0
+2. Look for a download link called `SkyFix360Mac.zip` for the Mac version of the app.
+3. Click on the download link and a download dialogue box should appear.
+4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it. It is greatly recommended that you keep the default location settings and do not move any of the folders that the program creates.
+5. Unzip downloaded folder if it did not unzip yet.
+6. Double-click on the file to start the installation process. If the file is in a compressed format like .zip or .dmg, you may need to extract it first.
+7. If you see a warning message saying that the app is from an unidentified developer, you may need to allow permission from Security and Privacy settings on your Mac.
+8. To do this, go to System Preferences > Security & Privacy. Under the General tab, you should see a message saying that the app was blocked. Click on the "Open Anyway" button next to it to allow the app to run.
+9. Follow the on-screen instructions to complete the installation process. Once the installation is complete, the application will automatically open on the screen.
 
-## Usage
 
-After installing the dependencies, you can run the SkyFix360 tool by executing the `gui.py` file. The program can only run when interacting with the PySimpleGUI window, so there is only one command to run and then nothing will be prompted from the console, only interactions on the window GUI.
+### Windows
 
-`python gui.py`
+1. Go to the website: <a href="https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0" target="_blank">Download link</a>
+2. Look for a download link called `SkyFix360Windows.zip` for the Windows version of the app.
+3. Click on the download link, and a download dialogue box should appear.
+4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it.
+4. Double-click on the downloaded file to start the installation process.
+5. If you see a warning message from your computer's security software, click "Run" to proceed with the installation.
+6. Follow the on-screen instructions to complete the installation process. You may need to select an installation location, agree to terms and conditions, and customize the installation options. It is greatly recommended that you keep the default location settings and do not move any of the folders that the program creates.
+7. Unzip downloaded folder.
+8. Once the installation is complete, you should see the app icon on your desktop and the application will automatically open on the screen.
 
-The tool will launch a PySimpleGUI window where you can load your 360-degree sky image, adjust the parameters and see the output image with the corrected sky. You can customize the output image by adjusting the various parameters available in the window.
+
+### Linux
+
+1. Go to the website: https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0
+2. Look for a download link called `SkyFix360SLinux.zip` for the Linux version of the app.
+3. Click on the download link, and a download dialogue box should appear.
+4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it.
+5. Open the terminal and navigate to the directory where you downloaded the file.
+6. If the file is in a compressed format like .zip or .tar.gz, you may need to extract it first. You can use the "tar" command to extract the file. For example, if the file is named "app.tar.gz", you can use the command "tar -xzvf app.tar.gz" to extract the files.
+7. Run the file by entering the command `chmod +x SkyFix360SLinuxScript.sh` in the terminal, where "SkyFix360SLinuxScript" is the name of the file you downloaded for Linux.
+8. Run `./SkyFix360SLinuxScript.sh` so the application starts running automatically.
 
 
 ## What each file represents
 
 This repository contains the following files:
 
-`auto_fix.py`: contains the necessary functions for automatic horizon line correction on images and videos.
-`gui.py`: The main file that runs the PySimpleGUI GUI and emits the events for the corrections for images and videos. The file contains the main code for processing the input image/video and correcting the sky.
-`horizon_line_model_new14.h5`: The Artificial Intelligence model that will assist with the automatic correction processes. 
-`requirements.txt`: The file containing the list of required dependencies.
-`LICENSE`: The file containing the license information for this project.
-`README.md`: The file you are currently reading, which contains information about the project and instructions on how to use it.
+`auto_fix.py`: contains the necessary functions for automatic horizon line correction on images and videos. <br/>
+
+`gui.py`: The main file that runs the PySimpleGUI GUI and emits the events for the corrections for images and videos. The file contains the main code for processing the input image/video and correcting the sky. <br />
+
+`LICENSE`: The file containing the license information for this project.<br />
+
+`horizon_line_modelFINAL.h5`:  loads images from a folder, resizes them to 224x224 pixels, and normalizes them to [0, 1], while normalizing annotated points by dividing their coordinates by the original image width and height, and performs data augmentation through vertical and horizontal flipping, and adds color variations via different color maps to increase dataset size and improve model robustness. <br />
+
+`README.md`: The file you are currently reading, which contains information about the project and instructions on how to use it. <br />
