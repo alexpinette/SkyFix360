@@ -1,4 +1,4 @@
-<p align="center" width="20%">
+<p align="center" width="300px">
   <img src="https://github.com/alexpinette/SkyFix360/blob/main/logo.png" alt="SkyFix360 Logo">
 </p>
 
