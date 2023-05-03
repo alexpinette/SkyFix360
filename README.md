@@ -1,6 +1,5 @@
-<div style="text-align:center;">
-    <img src="https://github.com/alexpinette/SkyFix360/blob/main/logo.png" alt="SkyFix360 Logo" style="width:300px;">
-</div>
+<img src="https://github.com/alexpinette/SkyFix360/blob/main/logo.png" alt="SkyFix360 Logo" style="width:300px;" class="center">
+
 
 
 # SkyFix360
@@ -18,7 +17,7 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ### MAC
 
-1. Go to the website: https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0
+1. Go to the website: [here](https://www.dropbox.com/sh/g7qz13tizm3xzk8/AACKXtNQkG8LShkBm-kQo8Xda?dl=0){:target='_blank'}
 2. Look for a download link called `SkyFix360Mac.zip` for the Mac version of the app.
 3. Click on the download link and a download dialogue box should appear.
 4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it. It is greatly recommended that you keep the default location settings and do not move any of the folders that the program creates.
