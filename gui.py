@@ -4,7 +4,7 @@
     Senior Seminar 2023
 '''
 
-import os, io, sys, platform
+import os, io, sys, platform, shutil
 import numpy as np
 import tkinter as tk 
 import PySimpleGUI as sg, PIL, cv2, textwrap
@@ -21,6 +21,7 @@ from auto_fix import auto_correct_process
 #-------------------------------------------------------------------------------
 global prevButtonClickedOnce
 global doneButtonClickedOnce
+
 
 
 def createWindow():
@@ -50,8 +51,8 @@ def createWindow():
                ]
 
 
-    secondRow = [[sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(200, 1))],
-                        [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(52, 4))],
+    secondRow = [[sg.Column([[sg.Text("SkyFix360", key='-TITLE-', font= ("Arial", 16, "bold"), size=(300, 1))],
+                        [sg.Text(newManualDescription, key='-MANUAL DESCRIPTION-', font=("Arial", 10), visible=False, size=(60, 4))],
                         [sg.In (size=(40,1), enable_events=True, key="-FOLDER-"),
                          sg.FolderBrowse(key='-BROWSE-', size=(10, 1))]], pad=(10, 10), size=(400, 100), key="-FOLDROW-"),
         
@@ -127,7 +128,8 @@ def helpWindow(modifyClicked):
         windowHeight = 440
             
     if modifyClicked == True:
-         windowHeight = windowHeight - 60
+        windowHeight = windowHeight - 60
+
     
     if modifyClicked == False:
 
@@ -219,6 +221,9 @@ def runEvents(window):
     pointTwoUpdated = False
     lastUpdate = None
     lastCorrectionMethod = None   # Keep track of latest correction method used for modification purposes
+    correctedVideoClip = None     # Placeholder for the corrected video if user choses a .mp4 file
+    pilImageGlobal = None         # Placeholder for the first frame of chosen .mp4 file
+    videoCorrectionChose = False
         
     while True:
         event, values = window.read()
@@ -282,7 +287,7 @@ def runEvents(window):
                     fileExt = '.jpg'
             
                     # Open the image
-                    pilImage = PIL.Image.open(fileName)
+                    pilImageGlobal = PIL.Image.open(fileName)
                     
                 elif fileExt == '.mp4':
                     # read the .mp4 video file
@@ -292,14 +297,15 @@ def runEvents(window):
                     ret, frame = cap.read()
 
                     # convert the OpenCV image to a PIL Image
-                    pilImage = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-                    pilImage.save("vidImage.jpg")
+                    pilImageGlobal = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                    
+                    # pilImageGlobal.save("vidImage.jpg")
                     
                     # NOTE TO CLOSE/RELEASE THE VIDEOCAPTURE:
                     # cap.release()
                     
                 # Get image data, and then use it to update window["-IMAGE-"]
-                data = imageToData(pilImage, window["-IMAGE-"].get_size())
+                data = imageToData(pilImageGlobal, window["-IMAGE-"].get_size())
                 window['-IMAGE-'].update(data=data)
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
                 
@@ -312,7 +318,8 @@ def runEvents(window):
 
             # User chose a video file.
             if (fileExt == '.mp4'):
-                handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
+                videoCorrectionChose = True
+                correctedVideoClip = handleAutomaticVideoCorrection(fileName, window, pilImageGlobal, videoCorrectionChose)
                 automaticCorrectedOnce = True
                 modifyClicked = False
 
@@ -647,18 +654,30 @@ def runEvents(window):
         # If user clicks export, export the fixed final image to the current working directory
         if event == '-EXPORT-':
             
-            savePath = getExportPath()
+            savePath = getExportPath(fileExt)
             
             # We only want to try saving and greying out the button if the user did save the image!
             if (savePath != "void"):
                 
-                # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
-                # Convert the array from BGR to RGB
-                finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                # Saving a corrected image
+                if (fileExt == '.jpg' or fileExt == '.jpeg'):
                 
-                # Save the file to the path specified
-                cv2.imwrite(savePath, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-                window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
+                    # Assuming `finalImg` is a numpy array with the shape (height, width, channels)
+                    # Convert the array from BGR to RGB
+                    finalImg = cv2.cvtColor(finalImg, cv2.COLOR_BGR2RGB)
+                    
+                    # Save the file to the path specified
+                    cv2.imwrite(savePath, finalImg, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                    window['-EXPORT-'].update(disabled=True, button_color=('grey', sg.theme_button_color_background()))
+                    
+                # Saving a corrected movie file (.mp4)
+                else:
+                    correctedVideoClip.write_videofile(savePath, codec="libx264", audio=True, audio_codec="aac")
+
+                    # Close the image sequence clip
+                    correctedVideoClip.close()
+                    
+                    
                 
                 
         
@@ -729,9 +748,9 @@ def runEvents(window):
         
  # ------------------------------------------------------------------------------  
 
-def getExportPath():
+def getExportPath(fileExtType):
     """ 
-        Args:       None
+        Args:       fileExtType --> String signifying if the export file should be a .jpg or .mp4
         Returns:    save_path: A string representing the full path and name of the file where the image will be saved.
         Summary:    Creates a "Save As" dialog to get the path and name for a corrected image file. It prompts the
                     user to enter a filename and select a directory. The function then checks if the filename is
@@ -743,7 +762,7 @@ def getExportPath():
     # Create a custom "Save As" dialog with a custom "Save" button text
     save_layout = [
              [sg.Text('Give your corrected image file a name in the FIRST textbox.\nIf you want to export to your local directory, leave the SECOND row blank!')],
-             [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here", enable_events=True)],
+             [sg.In (size=(40,1), key="-FILENAME-", default_text="Enter Filename Here (Backspace Me!)", enable_events=True)],
              [sg.In (size=(40,1), key="-DIRECTORY-",  default_text="Select Directory (Use Browse -->)", disabled=True),
                  sg.FolderBrowse(key='-BROWSE-', size=(10, 1))],
              [sg.Button('Save')],
@@ -752,10 +771,8 @@ def getExportPath():
     
     # Will be used when saving corrected image below
     sep = os.path.sep
-    save_path = "void" # Placeholder
-    
-    erasedHint = False
-    validSavePath = True
+    savePath = "void" # Placeholder
+
     erasedHint = False
     validSavePath = True
 
@@ -799,11 +816,11 @@ def getExportPath():
 
                 # If user wants local directory (did not choose separate directory)
                 if directory == "Select Directory (Use Browse -->)":
-                    save_path = os.getcwd() + sep + filename + '.jpg'
+                    savePath = os.getcwd() + sep + filename + fileExtType
 
                 # If user chose a directory
                 else:
-                    save_path = directory + sep + filename + '.jpg'
+                    savePath = directory + sep + filename + fileExtType
 
 
             # Only break out of loop and return save_path if user gave a valid file name
@@ -812,7 +829,7 @@ def getExportPath():
 
     save_window.Close()
     
-    return save_path
+    return savePath
         
 # ------------------------------------------------------------------------------  
 
@@ -941,11 +958,12 @@ def correctImageMan(fileName, ix, iy, window, vidImg):
 
 # ------------------------------------------------------------------------------ 
 
-def handleAutomaticVideoCorrection(fileName, window, vidImage):
+def handleAutomaticVideoCorrection(fileName, window, vidImage, videoCorrectionChose = False):
     """ 
         Args:    fileName --> Str: Name of the file to be corrected
                  window   --> PySimplueGui Object: The main window running the program
                  vidImg   --> Str: "img" if processing an image, "vid" if processing a video
+                 videoCorrectionChose --> Boolean that will help with deciding if should open PIL image in fixScreen()
         Returns: None
         Summary: Corrects the distortion in a video or image file using the fixVideo function and saves the corrected file.
     """
@@ -998,7 +1016,7 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
     clip.close()
 
     # Fix the screen to prepare for video processing
-    fixScreen(window, vidImage)
+    fixScreen(window, vidImage, videoCorrectionChose)
 
     # Fix each frame in the list of frames
     listOfCorrectedFrames = fixVideo(listOfFrames, window)
@@ -1009,13 +1027,18 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
     # Set the audio of the image clip
     audio = AudioFileClip("outputA.mp3")
     image_clip = image_clip.set_audio(audio)
+    
+    # Delete the "frames folder"
+    try:
+        shutil.rmtree(output_dir) #recursively deletes items in "frames"
+        # print(f"Folder '{output_dir}' deleted successfully.")
+    except OSError as e:
+        # print(f"Error: {output_dir} : {e.strerror}")
+        pass
+    
+    
+    return image_clip
 
-    # Write the image sequence clip to a video file
-    output_path = "output.mp4"
-    image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
-
-    # Close the image sequence clip
-    image_clip.close()
     
     
 # ------------------------------------------------------------------------------   
@@ -1129,10 +1152,12 @@ def fixVideo(listOfFrames, window):
 
 # ------------------------------------------------------------------------------   
 
-def fixScreen(window, fileName):
+def fixScreen(window, fileName, videoCorrectionChose = False):
     """ 
         Args:    window    --> PySimpleGui Object: The main window running the application
                  fileName: --> Str: The file name of the image to be opened
+                 videoCorrectionChose --> Boolean that will help with deciding if should open PIL image in fixScreen()
+
         Returns: None
         Summary: This function sets up the PySimpleGUI window to display the original image 
                  and the progress bar and progress text. It hides the controls and toolbar 
@@ -1156,12 +1181,19 @@ def fixScreen(window, fileName):
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
 
-    # Open the ORIGINAL image
-    pilImage = PIL.Image.open(fileName)
+    # Open the ORIGINAL image (IF IT WAS NOT THE VIDEO CLIP)
+    if (videoCorrectionChose == False):
+        pilImage = PIL.Image.open(fileName)
+        
+        # Get image data, and then use it to update window["-IMAGE-"]
+        # Blur the image because it wil be corrected next after returning from this function
+        data = imageToData(pilImage, window['-IMAGE-'].get_size(), blur=True)
+        
+    # Open the ORIGINAL image (IF IT WAS THE VIDEO CLIP)
+    elif (videoCorrectionChose == True):
+        data = imageToData(fileName, window['-IMAGE-'].get_size(), blur=True)
 
-    # Get image data, and then use it to update window["-IMAGE-"]
-    # Blur the image because it wil be corrected next after returning from this function
-    data = imageToData(pilImage, window['-IMAGE-'].get_size(), blur=True)
+    
     window['-IMAGE-'].update(data=data) 
 
     window['-ProgressText-'].Widget.master.pack()
@@ -1282,7 +1314,7 @@ def reformatScreen(window, btnClick, modifyStatus):
         else:
             manualDescription = "Click the lowest and highest points of the horizon. To remove the most recent point, click the `Undo` button. Once you are done, click 'Done'."
         
-        manualDescription = textwrap.fill(manualDescription, 52)    
+        manualDescription = textwrap.fill(manualDescription, 65)    
         window['-MANUAL DESCRIPTION-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,0)) 
         window['-MANUAL DESCRIPTION-'].update(manualDescription, visible=True)
 
@@ -1294,7 +1326,9 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-EXPORT-'].update(visible=False)
 
         if modifyStatus:
-            window['-SLIDERS-'].Widget.master.pack(side='top', padx=(0,0), pady=(0,10)) 
+            window['-SLIDERS-'].Widget.master.pack(side='top', padx=(0,0), pady=(0,25))
+            # If sliders look weird with modify use this line instead
+            # window['-SLIDERS-'].Widget.master.pack(side='top', padx=(0,0), pady=(0,10)) 
             window['-SLIDERS-'].update(visible=True)
 
         window['-UNDO-'].Widget.master.pack() 
