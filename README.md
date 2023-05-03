@@ -1,4 +1,4 @@
-<img src="https://github.com/alexpinette/SkyFix360/blob/main/logo.png" alt="SkyFix360 Logo" style="width:500px;">
+<img src="https://github.com/alexpinette/SkyFix360/blob/main/logo.png" alt="SkyFix360 Logo" style="width:300px;">
 
 # SkyFix360
 
