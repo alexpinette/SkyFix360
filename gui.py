@@ -676,6 +676,7 @@ def runEvents(window):
 
                     # Close the image sequence clip
                     correctedVideoClip.close()
+                
                     
                     
                 
@@ -1028,14 +1029,22 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage, videoCorrectionCh
     audio = AudioFileClip("outputA.mp3")
     image_clip = image_clip.set_audio(audio)
     
-    # Delete the "frames folder"
+    # Delete the "frames" folder
     try:
         shutil.rmtree(output_dir) #recursively deletes items in "frames"
         # print(f"Folder '{output_dir}' deleted successfully.")
     except OSError as e:
         # print(f"Error: {output_dir} : {e.strerror}")
         pass
-    
+       
+    # Delete the "outputA.mp3" file
+    audiodir = "outputA.mp3"
+    try:
+        os.remove(audiodir) 
+        # print(f"Folder '{audiodir}' deleted successfully.")
+    except OSError as e:
+        # print(f"Error: {audiodir} : {e.strerror}")
+        pass    
     
     return image_clip
 
