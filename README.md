@@ -1,5 +1,5 @@
-<p align="center" width="300px">
-  <img src="https://github.com/alexpinette/SkyFix360/blob/main/logo.png" alt="SkyFix360 Logo">
+<p align="center">
+  <img style="width:30%;" src="https://github.com/alexpinette/SkyFix360/blob/main/logo.png" alt="SkyFix360 Logo">
 </p>
 
 # SkyFix360
