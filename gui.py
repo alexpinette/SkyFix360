@@ -23,6 +23,7 @@ global prevButtonClickedOnce
 global doneButtonClickedOnce
 
 
+
 def createWindow():
     """ 
         Args:     None
@@ -221,6 +222,8 @@ def runEvents(window):
     lastUpdate = None
     lastCorrectionMethod = None   # Keep track of latest correction method used for modification purposes
     correctedVideoClip = None     # Placeholder for the corrected video if user choses a .mp4 file
+    pilImageGlobal = None         # Placeholder for the first frame of chosen .mp4 file
+    videoCorrectionChose = False
         
     while True:
         event, values = window.read()
@@ -284,7 +287,7 @@ def runEvents(window):
                     fileExt = '.jpg'
             
                     # Open the image
-                    pilImage = PIL.Image.open(fileName)
+                    pilImageGlobal = PIL.Image.open(fileName)
                     
                 elif fileExt == '.mp4':
                     # read the .mp4 video file
@@ -294,14 +297,15 @@ def runEvents(window):
                     ret, frame = cap.read()
 
                     # convert the OpenCV image to a PIL Image
-                    pilImage = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-                    pilImage.save("vidImage.jpg")
+                    pilImageGlobal = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                    
+                    # pilImageGlobal.save("vidImage.jpg")
                     
                     # NOTE TO CLOSE/RELEASE THE VIDEOCAPTURE:
                     # cap.release()
                     
                 # Get image data, and then use it to update window["-IMAGE-"]
-                data = imageToData(pilImage, window["-IMAGE-"].get_size())
+                data = imageToData(pilImageGlobal, window["-IMAGE-"].get_size())
                 window['-IMAGE-'].update(data=data)
                 window['-CORRECT-'].update(disabled=False, button_color=('#FFFFFF', '#004F00'))
                 
@@ -314,7 +318,8 @@ def runEvents(window):
 
             # User chose a video file.
             if (fileExt == '.mp4'):
-                correctedVideoClip = handleAutomaticVideoCorrection(fileName, window, "vidImage.jpg")
+                videoCorrectionChose = True
+                correctedVideoClip = handleAutomaticVideoCorrection(fileName, window, pilImageGlobal, videoCorrectionChose)
                 automaticCorrectedOnce = True
                 modifyClicked = False
 
@@ -953,11 +958,12 @@ def correctImageMan(fileName, ix, iy, window, vidImg):
 
 # ------------------------------------------------------------------------------ 
 
-def handleAutomaticVideoCorrection(fileName, window, vidImage):
+def handleAutomaticVideoCorrection(fileName, window, vidImage, videoCorrectionChose = False):
     """ 
         Args:    fileName --> Str: Name of the file to be corrected
                  window   --> PySimplueGui Object: The main window running the program
                  vidImg   --> Str: "img" if processing an image, "vid" if processing a video
+                 videoCorrectionChose --> Boolean that will help with deciding if should open PIL image in fixScreen()
         Returns: None
         Summary: Corrects the distortion in a video or image file using the fixVideo function and saves the corrected file.
     """
@@ -1010,7 +1016,7 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage):
     clip.close()
 
     # Fix the screen to prepare for video processing
-    fixScreen(window, vidImage)
+    fixScreen(window, vidImage, videoCorrectionChose)
 
     # Fix each frame in the list of frames
     listOfCorrectedFrames = fixVideo(listOfFrames, window)
@@ -1143,10 +1149,12 @@ def fixVideo(listOfFrames, window):
 
 # ------------------------------------------------------------------------------   
 
-def fixScreen(window, fileName):
+def fixScreen(window, fileName, videoCorrectionChose = False):
     """ 
         Args:    window    --> PySimpleGui Object: The main window running the application
                  fileName: --> Str: The file name of the image to be opened
+                 videoCorrectionChose --> Boolean that will help with deciding if should open PIL image in fixScreen()
+
         Returns: None
         Summary: This function sets up the PySimpleGUI window to display the original image 
                  and the progress bar and progress text. It hides the controls and toolbar 
@@ -1170,12 +1178,19 @@ def fixScreen(window, fileName):
     window['-IMAGE-'].Widget.master.pack()
     window['-IMAGE-'].update(visible=True)
 
-    # Open the ORIGINAL image
-    pilImage = PIL.Image.open(fileName)
+    # Open the ORIGINAL image (IF IT WAS NOT THE VIDEO CLIP)
+    if (videoCorrectionChose == False):
+        pilImage = PIL.Image.open(fileName)
+        
+        # Get image data, and then use it to update window["-IMAGE-"]
+        # Blur the image because it wil be corrected next after returning from this function
+        data = imageToData(pilImage, window['-IMAGE-'].get_size(), blur=True)
+        
+    # Open the ORIGINAL image (IF IT WAS THE VIDEO CLIP)
+    elif (videoCorrectionChose == True):
+        data = imageToData(fileName, window['-IMAGE-'].get_size(), blur=True)
 
-    # Get image data, and then use it to update window["-IMAGE-"]
-    # Blur the image because it wil be corrected next after returning from this function
-    data = imageToData(pilImage, window['-IMAGE-'].get_size(), blur=True)
+    
     window['-IMAGE-'].update(data=data) 
 
     window['-ProgressText-'].Widget.master.pack()
