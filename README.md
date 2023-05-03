@@ -37,13 +37,13 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ### Linux
 1. Go to the website:
-2. Look for a download link called `SkyFix360LinuxsApp.sh` for the Linux version of the app.
+2. Look for a download link called `SkyFix360SLinuxScript.sh` for the Linux version of the app.
 3. Click on the download link, and a download dialogue box should appear.
 4. Once the download is complete, locate the downloaded file in your Downloads folder or wherever you saved it.
 5. Open the terminal and navigate to the directory where you downloaded the file.
 6. If the file is in a compressed format like .zip or .tar.gz, you may need to extract it first. You can use the "tar" command to extract the file. For example, if the file is named "app.tar.gz", you can use the command "tar -xzvf app.tar.gz" to extract the files.
-7. Run the file by entering the command `chmod +x SkyFix360LinuxsApp.sh` in the terminal, where "SkyFix360LinuxsApp" is the name of the file you downloaded for Linux.
-8. Run `./SkyFix360Script.sh` so the application starts running automatically.
+7. Run the file by entering the command `chmod +x SkyFix360SLinuxScript.sh` in the terminal, where "SkyFix360SLinuxScript" is the name of the file you downloaded for Linux.
+8. Run `./SkyFix360SLinuxScript.sh` so the application starts running automatically.
 
 
 ## Usage
