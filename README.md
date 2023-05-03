@@ -1,3 +1,4 @@
+![SkyFix360 Logo](https://github.com/alexpinette/SkyFix360/blob/main/logo.png)
 # SkyFix360
 
 ## Brief introduction
