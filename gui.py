@@ -4,7 +4,7 @@
     Senior Seminar 2023
 '''
 
-import os, io, sys, platform
+import os, io, sys, platform, shutil
 import numpy as np
 import tkinter as tk 
 import PySimpleGUI as sg, PIL, cv2, textwrap
@@ -1028,14 +1028,17 @@ def handleAutomaticVideoCorrection(fileName, window, vidImage, videoCorrectionCh
     audio = AudioFileClip("outputA.mp3")
     image_clip = image_clip.set_audio(audio)
     
+    # Delete the "frames folder"
+    try:
+        shutil.rmtree(output_dir) #recursively deletes items in "frames"
+        # print(f"Folder '{output_dir}' deleted successfully.")
+    except OSError as e:
+        # print(f"Error: {output_dir} : {e.strerror}")
+        pass
+    
+    
     return image_clip
 
-    # Write the image sequence clip to a video file
-    # output_path = "output.mp4"
-    # image_clip.write_videofile(output_path, codec="libx264", audio=True, audio_codec="aac")
-
-    # # Close the image sequence clip
-    # image_clip.close()
     
     
 # ------------------------------------------------------------------------------   
