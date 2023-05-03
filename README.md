@@ -63,6 +63,6 @@ This repository contains the following files:
 
 `LICENSE`: The file containing the license information for this project.<br />
 
-`horizon_line_modelFINAL.h5`:  loads images from a folder, resizes them to 224x224 pixels, and normalizes them to [0, 1], while normalizing annotated points by dividing their coordinates by the original image width and height, and performs data augmentation through vertical and horizontal flipping, and adds color variations via different color maps to increase dataset size and improve model robustness. <br />
+`horizon_line_modelFINAL.h5`:  The saved Keras model containing all of the weights and the model architecture. <br />
 
 `README.md`: The file you are currently reading, which contains information about the project and instructions on how to use it. <br />
