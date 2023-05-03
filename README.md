@@ -11,8 +11,14 @@ The script also imports several libraries, such as PySimpleGUI, matplotlib, nump
 
 ## Installation
 
-To use SkyFix360, you need to install the required dependencies first. You can do this by running the following command:
-`pip install -r requirements.txt`
+### Mac
+
+
+### Windows
+
+
+### Linux
+
 
 
 ## Usage
@@ -28,8 +34,8 @@ The tool will launch a PySimpleGUI window where you can load your 360-degree sky
 
 This repository contains the following files:
 
-`auto_fix.py`: contains the necessary functions for automatic horizon line correction on images and videos.
-`gui.py`: The main file that runs the PySimpleGUI GUI and emits the events for the corrections for images and videos. The file contains the main code for processing the input image/video and correcting the sky.
-`requirements.txt`: The file containing the list of required dependencies.
-`LICENSE`: The file containing the license information for this project.
-`README.md`: The file you are currently reading, which contains information about the project and instructions on how to use it.
+`auto_fix.py`: contains the necessary functions for automatic horizon line correction on images and videos. <br/>
+`gui.py`: The main file that runs the PySimpleGUI GUI and emits the events for the corrections for images and videos. The file contains the main code for processing the input image/video and correcting the sky. <br />
+`LICENSE`: The file containing the license information for this project.<br />
+`horizon_line_modelFINAL.h5`:  loads images from a folder, resizes them to 224x224 pixels, and normalizes them to [0, 1], while normalizing annotated points by dividing their coordinates by the original image width and height, and performs data augmentation through vertical and horizontal flipping, and adds color variations via different color maps to increase dataset size and improve model robustness. <br />
+`README.md`: The file you are currently reading, which contains information about the project and instructions on how to use it. <br />
