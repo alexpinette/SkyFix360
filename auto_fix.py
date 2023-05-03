@@ -79,7 +79,6 @@ def visualize_predicted_points(image_path, predicted_points, output_path="visual
 
 # ------------------------------------------------------------------------------  
 
-
 def auto_correct_process(fileName):
   """
       Args:     fileName --> Str  path to the image file.
@@ -91,13 +90,10 @@ def auto_correct_process(fileName):
   # Read the image from file and resize it
   preprocessed_image = preprocess_image(fileName)
   
-  # modelDir = "horizon_line_model.h5"
-  # modelDir = os.path.join(folder, "horizon_line_model.h5")
-
   # print(modelDir)
   currentDir = os.getcwd()
   sep = os.path.sep
-  modelDir = currentDir + sep + "horizon_line_model_new12.h5"
+  modelDir = currentDir + sep + "horizon_line_modelFINAL.h5"
   # print(modelDir)
 
   # model = tf.keras.models.load_model(modelDir)
@@ -106,8 +102,6 @@ def auto_correct_process(fileName):
   # Preprocess the input image and predict the horizon line
   input_image = np.expand_dims(preprocessed_image, axis=0)
   # predicted_points = model.predict(input_image)
-
-  # print(predicted_points.shape)
 
   # Extract patches for the new image
   new_points = [0.5, 0.5] * 10  # Dummy points, will not affect the result
@@ -124,16 +118,48 @@ def auto_correct_process(fileName):
 
   return predicted_points
 
-def smoothness_penalty(y_true, y_pred):
-  # Calculate the vertical distance between neighboring points
-  true_diffs = K.abs(y_true[:, 1::2] - y_true[:, :-1:2])
-  pred_diffs = K.abs(y_pred[:, 1::2] - y_pred[:, :-1:2])
+# ------------------------------------------------------------------------------  
 
-  # Penalize large differences between neighboring points
-  smoothness_penalty = K.mean(K.square(true_diffs - pred_diffs))
-  return smoothness_penalty
+def smoothness_penalty(y_true, y_pred):
+    """
+        Args:    y_true --> tensor of shape (batch_size, 2*N), where N is the number of points
+                            on the horizon line.
+                 y_pred --> tensor of shape (batch_size, 2*N), containing the predicted coordinates
+                            of the horizon line points.
+        Returns: smoothness_penalty --> tensor of shape (), representing the penalty for large differences
+                                        between neighboring points.
+        Summary: This function calculates the smoothness penalty between the ground truth and predicted horizon
+                 line points, in order to encourage smooth predictions. It first calculates the vertical distance
+                 between neighboring points for both the ground truth and predicted points. It then computes the
+                 mean square difference between these distances and returns it as the smoothness penalty.
+    """
+
+  # Calculate the vertical distance between neighboring points
+    true_diffs = K.abs(y_true[:, 1::2] - y_true[:, :-1:2])
+    pred_diffs = K.abs(y_pred[:, 1::2] - y_pred[:, :-1:2])
+
+    # Penalize large differences between neighboring points
+    smoothness_penalty = K.mean(K.square(true_diffs - pred_diffs))
+    return smoothness_penalty
+
+# ------------------------------------------------------------------------------  
 
 def custom_loss(y_true, y_pred):
+    """
+        Args:    y_true --> tensor of shape (batch_size, 2*N), where N is the number of points on the horizon line.
+                 y_pred --> tensor of shape (batch_size, 2*N), containing the predicted coordinates of the horizon
+                            line points.
+        Returns: total_loss --> tensor of shape (), representing the total loss between the ground truth and predicted
+                                horizon line points.
+        Summary: This function computes the total loss between the ground truth and predicted horizon line points. 
+                 It first calculates the mean squared error (MSE) loss between the ground truth and predicted points using 
+                 `K.mean(K.square(y_true - y_pred))`. It then computes the smoothness penalty by calling the function
+                 `smoothness_penalty` with the ground truth and predicted points as inputs. The weight of the smoothness
+                 penalty can be adjusted by changing the coefficient `0.1` in the expression
+                 `total_loss = mse_loss + 0.1 * penalty`. This weight controls the influence of the smoothness penalty
+                 on the total loss. Finally, the function returns the total loss.
+    """
+      
     mse_loss = K.mean(K.square(y_true - y_pred))
     penalty = smoothness_penalty(y_true, y_pred)
     
@@ -141,7 +167,21 @@ def custom_loss(y_true, y_pred):
     total_loss = mse_loss + 0.1 * penalty
     return total_loss
 
+# ------------------------------------------------------------------------------  
+
 def extract_patches(image, points, patch_size=32, num_patches=10):
+    """
+        Args:    image --> NumPy array representing the input image.
+                 points --> list of length 2N, where N is the number of points on the horizon line.
+                        The list contains the x and y coordinates of each point in the range [0, 1].
+                 patch_size --> integer representing the size of the patches to extract. Default value is 32.
+                 num_patches --> integer representing the number of patches to extract. Default value is 10.
+        Returns: NumPy array of shape (num_patches, patch_size, patch_size, 3), representing the patches
+                 extracted from the input image centered at the given points.
+        Summary: This function extracts patches from the input image centered at the given points. For each point,
+                 a patch is extracted using the given patch_size parameter. The number of patches to extract is
+                 controlled by the num_patches.
+    """
     patches = []
     for i in range(0, len(points), 2):
         x = int(points[i] * image.shape[1])
