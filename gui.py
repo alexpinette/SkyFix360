@@ -4,7 +4,7 @@
     Senior Seminar 2023
 '''
 
-import os, io, sys
+import os, io, sys, platform
 import numpy as np
 import tkinter as tk 
 import PySimpleGUI as sg, PIL, cv2, textwrap
@@ -76,7 +76,21 @@ def createWindow():
     layout = [ firstRow, secondRow ]
 
     # Display the window
-    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 890))
+    window = sg.Window ("SkyFix360", layout, element_justification='c', resizable = True, finalize = True, size=(1300, 870))
+
+    # set icon of window to the custom logo (only works for windows/linux)
+    if platform.system() == 'Windows' or platform.system() == 'Linux':
+        currentDir = os.getcwd()
+        sep = os.path.sep
+        # if windows, it MUST be ICO format
+        if platform.system() == 'Windows':
+            modelDir = currentDir + sep + 'logo.ico'
+        
+        # else, linux accepts a Base64 of a PNG file
+        else:
+            modelDir = currentDir + sep + 'logo.png'
+
+        window.set_icon(modelDir)
     
     # bind to config so can check when window size changes
     window.bind('<Configure>', key='-CONFIG-')
@@ -1294,7 +1308,7 @@ def reformatScreen(window, btnClick, modifyStatus):
         window['-EXPORT-'].update(visible=False)
 
         if modifyStatus:
-            window['-SLIDERS-'].Widget.master.pack(side='left', padx=(0,0), pady=(0,10)) 
+            window['-SLIDERS-'].Widget.master.pack(side='top', padx=(0,0), pady=(0,10)) 
             window['-SLIDERS-'].update(visible=True)
 
         window['-UNDO-'].Widget.master.pack() 
